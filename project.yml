@@ -1,0 +1,61 @@
+name: MyNotch
+options:
+  bundleIdPrefix: com.emre
+  deploymentTarget:
+    macOS: "14.0"
+  xcodeVersion: "26.4"
+  createIntermediateGroups: true
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    SWIFT_APPROACHABLE_CONCURRENCY: YES
+    SWIFT_STRICT_CONCURRENCY: complete
+    # No signing identity on this machine: ad-hoc "Sign to Run Locally" for Debug builds.
+    CODE_SIGN_STYLE: Manual
+    CODE_SIGN_IDENTITY: "-"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+
+targets:
+  MyNotch:
+    type: application
+    platform: macOS
+    sources:
+      - App
+      - Core
+      - DebugPreview
+      - Settings
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.emre.mynotch
+        # UI app: everything is main-actor by default; pure helpers opt out with `nonisolated`.
+        SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
+        # Sandbox stays off (AppleScript automation + ~/.claude file watching later).
+        ENABLE_APP_SANDBOX: NO
+        ENABLE_HARDENED_RUNTIME: NO
+    info:
+      path: Resources/Info.plist
+      properties:
+        LSUIElement: true
+        CFBundleDisplayName: MyNotch
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        NSPrincipalClass: NSApplication
+        LSMinimumSystemVersion: "$(MACOSX_DEPLOYMENT_TARGET)"
+        NSHumanReadableCopyright: ""
+    scheme:
+      testTargets:
+        - MyNotchTests
+
+  MyNotchTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - MyNotchTests
+    dependencies:
+      - target: MyNotch
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.emre.mynotch.tests
+        GENERATE_INFOPLIST_FILE: YES

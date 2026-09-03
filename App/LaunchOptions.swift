@@ -13,6 +13,9 @@ nonisolated struct LaunchOptions: Equatable, Sendable {
     let debugState: String?
     /// Makes the demo module live, for exercising the engine without a real player.
     let demoLive: Bool
+    /// Posts a long-lived event from the demo module, so the banner strip another module gets
+    /// inside the expanded surface can be inspected.
+    let debugBanner: Bool
 
     static func read(from defaults: UserDefaults) -> LaunchOptions {
         LaunchOptions(
@@ -20,7 +23,8 @@ nonisolated struct LaunchOptions: Equatable, Sendable {
             openDebugPreview: defaults.bool(forKey: Key.openDebugPreview),
             hasLiveContent: defaults.bool(forKey: Key.liveContent),
             debugState: defaults.string(forKey: Key.debugState),
-            demoLive: defaults.bool(forKey: Key.demoLive)
+            demoLive: defaults.bool(forKey: Key.demoLive),
+            debugBanner: defaults.bool(forKey: Key.debugBanner)
         )
     }
 
@@ -30,5 +34,6 @@ nonisolated struct LaunchOptions: Equatable, Sendable {
         static let liveContent = "liveContent"
         static let debugState = "debugState"
         static let demoLive = "demoLive"
+        static let debugBanner = "debugBanner"
     }
 }

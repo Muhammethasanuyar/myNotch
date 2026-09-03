@@ -92,7 +92,11 @@ struct MediaExpandedView: View {
                     .lineLimit(1)
 
                 MediaLyricsView(state: state, service: controller.lyrics, accent: controller.artwork?.accent ?? .white)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+                    .frame(height: MediaLyricsView.bandHeight)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .clipped()
+
+                Spacer(minLength: 0)
 
                 MediaScrubber(state: state, accent: controller.artwork?.accent ?? .white) { position in
                     controller.send(.seek(position))
@@ -292,7 +296,10 @@ struct MediaLyricsView: View {
     let accent: Color
 
     /// Height of one line; two of them fit the gap above the scrubber.
-    private let rowHeight: CGFloat = 17
+    static let rowHeight: CGFloat = 17
+    /// The band the lyrics live in. Fixed, so lines entering and leaving during a transition
+    /// cannot resize it or spill into the title above and the scrubber below.
+    static let bandHeight: CGFloat = rowHeight * 2
 
     var body: some View {
         switch service.status {
@@ -331,11 +338,11 @@ struct MediaLyricsView: View {
         return ZStack(alignment: .topLeading) {
             ForEach(window(around: active, count: lyrics.lines.count), id: \.self) { index in
                 line(lyrics.lines[index].text, distance: index - active)
-                    .offset(y: CGFloat(index - active) * rowHeight)
+                    .offset(y: CGFloat(index - active) * Self.rowHeight)
             }
         }
         .frame(maxWidth: .infinity, alignment: .topLeading)
-        .frame(height: rowHeight * 2, alignment: .top)
+        .frame(height: Self.bandHeight, alignment: .top)
         .clipped()
         .animation(.easeOut(duration: 0.32), value: active)
     }
@@ -346,7 +353,7 @@ struct MediaLyricsView: View {
             .foregroundStyle(distance == 0 ? AnyShapeStyle(accent) : AnyShapeStyle(Color.white.opacity(0.35)))
             .lineLimit(1)
             .truncationMode(.tail)
-            .frame(height: rowHeight, alignment: .leading)
+            .frame(height: Self.rowHeight, alignment: .leading)
             .frame(maxWidth: .infinity, alignment: .leading)
             // The line that just finished fades as it leaves the top of the window.
             .opacity(distance < 0 ? 0 : 1)

@@ -37,6 +37,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if let stateName = options.debugState {
             applyDebugState(named: stateName, demo: demo)
         }
+        if options.debugBanner {
+            // From the demo module, so it lands as a banner inside whatever module is expanded.
+            manager.bus.post(.popup(NotchEvent(
+                moduleID: demo.id,
+                title: "Claude block at 80%",
+                detail: "Another module interrupting",
+                symbolName: "bell.fill",
+                duration: 60
+            )))
+        }
         if options.openDebugPreview {
             showDebugPreview()
         }

@@ -16,11 +16,13 @@ nonisolated enum NotchTransition {
     }
 
     /// A popup interrupts closed, compact and other popups. While expanded it must not grow the
-    /// surface a second time, so it becomes a banner instead.
+    /// surface a second time, so it becomes a banner instead — and an event from the module that
+    /// is already expanded is dropped entirely, because that module's own view is showing the very
+    /// change it wants to announce (a track change while the player is open, say).
     static func applyPopup(_ event: NotchEvent, to current: NotchState) -> PopupResolution {
         switch current {
-        case .expanded:
-            return PopupResolution(state: current, banner: event)
+        case .expanded(let moduleID):
+            return PopupResolution(state: current, banner: event.moduleID == moduleID ? nil : event)
         case .closed, .compact, .popup:
             return PopupResolution(state: .popup(event), banner: nil)
         }

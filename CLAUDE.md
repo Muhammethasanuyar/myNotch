@@ -39,7 +39,7 @@ Yol haritası, mimari ve kararlar: `docs/PLAN.md` (Faz 0–3 tamam: iskelet, ref
 - Menü bar → "Debug Preview": notch içeriğini normal, yeniden boyutlanabilir bir pencerede render eder.
 - State butonları (closed/compact/expanded/popup) hem preview modeli hem gerçek notch için; modül paneli (aç/kapa, `DemoModule` için aktivite seçici ve "Next track", her modül için "Test popup"); floating stil simülasyonu; layout tint; animasyon slider'ları ve "Apply to real notch".
 - Gerçek notch'a deploy etmeden animasyon iterasyonu burada yapılır.
-- Launch arg'ları: `-debugTintNotch YES` (panel ayak izi kırmızı, şekil mavi), `-openDebugPreview YES` (açılışta preview penceresi), `-debugState closed|compact|expanded|popup` (durumu zorlar ve dışarı-tıklama monitörünü kapatır; ekran görüntüsü için), `-liveContent YES` (compact ile başla).
+- Launch arg'ları: `-debugTintNotch YES` (panel ayak izi kırmızı, şekil mavi), `-openDebugPreview YES` (açılışta preview penceresi), `-debugState closed|compact|expanded|popup` (durumu zorlar ve dışarı-tıklama monitörünü kapatır; ekran görüntüsü için), `-liveContent YES` (compact ile başla), `-demoLive YES` (demo modülü canlı yap), `-debugBanner YES` (başka modülden banner gönder).
 
 ## Test
 - Mantık katmanları için XCTest (`MyNotchTests/`): `NotchGeometry`, `NotchLayout`, `NotchTransition`, `NotchViewModel` (async hover/popup zamanlaması), `ModuleResolver`, `EventBus`, `ModuleManager`.

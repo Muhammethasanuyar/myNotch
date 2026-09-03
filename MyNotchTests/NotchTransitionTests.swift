@@ -24,11 +24,20 @@ final class NotchTransitionTests: XCTestCase {
         XCTAssertNil(resolution.banner)
     }
 
-    func testPopupBecomesBannerWhileExpanded() {
+    func testAnotherModulesPopupBecomesABannerWhileExpanded() {
+        let expanded = NotchState.expanded(moduleID: "media")
+        let resolution = NotchTransition.applyPopup(otherEvent, to: expanded)
+        XCTAssertEqual(resolution.state, expanded, "the surface must not grow a second time")
+        XCTAssertEqual(resolution.banner, otherEvent)
+    }
+
+    func testTheExpandedModuleDoesNotAnnounceItself() {
+        // A track change while the player is open is already visible in the player itself; a
+        // banner on top of it would only overlap the very content it describes.
         let expanded = NotchState.expanded(moduleID: "media")
         let resolution = NotchTransition.applyPopup(event, to: expanded)
         XCTAssertEqual(resolution.state, expanded)
-        XCTAssertEqual(resolution.banner, event)
+        XCTAssertNil(resolution.banner)
     }
 
     func testHoverExpandsFromRestingStatesIntoDefaultModule() {

@@ -14,7 +14,7 @@ struct NotchRootView: View {
 
     var body: some View {
         let state = model.state
-        let size = NotchLayout.shapeSize(for: state, metrics: metrics)
+        let size = NotchLayout.shapeSize(for: state, metrics: metrics, showsBanner: model.banner != nil)
         let radii = NotchLayout.cornerRadii(for: state, style: metrics.style)
 
         ZStack(alignment: .top) {
@@ -86,21 +86,25 @@ struct NotchRootView: View {
     }
 
     private func expandedLayer(moduleID: String, size: CGSize, radii: NotchLayout.CornerRadii) -> some View {
-        ZStack(alignment: .top) {
-            content.expanded(moduleID, morphNamespace)
-                .padding(.top, NotchLayout.expandedTopInset(for: metrics))
-                .padding(.horizontal, radii.ear + NotchLayout.expandedContentInset)
-                .padding(.bottom, NotchLayout.expandedContentInset)
-                .frame(width: size.width, height: size.height, alignment: .top)
-                .transition(NotchTransitions.expandedContent)
+        // The banner sits in a strip of its own above the module's view; the surface grew by
+        // `NotchLayout.bannerHeight` to make room, so the two never cover each other.
+        VStack(spacing: 0) {
             if let banner = model.banner {
                 content.popup(banner, morphNamespace)
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 6)
-                    .background(.white.opacity(0.12), in: Capsule())
-                    .padding(.top, NotchLayout.expandedTopInset(for: metrics) + 4)
+                    .padding(.horizontal, 10)
+                    .frame(height: NotchLayout.bannerHeight - 6)
+                    .background(.white.opacity(0.1), in: Capsule())
+                    .padding(.horizontal, radii.ear + NotchLayout.expandedContentInset)
+                    .padding(.top, NotchLayout.expandedTopInset(for: metrics))
                     .transition(NotchTransitions.popup)
             }
+            content.expanded(moduleID, morphNamespace)
+                .padding(.top, model.banner == nil ? NotchLayout.expandedTopInset(for: metrics) : 6)
+                .padding(.horizontal, radii.ear + NotchLayout.expandedContentInset)
+                .padding(.bottom, NotchLayout.expandedContentInset)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                .transition(NotchTransitions.expandedContent)
         }
+        .frame(width: size.width, height: size.height, alignment: .top)
     }
 }

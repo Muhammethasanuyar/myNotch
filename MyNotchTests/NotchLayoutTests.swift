@@ -41,6 +41,30 @@ final class NotchLayoutTests: XCTestCase {
         XCTAssertEqual(NotchLayout.expandedTopInset(for: notched), 37)
     }
 
+    func testABannerGrowsTheCardInsteadOfCoveringIt() {
+        let plain = NotchLayout.shapeSize(for: .expanded(moduleID: "media"), metrics: notched)
+        let withBanner = NotchLayout.shapeSize(for: .expanded(moduleID: "media"), metrics: notched, showsBanner: true)
+        XCTAssertEqual(withBanner.width, plain.width)
+        XCTAssertEqual(withBanner.height, plain.height + NotchLayout.bannerHeight)
+    }
+
+    func testOnlyTheExpandedStateReservesBannerSpace() {
+        for state in [NotchState.closed, .compact, .popup(sampleEvent)] {
+            XCTAssertEqual(
+                NotchLayout.shapeSize(for: state, metrics: notched, showsBanner: true),
+                NotchLayout.shapeSize(for: state, metrics: notched),
+                "\(state) draws its own surface; a banner belongs to the expanded card"
+            )
+        }
+    }
+
+    func testTheExpandedCardWithABannerStillFitsThePanel() {
+        for metrics in [notched, floating] {
+            let size = NotchLayout.shapeSize(for: .expanded(moduleID: "media"), metrics: metrics, showsBanner: true)
+            XCTAssertLessThanOrEqual(size.height + NotchLayout.topInset(for: metrics), metrics.panelSize.height)
+        }
+    }
+
     func testEveryStateFitsInsideThePanel() {
         let states: [NotchState] = [.closed, .compact, .popup(sampleEvent), .expanded(moduleID: "debug")]
         for metrics in [notched, floating] {

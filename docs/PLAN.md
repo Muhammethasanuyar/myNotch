@@ -138,7 +138,7 @@ enum NotchState: Equatable {
 }
 ```
 
-- Geçiş kuralları: `popup` her durumda araya girebilir, bitince önceki duruma döner. `expanded` iken gelen popup, expanded içinde banner olarak gösterilir (üst üste büyüme olmasın).
+- Geçiş kuralları: `popup` her durumda araya girebilir, bitince önceki duruma döner. `expanded` iken gelen popup, expanded içinde banner olarak gösterilir (üst üste büyüme olmasın). *Güncelleme 2026-09-04:* banner kartın **üstünde ayrı bir şerit** alır ve yüzey `NotchLayout.bannerHeight` kadar büyür — eskiden içeriğin üzerine biniyordu. Ayrıca **açık olan modülün kendi olayı banner üretmez**: parça değişimini zaten oynatıcının kendisi gösteriyor.
 - Tüm geçişler tek bir `NotchViewModel` üzerinden (`@Published var state`).
 
 ### 4.3 Modül (Plugin) Sistemi — projenin kalbi

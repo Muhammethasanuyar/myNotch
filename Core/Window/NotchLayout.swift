@@ -56,6 +56,9 @@ nonisolated enum NotchLayout {
     static let popupExtraHeight: CGFloat = 16
     /// Vertical breathing room of compact content: icon height = housing height − this.
     static let compactContentInset: CGFloat = 12
+    /// Strip reserved above expanded content while another module's banner is showing, so the two
+    /// never overlap.
+    static let bannerHeight: CGFloat = 28
 
     struct CornerRadii: Equatable, Sendable {
         let ear: CGFloat
@@ -90,7 +93,15 @@ nonisolated enum NotchLayout {
     }
 
     /// Full size of the surface (including the ears) for a state.
-    static func shapeSize(for state: NotchState, metrics: NotchLayoutMetrics) -> CGSize {
+    /// - Parameter showsBanner: another module is announcing something inside the expanded surface,
+    ///   which needs a strip of its own.
+    static func shapeSize(for state: NotchState, metrics: NotchLayoutMetrics, showsBanner: Bool = false) -> CGSize {
+        let base = baseShapeSize(for: state, metrics: metrics)
+        guard showsBanner, state.isExpanded else { return base }
+        return CGSize(width: base.width, height: base.height + bannerHeight)
+    }
+
+    private static func baseShapeSize(for state: NotchState, metrics: NotchLayoutMetrics) -> CGSize {
         let radii = cornerRadii(for: state, style: metrics.style)
         switch metrics.style {
         case .notch:

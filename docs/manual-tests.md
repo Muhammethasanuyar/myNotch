@@ -57,6 +57,12 @@ Ad-hoc imza her build'de değiştiği için iznin tekrar sorulması normaldir.
 7. **Spotify'da ileri sar:** notch açıkken Spotify'dan konumu değiştir. Spotify seek'i bildirmediği için notch en geç ~2 sn içinde yakalamalı (expanded'dayken hızlı yeniden örnekleme).
 8. **Kulaklık gecikmesi:** Bluetooth kullanıyorsan sözler erken gelir; `defaults write com.emre.mynotch lyricsLeadSeconds -0.1` ile geri al (varsayılan 0.15).
 
+### Expanded'da araya giren olaylar
+
+1. Notch açıkken (hover) parça değişir → **banner çıkmamalı**; kart yerinde kalır, başlık/kapak/sözler yeni parçaya geçer. (Eski davranışta küçük bir kapsül kartın üstüne biniyordu.)
+2. Başka bir modülün olayı: `scripts/run.sh --args -debugState expanded -debugBanner YES` → kart 28 pt büyür, banner üstte kendi şeridinde durur, oynatıcı içeriği aşağı kayar; örtüşme olmaz.
+3. Notch kapalı/compact iken gelen olay → popup durumu (kart değil, küçük şerit) ve süresi dolunca eski duruma döner.
+
 ### Debug Preview
 
 - Modül panelinde `media` satırı görünür; "Test popup" gerçek notch'ta popup tetikler.

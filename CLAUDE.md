@@ -15,11 +15,16 @@ Yol haritası, mimari ve kararlar: `docs/PLAN.md` (Faz 0 iskelet tamam; sıradak
 - UI = SwiftUI, pencere yönetimi = AppKit (`NotchPanel`, `NSWindowController` alt sınıfları). Bu sınırı koru.
 - Swift 6 dil modu. Uygulama hedefinde varsayılan izolasyon `MainActor`; saf yardımcılar (geometri, layout hesapları) `nonisolated` ve birim testli.
 - Notch ölçüleri her zaman `NSScreen.safeAreaInsets` / `auxiliaryTopLeftArea` / `auxiliaryTopRightArea`'dan hesaplanır (`Core/Window/NotchGeometry.swift`); sabit ölçü yok.
+- Notch panelinde `ignoresMouseEvents` set edilmez (true da false da): set edilince pencere sunucusunun piksel-alfa tabanlı tıklama geçirgenliği kapanır ve menü bar panelin altında tıklanmaz olur. Geçirgenlik çizilen şeklin alfa'sına, hover `.onHover` + `contentShape(NotchShape)`'e bırakılır. Faz 0'daki geçici `ignoresMouseEvents = true` Faz 1'de kaldırılır (bkz. `docs/harvest/README.md`).
 - Yeni özellik = yeni `NotchModule` (Faz 2'den itibaren); `Core/` dosyalarına modül-özel kod sızdırma.
 - Animasyon parametreleri yalnızca `Core/State/Anim.swift` içinde tanımlanır (Faz 1).
 - Private API yok (mediaremote-adapter hariç — sadece `Modules/Media/Generic` altında, feature flag arkasında).
 - Ana thread'de AppleScript/Process çalıştırma; hepsi async.
 - Hataları sessizce yutma; açıkça fırlat ya da `assertionFailure` ile görünür kıl.
+
+## Referans repolar ve skill'ler
+- Referans klonları `references/` altında (git dışı); lisans denetimi ve desen notları `docs/harvest/README.md` + `docs/harvest/<repo>.md`. Bir deseni aktarmadan önce ilgili notu ve README'deki prompt şablonunu kullan.
+- macOS skill'leri (`macos-patterns`, `macos-notch-ui`, `macos-settings-ui`, `macos-build`, `macos-auto-update`, `macos-release`) `~/.claude/skills/` altında kurulu; kaynak `fayazara/macos-app-skills`. Bu repoda `CLAUDE.md` ve `scripts/*.sh` skill talimatlarından önceliklidir.
 
 ## Lisans / devşirme kuralları (bağlayıcı)
 - `references/` altından proje ağacına dosya KOPYALAMA. MIT/BSD/Apache kaynaklardan adapte et, dosya başına `// Adapted from <repo> (<lisans>)` ekle ve `THIRD_PARTY_LICENSES.md`'yi güncelle.

@@ -1,4 +1,5 @@
 import AppKit
+import SwiftUI
 
 /// Transparent, always-on-top, non-activating panel that sits over the physical notch.
 /// The panel keeps the expanded footprint at all times; the SwiftUI content decides what is visible.
@@ -33,4 +34,13 @@ final class NotchPanel: NSPanel {
     override func constrainFrameRect(_ frameRect: NSRect, to screen: NSScreen?) -> NSRect {
         frameRect
     }
+}
+
+/// Hosting view for the notch content.
+///
+/// `acceptsFirstMouse` matters here: the panel never becomes key, so without it AppKit would eat
+/// the first click as an activation click and a transport button would need to be pressed twice
+/// whenever another app is in front.
+final class NotchHostingView<Content: View>: NSHostingView<Content> {
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
 }

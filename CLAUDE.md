@@ -1,7 +1,7 @@
 # MyNotch — macOS Dynamic Notch App
 
 MacBook notch'unu Dynamic Island benzeri canlı bir yüzeye çeviren menü bar uygulaması.
-Yol haritası, mimari ve kararlar: `docs/PLAN.md` (Faz 0 iskelet, Faz 0.5 referans madenciliği, Faz 1 notch motoru ve Faz 2 modül sistemi tamam; sıradaki: Faz 3 medya modülü — başlamadan `docs/harvest/README.md` "Öne çıkan bulgular" bölümünü oku).
+Yol haritası, mimari ve kararlar: `docs/PLAN.md` (Faz 0–3 tamam: iskelet, referans madenciliği, notch motoru, modül sistemi, medya modülü; sıradaki: Faz 4 Claude usage — başlamadan `docs/harvest/README.md` "Öne çıkan bulgular" bölümünü oku).
 
 ## Build & Run
 - Proje dosyası XcodeGen ile üretilir: `xcodegen generate`. `project.yml` tek gerçek kaynaktır; `MyNotch.xcodeproj` ve `Resources/Info.plist` üretilir, git'e girmez.
@@ -22,7 +22,7 @@ Yol haritası, mimari ve kararlar: `docs/PLAN.md` (Faz 0 iskelet, Faz 0.5 refera
 - `EventBus` bilinçli olarak Combine değil: her şey main-actor UI bağlantısı ve callback kaydı Swift 6 `Sendable` gereksinimlerini modül sözleşmesinden uzak tutuyor.
 - Animasyon parametreleri yalnızca `Core/State/Anim.swift` içinde tanımlanır; Debug Preview'daki slider'lar `NotchViewModel.animation` kopyasını değiştirir.
 - Private API yok (mediaremote-adapter hariç — sadece `Modules/Media/Generic` altında, feature flag arkasında).
-- Ana thread'de AppleScript/Process çalıştırma; hepsi async.
+- Ana thread'de AppleScript/Process çalıştırma; hepsi async. AppleScript `AppleScriptRunner` (osascript + özel seri kuyruk) üzerinden gider; sağlayıcılar script'i üretir ve çıktıyı saf `parse` fonksiyonlarıyla ayrıştırır (testli). Medya güncellemeleri olay güdümlüdür (dağıtık bildirimler), playhead yerel olarak ekstrapole edilir; poll yalnızca kaçan olaylar için 15 sn / 60 sn.
 - Hataları sessizce yutma; açıkça fırlat ya da `assertionFailure` ile görünür kıl.
 
 ## Referans repolar ve skill'ler
@@ -42,7 +42,8 @@ Yol haritası, mimari ve kararlar: `docs/PLAN.md` (Faz 0 iskelet, Faz 0.5 refera
 
 ## Test
 - Mantık katmanları için XCTest (`MyNotchTests/`): `NotchGeometry`, `NotchLayout`, `NotchTransition`, `NotchViewModel` (async hover/popup zamanlaması), `ModuleResolver`, `EventBus`, `ModuleManager`.
-- UI değişikliğinde: Debug Preview ekran görüntüsü + gerçek notch'ta manuel senaryo listesi.
+- UI değişikliğinde: Debug Preview ekran görüntüsü + gerçek notch'ta manuel senaryo listesi (`docs/manual-tests.md`).
+- AppleScript değiştirdiğinde sözdizimini `osacompile` ile doğrula (uygulamaya olay göndermez).
 
 ## Commit
 - Conventional Commits (`feat(scope): …`, `fix(scope): …`, `chore(scope): …`, `docs(scope): …`); mesajlarda yapay zeka referansı yok.

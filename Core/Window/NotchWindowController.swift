@@ -6,7 +6,7 @@ import SwiftUI
 final class NotchWindowController: NSWindowController {
     let model: NotchViewModel
     private let content: NotchContentProvider
-    private let hostingView: NSHostingView<NotchRootView>
+    private let hostingView: NotchHostingView<NotchRootView>
     private let debugTint: Bool
     private(set) var metrics: NotchLayoutMetrics = .placeholder
     private var clickOutsideMonitor: Any?
@@ -18,7 +18,7 @@ final class NotchWindowController: NSWindowController {
         self.content = content
         self.debugTint = debugTint
 
-        let hostingView = NSHostingView(
+        let hostingView = NotchHostingView(
             rootView: NotchRootView(model: model, metrics: .placeholder, content: content, debugTint: debugTint)
         )
         // AppKit owns the panel geometry; SwiftUI must not push size constraints onto the window.

@@ -45,6 +45,7 @@ targets:
         NSPrincipalClass: NSApplication
         LSMinimumSystemVersion: "$(MACOSX_DEPLOYMENT_TARGET)"
         NSHumanReadableCopyright: ""
+        NSAppleEventsUsageDescription: "MyNotch asks Spotify and Music what is playing so it can show it in the notch."
     scheme:
       testTargets:
         - MyNotchTests

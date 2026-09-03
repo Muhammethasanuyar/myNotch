@@ -12,9 +12,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let options = LaunchOptions.read(from: .standard)
 
         let manager = ModuleManager(model: model)
-        // Phase 2 ships only the demo module; Phase 3 registers the media module here.
+        manager.register(MediaModule())
+        // The demo module only exists to exercise the engine, so it never ships in a release build.
         let demo = DemoModule()
+        #if DEBUG
         manager.register(demo)
+        #endif
         moduleManager = manager
 
         let notchController = NotchWindowController(

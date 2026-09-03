@@ -9,6 +9,10 @@ struct SpotifyProvider: MediaProvider {
     let bundleIdentifier = "com.spotify.client"
     let changeNotification = Notification.Name("com.spotify.client.PlaybackStateChanged")
     let symbolName = "music.note"
+    /// Spotify's dictionary advertises `shuffling` and `repeating` as writable, but the app
+    /// silently ignores writes to both (measured 2026-09-04), and `starred` errors with -10000.
+    /// Their values still read correctly, so the buttons show the real state without being usable.
+    let capabilities = MediaCapabilities(canShuffle: false, canRepeat: false, canFavorite: false, hasRepeatModes: false)
 
     private let runner: any AppleScriptRunning
 
@@ -23,7 +27,9 @@ struct SpotifyProvider: MediaProvider {
     }
 
     func send(_ command: MediaCommand) async throws {
-        _ = try await runner.run(Self.script(for: command))
+        let script = Self.script(for: command)
+        guard !script.isEmpty else { return }
+        _ = try await runner.run(script)
     }
 
     // MARK: Scripts
@@ -32,7 +38,11 @@ struct SpotifyProvider: MediaProvider {
     tell application "Spotify"
         if player state is stopped then return ""
         set sep to (character id 1)
-        return (name of current track) & sep & (artist of current track) & sep & (album of current track) & sep & (id of current track) & sep & (artwork url of current track) & sep & (player state as text) & sep & ((duration of current track) as text) & sep & ((round (player position * 1000)) as text)
+        set shuf to "0"
+        if shuffling then set shuf to "1"
+        set rept to "0"
+        if repeating then set rept to "1"
+        return (name of current track) & sep & (artist of current track) & sep & (album of current track) & sep & (id of current track) & sep & (artwork url of current track) & sep & (player state as text) & sep & ((duration of current track) as text) & sep & ((round (player position * 1000)) as text) & sep & shuf & sep & rept
     end tell
     """
 
@@ -43,6 +53,10 @@ struct SpotifyProvider: MediaProvider {
         case .next: body = "next track"
         case .previous: body = "previous track"
         case .seek(let position): body = "set player position to \(max(0, position))"
+        case .toggleShuffle: body = "set shuffling to not shuffling"
+        // Spotify has no repeat-one, so the cycle is a plain toggle.
+        case .cycleRepeat: body = "set repeating to not repeating"
+        case .setFavorite: return ""
         }
         return "tell application \"Spotify\" to \(body)"
     }
@@ -55,7 +69,7 @@ struct SpotifyProvider: MediaProvider {
     /// user's decimal separator (a comma in a Turkish locale), which `Double(_:)` would reject, so
     /// the script rounds them to whole milliseconds instead.
     nonisolated static func parse(_ output: String, at now: Date) -> MediaState? {
-        guard let fields = MediaScript.fields(output, expected: 8) else { return nil }
+        guard let fields = MediaScript.fields(output, expected: 10) else { return nil }
         let title = fields[0]
         guard !title.isEmpty else { return nil }
 
@@ -71,7 +85,9 @@ struct SpotifyProvider: MediaProvider {
             duration: (duration ?? 0) > 0 ? duration : nil,
             elapsed: (MediaScript.milliseconds(fields[7]) ?? 0) / 1000,
             elapsedAt: now,
-            artwork: URL(string: fields[4]).map { MediaArtworkSource.url($0) }
+            artwork: URL(string: fields[4]).map { MediaArtworkSource.url($0) },
+            isShuffling: MediaScript.flag(fields[8]),
+            repeatMode: MediaScript.flag(fields[9]) ? .all : .off
         )
     }
 }

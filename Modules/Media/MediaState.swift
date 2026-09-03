@@ -10,14 +10,19 @@ nonisolated struct MediaState: Equatable, Sendable {
     let title: String
     let artist: String
     let album: String
-    let isPlaying: Bool
+    /// Mutable so the views can react to a tap before the round-trip confirms it.
+    var isPlaying: Bool
     /// Total length in seconds.
     let duration: TimeInterval?
     /// Playhead at `elapsedAt`, in seconds.
-    let elapsed: TimeInterval
-    let elapsedAt: Date
+    var elapsed: TimeInterval
+    var elapsedAt: Date
     /// Where the artwork can be fetched from: a URL (Spotify) or a file the provider wrote (Music).
     let artwork: MediaArtworkSource?
+    var isShuffling: Bool = false
+    var repeatMode: MediaRepeatMode = .off
+    /// Whether the track is in the user's library. Always `false` where the player cannot say.
+    var isFavorite: Bool = false
 
     /// Identity of the artwork, so it is fetched once per track.
     var artworkKey: String { "\(providerID)|\(trackID)" }
@@ -36,10 +41,41 @@ nonisolated struct MediaState: Equatable, Sendable {
         return min(1, max(0, liveElapsed(at: now) / duration))
     }
 
+    /// A copy with playback flipped and the playhead frozen where it is now, so a tap on
+    /// play/pause shows immediately instead of waiting for the round-trip.
+    func togglingPlayback(at now: Date = Date()) -> MediaState {
+        var copy = self
+        copy.elapsed = liveElapsed(at: now)
+        copy.elapsedAt = now
+        copy.isPlaying.toggle()
+        return copy
+    }
+
+    /// The mode the repeat button steps to. `hasModes` players walk off → all → one.
+    func nextRepeatMode(hasModes: Bool) -> MediaRepeatMode {
+        guard hasModes else { return repeatMode.isOn ? .off : .all }
+        switch repeatMode {
+        case .off: return .all
+        case .all: return .one
+        case .one: return .off
+        }
+    }
+
     private func clampToDuration(_ value: TimeInterval) -> TimeInterval {
         guard let duration, duration > 0 else { return max(0, value) }
         return min(duration, max(0, value))
     }
+}
+
+/// How the player repeats. Spotify only knows on and off; Music also repeats a single track.
+nonisolated enum MediaRepeatMode: String, Equatable, Sendable {
+    case off
+    case all
+    case one
+
+    var isOn: Bool { self != .off }
+    /// SF Symbol for the repeat button.
+    var symbolName: String { self == .one ? "repeat.1" : "repeat" }
 }
 
 /// Where a track's artwork comes from.
@@ -56,6 +92,22 @@ nonisolated enum MediaCommand: Equatable, Sendable {
     case next
     case previous
     case seek(TimeInterval)
+    case toggleShuffle
+    /// Steps through the player's repeat modes; each provider knows its own cycle.
+    case cycleRepeat
+    case setFavorite(Bool)
+}
+
+/// What a player lets other apps **change**. Reading is a separate matter: Spotify reports its
+/// shuffle and repeat state happily, it just ignores writes to them (measured 2026-09-04 — the
+/// command succeeds and nothing happens), and its `starred` property errors outright. So on
+/// Spotify those controls are indicators, while Music accepts all three.
+nonisolated struct MediaCapabilities: Equatable, Sendable {
+    let canShuffle: Bool
+    let canRepeat: Bool
+    let canFavorite: Bool
+    /// Music cycles off → all → one; a player without modes only toggles.
+    let hasRepeatModes: Bool
 }
 
 /// Whether macOS has let us talk to the media apps yet.

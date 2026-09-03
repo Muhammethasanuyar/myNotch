@@ -9,6 +9,8 @@ struct AppleMusicProvider: MediaProvider {
     let bundleIdentifier = "com.apple.Music"
     let changeNotification = Notification.Name("com.apple.Music.playerInfo")
     let symbolName = "music.note.list"
+    /// Music exposes all three: `shuffle enabled`, `song repeat` (off/one/all) and `favorited`.
+    let capabilities = MediaCapabilities(canShuffle: true, canRepeat: true, canFavorite: true, hasRepeatModes: true)
 
     private let runner: any AppleScriptRunning
 
@@ -38,7 +40,16 @@ struct AppleMusicProvider: MediaProvider {
     tell application "Music"
         if player state is stopped then return ""
         set sep to (character id 1)
-        return (name of current track) & sep & (artist of current track) & sep & (album of current track) & sep & (database ID of current track as text) & sep & (player state as text) & sep & ((round (duration of current track * 1000)) as text) & sep & ((round (player position * 1000)) as text)
+        set shuf to "0"
+        if shuffle enabled then set shuf to "1"
+        set rept to "off"
+        if song repeat is one then set rept to "one"
+        if song repeat is all then set rept to "all"
+        set fav to "0"
+        try
+            if favorited of current track then set fav to "1"
+        end try
+        return (name of current track) & sep & (artist of current track) & sep & (album of current track) & sep & (database ID of current track as text) & sep & (player state as text) & sep & ((round (duration of current track * 1000)) as text) & sep & ((round (player position * 1000)) as text) & sep & shuf & sep & rept & sep & fav
     end tell
     """
 
@@ -66,6 +77,21 @@ struct AppleMusicProvider: MediaProvider {
         case .next: body = "next track"
         case .previous: body = "previous track"
         case .seek(let position): body = "set player position to \(max(0, position))"
+        case .toggleShuffle: body = "set shuffle enabled to not shuffle enabled"
+        case .setFavorite(let favorite): body = "set favorited of current track to \(favorite)"
+        case .cycleRepeat:
+            // Music walks off → all → one, the order its own controls use.
+            return """
+            tell application "Music"
+                if song repeat is off then
+                    set song repeat to all
+                else if song repeat is all then
+                    set song repeat to one
+                else
+                    set song repeat to off
+                end if
+            end tell
+            """
         }
         return "tell application \"Music\" to \(body)"
     }
@@ -75,7 +101,7 @@ struct AppleMusicProvider: MediaProvider {
     /// Turns the fetch script's output into a state. Like Spotify's, both time fields arrive as
     /// integer milliseconds so a locale's decimal comma can never reach the parser.
     nonisolated static func parse(_ output: String, at now: Date) -> MediaState? {
-        guard let fields = MediaScript.fields(output, expected: 7) else { return nil }
+        guard let fields = MediaScript.fields(output, expected: 10) else { return nil }
         let title = fields[0]
         guard !title.isEmpty else { return nil }
 
@@ -91,7 +117,10 @@ struct AppleMusicProvider: MediaProvider {
             duration: (duration ?? 0) > 0 ? duration : nil,
             elapsed: (MediaScript.milliseconds(fields[6]) ?? 0) / 1000,
             elapsedAt: now,
-            artwork: nil
+            artwork: nil,
+            isShuffling: MediaScript.flag(fields[7]),
+            repeatMode: MediaRepeatMode(rawValue: fields[8]) ?? .off,
+            isFavorite: MediaScript.flag(fields[9])
         )
     }
 }

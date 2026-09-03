@@ -197,21 +197,42 @@ final class MediaController {
         }
     }
 
-    /// Optimistic local update so the transport reacts before the round-trip completes.
-    func applyOptimisticPlayPause() {
+    /// What the active player lets us do; the control bar hides or dims what it cannot.
+    var capabilities: MediaCapabilities {
+        activeProvider?.capabilities ?? MediaCapabilities(canShuffle: false, canRepeat: false, canFavorite: false, hasRepeatModes: false)
+    }
+
+    // MARK: Optimistic updates
+    //
+    // Every command is a ~110 ms round-trip followed by a confirming read, so the button would
+    // feel dead without showing the expected result immediately. The next refresh corrects us if
+    // the player disagreed.
+
+    func togglePlayPause() {
         guard let current = state else { return }
-        updateState(MediaState(
-            providerID: current.providerID,
-            providerName: current.providerName,
-            trackID: current.trackID,
-            title: current.title,
-            artist: current.artist,
-            album: current.album,
-            isPlaying: !current.isPlaying,
-            duration: current.duration,
-            elapsed: current.liveElapsed(),
-            elapsedAt: Date(),
-            artwork: current.artwork
-        ))
+        updateState(current.togglingPlayback())
+        send(.playPause)
+    }
+
+    func toggleShuffle() {
+        guard var current = state, capabilities.canShuffle else { return }
+        current.isShuffling.toggle()
+        updateState(current)
+        send(.toggleShuffle)
+    }
+
+    func cycleRepeat() {
+        guard var current = state, capabilities.canRepeat else { return }
+        current.repeatMode = current.nextRepeatMode(hasModes: capabilities.hasRepeatModes)
+        updateState(current)
+        send(.cycleRepeat)
+    }
+
+    func toggleFavorite() {
+        guard var current = state, capabilities.canFavorite else { return }
+        let favorite = !current.isFavorite
+        current.isFavorite = favorite
+        updateState(current)
+        send(.setFavorite(favorite))
     }
 }

@@ -46,6 +46,13 @@ Ad-hoc imza her build'de değiştiği için iznin tekrar sorulması normaldir.
 3. Transport ve seek çalışır (Music süreyi saniye verir).
 4. Her iki uygulama da açıkken: son olay gönderen kazanır; diğerine geçince bir sonraki bildirimde kaynak değişir (expanded'da sağ üstteki kaynak ikonu değişir).
 
+### Kontrol çubuğu
+
+1. Butonlar kart genişliğince ortalı: shuffle · önceki · beyaz daire içinde oynat/duraklat · sonraki · repeat; kalp solda.
+2. **Apple Music:** shuffle, repeat (kapalı → tümü → tek) ve kalp çalışır; ikonlar Music'teki gerçek durumu yansıtır ve tıklayınca anında değişir (iyimser güncelleme, ~0,4 sn sonra teyit).
+3. **Spotify:** shuffle/repeat/kalp soluk ve tıklanamaz — Spotify bu yazımları yok sayıyor. Yine de shuffle/repeat Spotify'da açıksa ikon vurgulu görünmeli. Üzerine gelince tooltip nedeni söyler.
+4. Önceki/oynat/sonraki her iki uygulamada da ilk tıklamada çalışır (başka uygulama önde olsa bile).
+
 ### Şarkı sözleri
 
 1. Sözleri olan bir parça çal → başlık ile progress bar arasında aktif satır kapak renginde, altında sonraki satır soluk görünür; parça ilerledikçe yukarı kayar.

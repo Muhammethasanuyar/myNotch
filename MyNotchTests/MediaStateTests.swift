@@ -45,6 +45,42 @@ final class MediaStateTests: XCTestCase {
         XCTAssertEqual(state(isPlaying: true).artworkKey, "spotify|t1")
     }
 
+    func testTogglingPlaybackFreezesThePlayheadWhereItIs() {
+        let playing = state(isPlaying: true, elapsed: 30)
+        let paused = playing.togglingPlayback(at: sampledAt.addingTimeInterval(10))
+
+        XCTAssertFalse(paused.isPlaying)
+        XCTAssertEqual(paused.elapsed, 40, accuracy: 0.001, "the playhead keeps the position it had reached")
+        XCTAssertEqual(paused.liveElapsed(at: sampledAt.addingTimeInterval(60)), 40, accuracy: 0.001)
+    }
+
+    func testRepeatCyclesThroughEveryModeWhereThePlayerHasThem() {
+        var current = state(isPlaying: true)
+        XCTAssertEqual(current.repeatMode, .off)
+        current.repeatMode = current.nextRepeatMode(hasModes: true)
+        XCTAssertEqual(current.repeatMode, .all)
+        current.repeatMode = current.nextRepeatMode(hasModes: true)
+        XCTAssertEqual(current.repeatMode, .one)
+        current.repeatMode = current.nextRepeatMode(hasModes: true)
+        XCTAssertEqual(current.repeatMode, .off)
+    }
+
+    func testRepeatIsAPlainToggleWhereThePlayerHasNoModes() {
+        var current = state(isPlaying: true)
+        current.repeatMode = current.nextRepeatMode(hasModes: false)
+        XCTAssertEqual(current.repeatMode, .all)
+        current.repeatMode = current.nextRepeatMode(hasModes: false)
+        XCTAssertEqual(current.repeatMode, .off)
+    }
+
+    func testRepeatSymbolMarksTheSingleTrackMode() {
+        XCTAssertEqual(MediaRepeatMode.off.symbolName, "repeat")
+        XCTAssertEqual(MediaRepeatMode.all.symbolName, "repeat")
+        XCTAssertEqual(MediaRepeatMode.one.symbolName, "repeat.1")
+        XCTAssertFalse(MediaRepeatMode.off.isOn)
+        XCTAssertTrue(MediaRepeatMode.all.isOn)
+    }
+
     func testScrubberFormatsTime() {
         XCTAssertEqual(MediaScrubber.time(0), "0:00")
         XCTAssertEqual(MediaScrubber.time(61), "1:01")

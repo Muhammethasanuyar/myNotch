@@ -1,6 +1,11 @@
 import XCTest
 @testable import MyNotch
 
+/// Providers only need a runner to be constructed; these tests never execute a script.
+private struct StubRunner: AppleScriptRunning {
+    func run(_ source: String) async throws -> String { "" }
+}
+
 final class MediaProviderTests: XCTestCase {
     private let now = Date(timeIntervalSince1970: 2_000_000)
     private let sep = MediaScript.separator
@@ -14,7 +19,7 @@ final class MediaProviderTests: XCTestCase {
     func testSpotifyParsesAPlayingTrackAndConvertsMilliseconds() {
         let output = joined([
             "Say It Ain't So", "Weezer", "Weezer", "spotify:track:abc",
-            "https://i.scdn.co/image/abc", "playing", "255000", "61500"
+            "https://i.scdn.co/image/abc", "playing", "255000", "61500", "0", "0"
         ])
         let state = SpotifyProvider.parse(output, at: now)
 
@@ -28,24 +33,53 @@ final class MediaProviderTests: XCTestCase {
     }
 
     func testSpotifyParsesAPausedTrack() {
-        let output = joined(["Blue Monday", "New Order", "Power", "id", "", "paused", "450000", "0"])
-        XCTAssertEqual(SpotifyProvider.parse(output, at: now)?.isPlaying, false)
+        let output = joined(["Blue Monday", "New Order", "Power", "id", "", "paused", "450000", "0", "1", "1"])
+        let state = SpotifyProvider.parse(output, at: now)
+        XCTAssertEqual(state?.isPlaying, false)
+        XCTAssertEqual(state?.isShuffling, true)
+        XCTAssertEqual(state?.repeatMode, .all, "Spotify only knows repeat on or off")
+        XCTAssertEqual(state?.isFavorite, false, "Spotify cannot report a saved track")
     }
 
     func testSpotifyReturnsNilWhenStoppedOrMalformed() {
         XCTAssertNil(SpotifyProvider.parse("", at: now))
         XCTAssertNil(SpotifyProvider.parse("only\(sep)three\(sep)fields", at: now))
-        XCTAssertNil(SpotifyProvider.parse(joined(["", "a", "b", "c", "", "playing", "1000", "0"]), at: now))
+        XCTAssertNil(SpotifyProvider.parse(joined(["", "a", "b", "c", "", "playing", "1000", "0", "0", "0"]), at: now))
     }
 
     func testSpotifyFallsBackToArtistAndTitleWhenThereIsNoTrackID() {
-        let output = joined(["Local File", "Someone", "Album", "", "", "playing", "1000", "0"])
+        let output = joined(["Local File", "Someone", "Album", "", "", "playing", "1000", "0", "0", "0"])
         XCTAssertEqual(SpotifyProvider.parse(output, at: now)?.trackID, "Someone|Local File")
     }
 
     func testSpotifyIgnoresAZeroDuration() {
-        let output = joined(["Live Stream", "Radio", "", "id", "", "playing", "0", "12"])
+        let output = joined(["Live Stream", "Radio", "", "id", "", "playing", "0", "12", "0", "0"])
         XCTAssertNil(SpotifyProvider.parse(output, at: now)?.duration)
+    }
+
+    @MainActor
+    func testTransportCapabilitiesComeFromTheScriptingDictionaries() {
+        // Spotify advertises writable shuffle and repeat but ignores the writes, and `starred`
+        // errors, so nothing here is actually controllable from outside.
+        let spotify = SpotifyProvider(runner: StubRunner()).capabilities
+        XCTAssertFalse(spotify.canShuffle)
+        XCTAssertFalse(spotify.canRepeat)
+        XCTAssertFalse(spotify.canFavorite)
+        XCTAssertFalse(spotify.hasRepeatModes)
+
+        let music = AppleMusicProvider(runner: StubRunner()).capabilities
+        XCTAssertTrue(music.canFavorite)
+        XCTAssertTrue(music.hasRepeatModes, "Music repeats off, all or one")
+    }
+
+    func testShuffleAndRepeatScripts() {
+        XCTAssertEqual(SpotifyProvider.script(for: .toggleShuffle), "tell application \"Spotify\" to set shuffling to not shuffling")
+        XCTAssertEqual(SpotifyProvider.script(for: .cycleRepeat), "tell application \"Spotify\" to set repeating to not repeating")
+        XCTAssertTrue(SpotifyProvider.script(for: .setFavorite(true)).isEmpty, "nothing to send; Spotify cannot do it")
+
+        XCTAssertEqual(AppleMusicProvider.script(for: .toggleShuffle), "tell application \"Music\" to set shuffle enabled to not shuffle enabled")
+        XCTAssertEqual(AppleMusicProvider.script(for: .setFavorite(true)), "tell application \"Music\" to set favorited of current track to true")
+        XCTAssertTrue(AppleMusicProvider.script(for: .cycleRepeat).contains("set song repeat to all"))
     }
 
     func testSpotifyCommandScripts() {
@@ -59,7 +93,7 @@ final class MediaProviderTests: XCTestCase {
     // MARK: Apple Music
 
     func testAppleMusicParsesMilliseconds() {
-        let output = joined(["Teardrop", "Massive Attack", "Mezzanine", "12345", "playing", "330000", "12000"])
+        let output = joined(["Teardrop", "Massive Attack", "Mezzanine", "12345", "playing", "330000", "12000", "1", "one", "1"])
         let state = AppleMusicProvider.parse(output, at: now)
 
         XCTAssertEqual(state?.providerID, "appleMusic")
@@ -68,6 +102,9 @@ final class MediaProviderTests: XCTestCase {
         XCTAssertEqual(state?.duration ?? 0, 330, accuracy: 0.001)
         XCTAssertEqual(state?.elapsed ?? 0, 12, accuracy: 0.001)
         XCTAssertNil(state?.artwork, "Music has no artwork URL; the file is written on demand")
+        XCTAssertEqual(state?.isShuffling, true)
+        XCTAssertEqual(state?.repeatMode, .one)
+        XCTAssertEqual(state?.isFavorite, true)
     }
 
     func testAppleMusicReturnsNilWhenStopped() {
@@ -84,7 +121,7 @@ final class MediaProviderTests: XCTestCase {
     func testTimeFieldsSurviveALocaleDecimalComma() {
         // AppleScript renders reals with the user's separator; the scripts round to whole
         // milliseconds, but a stray comma must still not zero the playhead.
-        let output = joined(["Track", "Artist", "Album", "id", "", "playing", "255000", "61500,5"])
+        let output = joined(["Track", "Artist", "Album", "id", "", "playing", "255000", "61500,5", "0", "0"])
         XCTAssertEqual(SpotifyProvider.parse(output, at: now)?.elapsed ?? 0, 61.5005, accuracy: 0.0001)
         XCTAssertEqual(MediaScript.milliseconds("243690,5") ?? 0, 243690.5, accuracy: 0.001)
         XCTAssertNil(MediaScript.milliseconds("not a number"))

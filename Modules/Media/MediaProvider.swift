@@ -10,6 +10,8 @@ protocol MediaProvider: Sendable {
     var changeNotification: Notification.Name { get }
     /// SF Symbol used as the source badge in the expanded view.
     var symbolName: String { get }
+    /// What this player lets us do, taken from its scripting dictionary.
+    var capabilities: MediaCapabilities { get }
 
     /// Current playback, or `nil` when the app is stopped or has nothing loaded.
     func fetch() async throws -> MediaState?
@@ -40,6 +42,12 @@ nonisolated enum MediaScript {
     static func sampleDate(start: Date, finish: Date) -> Date {
         start.addingTimeInterval(max(0, finish.timeIntervalSince(start)) / 2)
     }
+
+    /// Reads a boolean the scripts emit as "1" or "0".
+    ///
+    /// The scripts avoid `as text` for booleans for the same reason they avoid it for numbers: the
+    /// output should never depend on the user's language.
+    static func flag(_ field: String) -> Bool { field == "1" }
 
     /// Reads a millisecond field.
     ///

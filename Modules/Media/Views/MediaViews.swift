@@ -71,6 +71,14 @@ struct MediaExpandedView: View {
     }
 
     private func player(for state: MediaState) -> some View {
+        VStack(spacing: 8) {
+            details(for: state)
+            MediaControlBar(controller: controller, state: state)
+        }
+        .foregroundStyle(.white)
+    }
+
+    private func details(for state: MediaState) -> some View {
         HStack(alignment: .top, spacing: 14) {
             MediaArtworkView(artwork: controller.artwork, cornerRadius: 12)
                 .matchedGeometryEffect(id: MediaModule.artworkID, in: namespace)
@@ -101,33 +109,125 @@ struct MediaExpandedView: View {
                 MediaScrubber(state: state, accent: controller.artwork?.accent ?? .white) { position in
                     controller.send(.seek(position))
                 }
-
-                HStack(spacing: 24) {
-                    transportButton("backward.fill") { controller.send(.previous) }
-                    transportButton(state.isPlaying ? "pause.fill" : "play.fill") {
-                        controller.applyOptimisticPlayPause()
-                        controller.send(.playPause)
-                    }
-                    transportButton("forward.fill") { controller.send(.next) }
-                }
-                .font(.title3)
-                .frame(maxWidth: .infinity)
-                .padding(.top, 2)
             }
         }
-        .foregroundStyle(.white)
+    }
+}
+
+/// The player's controls, laid out like a music app's: shuffle, previous, a filled play/pause
+/// circle, next and repeat, centred across the whole card, with the favourite button on the left.
+struct MediaControlBar: View {
+    let controller: MediaController
+    let state: MediaState
+
+    private var accent: Color { controller.artwork?.accent ?? .white }
+
+    /// A control the player will not accept still shows its real state, just muted, because seeing
+    /// that shuffle is on is useful even when we cannot turn it off from here.
+    private func tint(isOn: Bool, isEnabled: Bool) -> Color {
+        if isOn { return isEnabled ? accent : accent.opacity(0.45) }
+        return .white.opacity(isEnabled ? 0.75 : 0.25)
     }
 
-    /// A drag gesture rather than a tap: inside a non-activating panel the first tap is otherwise
-    /// swallowed as the window-activation click.
-    private func transportButton(_ symbol: String, action: @escaping () -> Void) -> some View {
-        Image(systemName: symbol)
-            .frame(width: 28, height: 24)
-            .contentShape(Rectangle())
-            .gesture(DragGesture(minimumDistance: 0).onEnded { value in
+    private func unsupported(_ what: String) -> String {
+        "\(state.providerName) does not let other apps control \(what)"
+    }
+
+    var body: some View {
+        let capabilities = controller.capabilities
+        // A ZStack rather than an HStack with spacers: the transport stays centred in the card no
+        // matter how wide the favourite button beside it is.
+        ZStack {
+            HStack(spacing: 20) {
+                MediaControlButton(
+                    symbol: "shuffle",
+                    size: 12,
+                    tint: tint(isOn: state.isShuffling, isEnabled: capabilities.canShuffle),
+                    isEnabled: capabilities.canShuffle
+                ) { controller.toggleShuffle() }
+                .help(capabilities.canShuffle ? "Shuffle" : unsupported("shuffle"))
+
+                MediaControlButton(symbol: "backward.end.fill", size: 15) { controller.send(.previous) }
+
+                playPauseButton
+
+                MediaControlButton(symbol: "forward.end.fill", size: 15) { controller.send(.next) }
+
+                MediaControlButton(
+                    symbol: state.repeatMode.symbolName,
+                    size: 12,
+                    tint: tint(isOn: state.repeatMode.isOn, isEnabled: capabilities.canRepeat),
+                    isEnabled: capabilities.canRepeat
+                ) { controller.cycleRepeat() }
+                .help(capabilities.canRepeat ? "Repeat" : unsupported("repeat"))
+            }
+
+            HStack {
+                favoriteButton(capabilities: capabilities)
+                Spacer(minLength: 0)
+            }
+        }
+        .frame(height: 30)
+    }
+
+    private var playPauseButton: some View {
+        MediaControlButton(
+            symbol: state.isPlaying ? "pause.fill" : "play.fill",
+            size: 12,
+            tint: .black,
+            background: .white,
+            diameter: 28
+        ) { controller.togglePlayPause() }
+    }
+
+    @ViewBuilder
+    private func favoriteButton(capabilities: MediaCapabilities) -> some View {
+        MediaControlButton(
+            symbol: state.isFavorite ? "heart.fill" : "heart",
+            size: 13,
+            tint: tint(isOn: state.isFavorite, isEnabled: capabilities.canFavorite),
+            isEnabled: capabilities.canFavorite
+        ) { controller.toggleFavorite() }
+        .help(capabilities.canFavorite ? "Add to favourites" : unsupported("saving tracks"))
+    }
+}
+
+/// One control. Taps go through a drag gesture: inside a non-activating panel a plain tap is
+/// otherwise swallowed as the window-activation click.
+struct MediaControlButton: View {
+    let symbol: String
+    var size: CGFloat = 15
+    var tint: Color = .white
+    var background: Color?
+    var diameter: CGFloat = 26
+    var isEnabled = true
+    let action: () -> Void
+
+    @State private var isHovering = false
+
+    var body: some View {
+        ZStack {
+            if let background {
+                Circle()
+                    .fill(background)
+                    .frame(width: diameter, height: diameter)
+            }
+            Image(systemName: symbol)
+                .font(.system(size: size, weight: .semibold))
+                .foregroundStyle(tint)
+        }
+        .frame(width: diameter, height: diameter)
+        .scaleEffect(isHovering && isEnabled ? 1.12 : 1)
+        .animation(.easeOut(duration: 0.12), value: isHovering)
+        .contentShape(Rectangle())
+        .onHover { isHovering = $0 }
+        .gesture(
+            DragGesture(minimumDistance: 0).onEnded { value in
                 let inside = abs(value.translation.width) < 20 && abs(value.translation.height) < 20
-                if inside { action() }
-            })
+                if inside && isEnabled { action() }
+            }
+        )
+        .allowsHitTesting(isEnabled)
     }
 }
 

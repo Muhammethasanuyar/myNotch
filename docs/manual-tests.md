@@ -53,6 +53,9 @@ Ad-hoc imza her build'de değiştiği için iznin tekrar sorulması normaldir.
 3. Sözü olmayan bir parça: alan boş kalır, hata gösterilmez.
 4. Kapatma: `defaults write com.emre.mynotch lyricsEnabled -bool NO` → yeniden başlat, alan hep boş olur. Geri açmak için `defaults delete com.emre.mynotch lyricsEnabled`.
 5. Ağ yokken: alan boş kalır, uygulama takılmaz (istek 10 sn'de zaman aşımına uğrar).
+6. **Senkron:** çalan bir parçada satırın vurgulanma anı sesle örtüşmeli. Ölçmek için: `osascript -e 'tell application "Spotify" to return player position'` ile konumu oku, aynı anda ekran görüntüsü al ve LRCLIB'deki satır zamanlarıyla karşılaştır (2026-09-04'te "mor ve ötesi — Re" ile doğrulandı: 113,4 sn'de beklenen satır aktifti).
+7. **Spotify'da ileri sar:** notch açıkken Spotify'dan konumu değiştir. Spotify seek'i bildirmediği için notch en geç ~2 sn içinde yakalamalı (expanded'dayken hızlı yeniden örnekleme).
+8. **Kulaklık gecikmesi:** Bluetooth kullanıyorsan sözler erken gelir; `defaults write com.emre.mynotch lyricsLeadSeconds -0.1` ile geri al (varsayılan 0.15).
 
 ### Debug Preview
 

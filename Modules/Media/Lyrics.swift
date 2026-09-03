@@ -71,6 +71,38 @@ nonisolated enum LyricsParser {
         return result
     }
 
+    /// The wall-clock instants at which the displayed line changes.
+    ///
+    /// The view is driven by these rather than by a polling tick: a 0.25 s tick would show each
+    /// line up to a quarter of a second late, while an exact schedule changes the line on the
+    /// millisecond and wakes the app only when there is something to redraw.
+    ///
+    /// - Parameters:
+    ///   - anchor: when `elapsed` was sampled.
+    ///   - lead: how far ahead of the audio the lyrics should run.
+    ///   - slack: how long after a boundary to wake. A timer that fires even a millisecond early
+    ///     would resolve to the previous line and, since the next wake is the following boundary,
+    ///     show every line a full line late — so each wake is nudged just past its boundary.
+    static func boundaries(
+        lines: [LyricsLine],
+        anchor: Date,
+        elapsed: TimeInterval,
+        lead: TimeInterval,
+        after now: Date,
+        limit: Int = 60,
+        slack: TimeInterval = 0.03
+    ) -> [Date] {
+        // A line becomes active when elapsed + (now - anchor) + lead >= line.time.
+        var dates: [Date] = [now]
+        for line in lines {
+            let date = anchor.addingTimeInterval(line.time - elapsed - lead + slack)
+            guard date > now else { continue }
+            dates.append(date)
+            if dates.count > limit { break }
+        }
+        return dates
+    }
+
     // MARK: Private
 
     /// `[offset:+250]` shifts every timestamp, in milliseconds.

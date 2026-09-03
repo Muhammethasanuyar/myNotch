@@ -208,7 +208,7 @@ tell application "Spotify"
 end tell
 ```
 
-- Bildirim geldiğinde AppleScript ile tam durumu çek (bildirim payload'ına güvenme); çalarken 1 sn'de bir sadece `player position` polle (progress bar için).
+- Bildirim geldiğinde AppleScript ile tam durumu çek (bildirim payload'ına güvenme). *Güncelleme 2026-09-04 (ölçüldü):* Spotify `PlaybackStateChanged`'i **play ve pause'da gönderiyor, seek'te göndermiyor** — bu yüzden konum için poll şart. Playhead yerel ekstrapolasyonla ilerler; yeniden örnekleme expanded oynatıcı ekrandayken 2 sn, sadece çalarken 15 sn, duraklatmada 60 sn. Örnek zaman damgası script'in **ortasına** basılır (gidiş-dönüş ~110 ms; sonuna basmak playhead'i o kadar geriye atıyordu).
 - `NSAppleEventsUsageDescription` Info.plist'e eklenecek; ilk kontrolde macOS otomasyon izni soracak — onboarding'de kullanıcıya anlat.
 
 ### 5.2 UI durumları
@@ -382,5 +382,5 @@ Ada/
 | Visualizer | MVP'de sahte animasyon; gerçek FFT Faz 6 opsiyonel |
 | Test | XCTest (`MyNotchTests/`) |
 | Faz durumu | Faz 0 iskelet 2026-09-02; Faz 0.5, Faz 1 (notch motoru) ve Faz 2 (modül sistemi) 2026-09-03; Faz 3 medya modülü 2026-09-03 (Spotify + Apple Music sağlayıcıları, AppleScriptRunner, MediaController, artwork + accent, scrubber/transport, parça değişimi popup'ı; 78 test). Sıradaki: Faz 4 (Claude usage). Elle yapılacak doğrulamalar: `docs/manual-tests.md` |
-| Şarkı sözleri | LRCLIB (`/api/get` → `/api/search` → sadeleştirilmiş başlıkla arama), parça başına önbellek, `lyricsEnabled` bayrağı. AppleScript sayıları locale'e göre virgüllü döndürdüğü için tüm süre/konum alanları tam sayı **milisaniye** olarak alınır |
+| Şarkı sözleri | LRCLIB (`/api/get` → `/api/search` → sadeleştirilmiş başlıkla arama), parça başına önbellek, `lyricsEnabled` bayrağı. Satır değişimi poll ile değil, satır başlangıçlarından üretilen **kesin zaman çizelgesiyle** (`TimelineView(.explicit)`) yapılır; her uyanış sınırdan 30 ms sonraya kaydırılır (erken ateşleyen zamanlayıcı bir önceki satırı seçip her satırı bir satır geciktiriyordu). `lyricsLeadSeconds` (varsayılan 0,15 sn) sözleri sesin biraz önünde tutar; Bluetooth gecikmesi için negatif verilebilir. AppleScript sayıları locale'e göre virgüllü döndürdüğü için tüm süre/konum alanları tam sayı **milisaniye** olarak alınır |
 | EventBus | Combine yerine main-actor callback kaydı (`Core/Modules/EventBus.swift`): Swift 6'da `Sendable` gereksinimleri modül sözleşmesini kirletmesin diye. Abonelik token'ı bırakılınca bir sonraki main-actor turunda iptal olur, `invalidate()` anında iptal eder |

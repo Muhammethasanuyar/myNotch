@@ -22,6 +22,16 @@ final class LyricsService {
         UserDefaults.standard.object(forKey: "lyricsEnabled") as? Bool ?? true
     }
 
+    /// How far ahead of the audio the lyrics run, in seconds.
+    ///
+    /// A small lead reads better than a perfectly aligned one — the eye needs a moment to find the
+    /// line. It is also the knob for output latency: Bluetooth headphones delay the sound by
+    /// 150–300 ms, so a negative value pushes the lyrics back to match what is actually heard
+    /// (`defaults write com.emre.mynotch lyricsLeadSeconds -0.1`).
+    nonisolated static var lead: TimeInterval {
+        UserDefaults.standard.object(forKey: "lyricsLeadSeconds") as? Double ?? 0.15
+    }
+
     init(session: URLSession = .shared) {
         self.session = session
     }

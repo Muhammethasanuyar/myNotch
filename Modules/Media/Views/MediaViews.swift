@@ -54,13 +54,20 @@ struct MediaExpandedView: View {
     let namespace: Namespace.ID
 
     var body: some View {
-        if controller.permission == .denied {
-            MediaPermissionView()
-        } else if let state = controller.state {
-            player(for: state)
-        } else {
-            MediaIdleView()
+        Group {
+            if controller.permission == .denied {
+                MediaPermissionView()
+            } else if let state = controller.state {
+                player(for: state)
+            } else {
+                MediaIdleView()
+            }
         }
+        // While the player is on screen the controller re-anchors the playhead every couple of
+        // seconds, so a seek made inside Spotify (which it never announces) cannot leave the
+        // scrubber and the lyrics behind.
+        .onAppear { controller.setDetailVisible(true) }
+        .onDisappear { controller.setDetailVisible(false) }
     }
 
     private func player(for state: MediaState) -> some View {
@@ -290,8 +297,9 @@ struct MediaLyricsView: View {
     var body: some View {
         switch service.status {
         case .loaded(let lyrics) where !lyrics.isEmpty:
-            TimelineView(.periodic(from: .now, by: state.isPlaying ? 0.25 : 3600)) { context in
-                scroller(lyrics: lyrics, at: state.liveElapsed(at: context.date))
+            // Driven by the exact line-change instants, so a line never appears a tick late.
+            TimelineView(.explicit(schedule(for: lyrics))) { context in
+                scroller(lyrics: lyrics, at: state.liveElapsed(at: context.date) + LyricsService.lead)
             }
         case .loading:
             Text("Lyrics…")
@@ -302,6 +310,19 @@ struct MediaLyricsView: View {
             // Nothing for this track: leave the gap empty rather than apologising for it.
             Color.clear
         }
+    }
+
+    /// While playing, wake exactly when the next lines start; while paused, render once.
+    private func schedule(for lyrics: Lyrics) -> [Date] {
+        let now = Date()
+        guard state.isPlaying else { return [now] }
+        return LyricsParser.boundaries(
+            lines: lyrics.lines,
+            anchor: state.elapsedAt,
+            elapsed: state.elapsed,
+            lead: LyricsService.lead,
+            after: now
+        )
     }
 
     private func scroller(lyrics: Lyrics, at elapsed: TimeInterval) -> some View {

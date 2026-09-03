@@ -84,8 +84,14 @@ nonisolated enum MediaActivityRules {
         return previous.trackID != current.trackID
     }
 
-    /// Recovery cadence: notifications carry the real updates, this only repairs missed events.
-    static func pollInterval(isPlaying: Bool) -> Duration {
-        isPlaying ? .seconds(15) : .seconds(60)
+    /// Recovery cadence.
+    ///
+    /// Notifications carry play/pause and track changes, but **Spotify posts nothing when the
+    /// position is seeked** (measured 2026-09-04), so a stale playhead can only be repaired by
+    /// re-reading. While the expanded player is on screen the playhead and the lyrics are visible,
+    /// so it is re-anchored every couple of seconds; otherwise the slow net is enough.
+    static func pollInterval(isPlaying: Bool, detailVisible: Bool = false) -> Duration {
+        guard isPlaying else { return .seconds(60) }
+        return detailVisible ? .seconds(2) : .seconds(15)
     }
 }

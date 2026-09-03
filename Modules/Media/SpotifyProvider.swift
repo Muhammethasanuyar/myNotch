@@ -17,8 +17,9 @@ struct SpotifyProvider: MediaProvider {
     }
 
     func fetch() async throws -> MediaState? {
+        let start = Date()
         let output = try await runner.run(Self.fetchScript)
-        return Self.parse(output, at: Date())
+        return Self.parse(output, at: MediaScript.sampleDate(start: start, finish: Date()))
     }
 
     func send(_ command: MediaCommand) async throws {

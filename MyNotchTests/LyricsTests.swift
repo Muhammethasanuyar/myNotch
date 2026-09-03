@@ -93,6 +93,73 @@ final class LyricsParserTests: XCTestCase {
     }
 }
 
+final class LyricsTimingTests: XCTestCase {
+    private let anchor = Date(timeIntervalSince1970: 1_000_000)
+    private let lines = [
+        LyricsLine(time: 10, text: "bir"),
+        LyricsLine(time: 20, text: "iki"),
+        LyricsLine(time: 30, text: "üç")
+    ]
+
+    func testSampleDateIsTheMiddleOfTheScriptRoundTrip() {
+        let start = Date(timeIntervalSince1970: 100)
+        let finish = start.addingTimeInterval(0.110)
+        XCTAssertEqual(
+            MediaScript.sampleDate(start: start, finish: finish).timeIntervalSince1970,
+            100.055,
+            accuracy: 0.0001,
+            "stamping the finish time would leave the playhead ~110 ms behind"
+        )
+    }
+
+    func testSampleDateSurvivesAClockThatWentBackwards() {
+        let start = Date(timeIntervalSince1970: 100)
+        XCTAssertEqual(MediaScript.sampleDate(start: start, finish: start.addingTimeInterval(-5)), start)
+    }
+
+    func testBoundariesAreTheInstantsEachLineStarts() {
+        // Sampled at `anchor` with the playhead at 5 s: line 1 (t=10) is 5 s away.
+        let dates = LyricsParser.boundaries(lines: lines, anchor: anchor, elapsed: 5, lead: 0, after: anchor, slack: 0)
+        XCTAssertEqual(dates.count, 4, "now plus the three upcoming lines")
+        XCTAssertEqual(dates[1].timeIntervalSince(anchor), 5, accuracy: 0.001)
+        XCTAssertEqual(dates[2].timeIntervalSince(anchor), 15, accuracy: 0.001)
+        XCTAssertEqual(dates[3].timeIntervalSince(anchor), 25, accuracy: 0.001)
+    }
+
+    func testLeadMovesEveryBoundaryEarlier() {
+        let dates = LyricsParser.boundaries(lines: lines, anchor: anchor, elapsed: 5, lead: 0.15, after: anchor, slack: 0)
+        XCTAssertEqual(dates[1].timeIntervalSince(anchor), 4.85, accuracy: 0.001)
+    }
+
+    func testWakesLandJustPastTheBoundarySoTheLineIsNeverOneLate() {
+        let dates = LyricsParser.boundaries(lines: lines, anchor: anchor, elapsed: 5, lead: 0, after: anchor)
+        // The wake is nudged past the boundary; looking up at that instant must give the new line.
+        let elapsedAtWake = 5 + dates[1].timeIntervalSince(anchor)
+        XCTAssertGreaterThan(elapsedAtWake, 10)
+        XCTAssertEqual(LyricsParser.index(at: elapsedAtWake, in: lines), 0)
+    }
+
+    func testBoundariesSkipLinesAlreadyPassed() {
+        // Playhead at 25 s: only the line at 30 s is still ahead.
+        let dates = LyricsParser.boundaries(lines: lines, anchor: anchor, elapsed: 25, lead: 0, after: anchor, slack: 0)
+        XCTAssertEqual(dates.count, 2)
+        XCTAssertEqual(dates[1].timeIntervalSince(anchor), 5, accuracy: 0.001)
+    }
+
+    func testBoundariesAreCapped() {
+        let many = (0..<500).map { LyricsLine(time: Double($0) + 1, text: "x") }
+        XCTAssertLessThanOrEqual(
+            LyricsParser.boundaries(lines: many, anchor: anchor, elapsed: 0, lead: 0, after: anchor, limit: 10, slack: 0).count,
+            11
+        )
+    }
+
+    func testAFinishedSongSchedulesNothingFurther() {
+        let dates = LyricsParser.boundaries(lines: lines, anchor: anchor, elapsed: 100, lead: 0, after: anchor, slack: 0)
+        XCTAssertEqual(dates, [anchor], "only the immediate render")
+    }
+}
+
 final class LyricsServiceTests: XCTestCase {
     private func state(title: String, artist: String, album: String = "Album", duration: TimeInterval? = 237) -> MediaState {
         MediaState(

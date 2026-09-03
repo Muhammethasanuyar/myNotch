@@ -24,6 +24,8 @@ final class MediaController {
     @ObservationIgnored private var activeProviderID: String?
     @ObservationIgnored private var observerTasks: [Task<Void, Never>] = []
     @ObservationIgnored private var pollTask: Task<Void, Never>?
+    /// How many expanded players are on screen (the notch and the Debug Preview can both show one).
+    @ObservationIgnored private var detailViewers = 0
     @ObservationIgnored private var refreshTask: Task<Void, Never>?
 
     init(providers: [any MediaProvider]) {
@@ -69,17 +71,32 @@ final class MediaController {
         updateState(nil)
     }
 
-    /// Notifications carry the real updates; this is the safety net for missed ones and for
-    /// scrubber drift while the expanded view is open.
+    /// Notifications carry play/pause and track changes; this repairs what they miss — above all
+    /// a seek, which Spotify does not announce at all.
     private func startPolling() {
+        guard !observerTasks.isEmpty else { return }
+        pollTask?.cancel()
         pollTask = Task { [weak self] in
             while !Task.isCancelled {
-                let interval = MediaActivityRules.pollInterval(isPlaying: self?.state?.isPlaying ?? false)
+                let interval = MediaActivityRules.pollInterval(
+                    isPlaying: self?.state?.isPlaying ?? false,
+                    detailVisible: (self?.detailViewers ?? 0) > 0
+                )
                 try? await Task.sleep(for: interval)
                 guard !Task.isCancelled else { return }
                 self?.refresh()
             }
         }
+    }
+
+    /// Called by the expanded player as it appears and disappears. While it is up the playhead is
+    /// visible, so the controller re-anchors quickly instead of trusting a minutes-old sample.
+    func setDetailVisible(_ visible: Bool) {
+        detailViewers = max(0, detailViewers + (visible ? 1 : -1))
+        guard !observerTasks.isEmpty else { return }
+        // Apply the new cadence immediately, and re-read right away when the player opens.
+        startPolling()
+        if visible { refresh() }
     }
 
     // MARK: Reading
@@ -144,6 +161,12 @@ final class MediaController {
         let previous = state
         state = newState
         if newState == nil { artwork = nil }
+        // The cadence is chosen when the loop goes to sleep, so it has to be recomputed whenever
+        // its inputs change. Without this the loop picked "nothing is playing → 60 s" at launch,
+        // before the first sample had landed, and then never sped up.
+        if previous?.isPlaying != newState?.isPlaying {
+            startPolling()
+        }
         // Lyrics are per track, so only a new item triggers a lookup — play/pause and scrubbing
         // must never hit the network.
         if previous?.artworkKey != newState?.artworkKey {

@@ -32,6 +32,15 @@ extension MediaProvider {
 nonisolated enum MediaScript {
     static let separator = "\u{01}"
 
+    /// The instant the player's position was actually read.
+    ///
+    /// The read happens somewhere inside the script round-trip (~110 ms on this machine), so the
+    /// midpoint is the best estimate. Stamping the finish time instead would leave the playhead —
+    /// and with it the lyrics — running about a tenth of a second behind the music.
+    static func sampleDate(start: Date, finish: Date) -> Date {
+        start.addingTimeInterval(max(0, finish.timeIntervalSince(start)) / 2)
+    }
+
     /// Reads a millisecond field.
     ///
     /// The scripts round every time to a whole millisecond because AppleScript renders reals with

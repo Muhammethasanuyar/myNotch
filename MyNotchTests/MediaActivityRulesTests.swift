@@ -52,4 +52,11 @@ final class MediaActivityRulesTests: XCTestCase {
         XCTAssertEqual(MediaActivityRules.pollInterval(isPlaying: true), .seconds(15))
         XCTAssertEqual(MediaActivityRules.pollInterval(isPlaying: false), .seconds(60))
     }
+
+    func testPollSpeedsUpWhileThePlayerIsOnScreen() {
+        // Spotify announces play/pause but not a seek, so a visible playhead must be re-read often.
+        XCTAssertEqual(MediaActivityRules.pollInterval(isPlaying: true, detailVisible: true), .seconds(2))
+        XCTAssertEqual(MediaActivityRules.pollInterval(isPlaying: false, detailVisible: true), .seconds(60),
+                       "a paused playhead does not drift, so being on screen changes nothing")
+    }
 }

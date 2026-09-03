@@ -52,6 +52,20 @@ final class NotchGeometryTests: XCTestCase {
         )
     }
 
+    func testNotchRectIsIndependentOfAuxiliaryAreaCoordinateSpace() {
+        // Same offset screen, but the auxiliary areas reported relative to the screen's own origin.
+        let localCoordinates = ScreenTopGeometry(
+            frame: CGRect(x: -1728, y: 300, width: 1728, height: 1117),
+            safeAreaTop: 37,
+            auxiliaryTopLeft: CGRect(x: 0, y: 1080, width: 780, height: 37),
+            auxiliaryTopRight: CGRect(x: 948, y: 1080, width: 780, height: 37)
+        )
+        XCTAssertEqual(
+            NotchGeometry.notchRect(for: localCoordinates),
+            CGRect(x: -948, y: 1380, width: 168, height: 37)
+        )
+    }
+
     func testPanelFrameIsCentredOnAnchorAndFlushWithScreenTop() {
         let frame = NotchGeometry.panelFrame(
             centeredAt: 864,

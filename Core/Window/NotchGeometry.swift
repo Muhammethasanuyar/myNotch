@@ -22,10 +22,12 @@ nonisolated enum NotchGeometry {
               let right = screen.auxiliaryTopRight else {
             return nil
         }
-        let width = right.minX - left.maxX
+        // Use widths only: the auxiliary areas always start at the screen edges, so this stays
+        // correct whether AppKit reports them in global or screen-local coordinates.
+        let width = screen.frame.width - left.width - right.width
         guard width > 0 else { return nil }
         return CGRect(
-            x: left.maxX,
+            x: screen.frame.minX + left.width,
             y: screen.frame.maxY - screen.safeAreaTop,
             width: width,
             height: screen.safeAreaTop

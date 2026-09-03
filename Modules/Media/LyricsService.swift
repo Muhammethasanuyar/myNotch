@@ -12,7 +12,8 @@ import Observation
 final class LyricsService {
     private(set) var status: LyricsStatus = .idle
 
-    /// Results per track, including negative ones so a missing track is not looked up twice.
+    /// Results per track. Definitive misses are cached too, so a track without lyrics is not looked
+    /// up again; transient failures are not, so a flaky network does not hide lyrics for good.
     @ObservationIgnored private var cache: [String: LyricsStatus] = [:]
     @ObservationIgnored private var loadTask: Task<Void, Never>?
     @ObservationIgnored private let session: URLSession
@@ -31,6 +32,9 @@ final class LyricsService {
     nonisolated static var lead: TimeInterval {
         UserDefaults.standard.object(forKey: "lyricsLeadSeconds") as? Double ?? 0.15
     }
+
+    /// How long to wait before retrying after a network failure.
+    static let retryDelay: Duration = .seconds(8)
 
     init(session: URLSession = .shared) {
         self.session = session
@@ -52,13 +56,28 @@ final class LyricsService {
         status = .loading
         loadTask = Task { [weak self] in
             guard let self else { return }
-            let result = await Self.fetch(for: state, session: session)
+            var outcome = await Self.fetch(for: state, session: session)
+            if outcome == .failed {
+                // One retry: a track that just started should not lose its lyrics to a hiccup.
+                try? await Task.sleep(for: Self.retryDelay)
+                guard !Task.isCancelled else { return }
+                outcome = await Self.fetch(for: state, session: session)
+            }
             guard !Task.isCancelled else { return }
-            cache[key] = result
+
+            switch outcome {
+            case .found(let lyrics):
+                cache[key] = .loaded(lyrics)
+                status = .loaded(lyrics)
+            case .notFound:
+                cache[key] = .unavailable
+                status = .unavailable
+            case .failed:
+                status = .unavailable
+            }
             if cache.count > 24 {
                 cache.removeValue(forKey: cache.keys.first { $0 != key } ?? key)
             }
-            status = result
         }
     }
 
@@ -67,51 +86,104 @@ final class LyricsService {
         status = .idle
     }
 
-    // MARK: Networking
+    // MARK: Lookup chain
 
-    /// Three chances to find timed lyrics, cheapest first:
-    /// 1. `/api/get` with everything we know — an exact hit, but its record may only carry plain lyrics;
-    /// 2. `/api/search` with artist + title — several records, one of which usually has the synced set;
-    /// 3. the same search with a simplified title, for "… - Remastered" style suffixes.
-    private static func fetch(for state: MediaState, session: URLSession) async -> LyricsStatus {
-        if let track = await request(getURL(for: state), session: session, decoding: LRCLIBTrack.self),
-           let status = status(from: track, state: state) {
-            return status
-        }
-        if let results = await request(searchURL(artist: state.artist, title: state.title), session: session, decoding: [LRCLIBTrack].self),
-           let best = bestCandidate(from: results, duration: state.duration),
-           let status = status(from: best, state: state) {
-            return status
-        }
-        if let simplified = simplifiedTitle(state.title),
-           let results = await request(searchURL(artist: state.artist, title: simplified), session: session, decoding: [LRCLIBTrack].self),
-           let best = bestCandidate(from: results, duration: state.duration),
-           let status = status(from: best, state: state) {
-            return status
-        }
-        return .unavailable
+    nonisolated enum Outcome: Equatable {
+        case found(Lyrics)
+        /// Every step answered and none had lyrics.
+        case notFound
+        /// The network let us down; worth retrying.
+        case failed
     }
 
-    private static func request<T: Decodable>(_ url: URL?, session: URLSession, decoding: T.Type) async -> T? {
-        guard let url else { return nil }
+    /// Several chances to find lyrics, cheapest first. Synced lyrics from any step win; the best
+    /// plain-text record seen along the way is the fallback.
+    ///
+    /// 1. `/api/get` with everything we know — an exact hit, but its record often carries plain lyrics only;
+    /// 2. `/api/search` with artist + title;
+    /// 3. the same with the streaming suffix stripped ("… - Remastered", "… (Live)");
+    /// 4. the primary artist only, for "A, B" and "A feat. B" credits;
+    /// 5. a free-text query, which LRCLIB matches most loosely.
+    private static func fetch(for state: MediaState, session: URLSession) async -> Outcome {
+        var plainFallback: LRCLIBTrack?
+        var sawFailure = false
+
+        func consider(_ candidates: [LRCLIBTrack]) -> Lyrics? {
+            if let best = bestCandidate(from: candidates, duration: state.duration),
+               let lyrics = syncedLyrics(from: best, state: state) {
+                return lyrics
+            }
+            if plainFallback == nil {
+                plainFallback = bestPlainCandidate(from: candidates, duration: state.duration)
+            }
+            return nil
+        }
+
+        switch await request(getURL(for: state), session: session, decoding: LRCLIBTrack.self) {
+        case .ok(let track):
+            if let lyrics = consider([track]) { return .found(lyrics) }
+        case .notFound: break
+        case .failed: sawFailure = true
+        }
+
+        let simplified = simplifiedTitle(state.title)
+        let primary = primaryArtist(state.artist)
+        var searches: [URL?] = [searchURL(artist: state.artist, title: state.title)]
+        if let simplified { searches.append(searchURL(artist: state.artist, title: simplified)) }
+        if let primary { searches.append(searchURL(artist: primary, title: simplified ?? state.title)) }
+        searches.append(freeTextSearchURL(artist: primary ?? state.artist, title: simplified ?? state.title))
+
+        for url in searches {
+            switch await request(url, session: session, decoding: [LRCLIBTrack].self) {
+            case .ok(let results):
+                if let lyrics = consider(results) { return .found(lyrics) }
+            case .notFound: break
+            case .failed: sawFailure = true
+            }
+        }
+
+        if let plainFallback, let lyrics = plainLyrics(from: plainFallback, state: state) {
+            return .found(lyrics)
+        }
+        return sawFailure ? .failed : .notFound
+    }
+
+    private enum Response<T> {
+        case ok(T)
+        case notFound
+        case failed
+    }
+
+    private static func request<T: Decodable>(_ url: URL?, session: URLSession, decoding: T.Type) async -> Response<T> {
+        guard let url else { return .notFound }
         var request = URLRequest(url: url)
         request.timeoutInterval = 10
         // LRCLIB asks clients to identify themselves.
         request.setValue("MyNotch/0.1.0 (https://github.com/Muhammethasanuyar/myNotch)", forHTTPHeaderField: "User-Agent")
         do {
             let (data, response) = try await session.data(for: request)
-            // 404 means "nothing for this track", which is a normal answer rather than an error.
-            guard let http = response as? HTTPURLResponse, http.statusCode == 200 else { return nil }
-            return try JSONDecoder().decode(T.self, from: data)
+            guard let http = response as? HTTPURLResponse else { return .failed }
+            // 404 means "nothing for this track", a normal answer rather than an error.
+            if http.statusCode == 404 { return .notFound }
+            guard http.statusCode == 200 else { return .failed }
+            return .ok(try JSONDecoder().decode(T.self, from: data))
         } catch {
-            return nil
+            return .failed
         }
     }
 
-    private static func status(from track: LRCLIBTrack, state: MediaState) -> LyricsStatus? {
+    private static func syncedLyrics(from track: LRCLIBTrack, state: MediaState) -> Lyrics? {
         guard track.instrumental != true, let synced = track.syncedLyrics, !synced.isEmpty else { return nil }
         let lines = LyricsParser.parse(synced)
-        return lines.isEmpty ? nil : .loaded(Lyrics(trackKey: state.artworkKey, lines: lines))
+        return lines.isEmpty ? nil : Lyrics(trackKey: state.artworkKey, lines: lines, isSynced: true)
+    }
+
+    /// Unsynced text spread evenly across the track: not the real timing, but close enough to
+    /// read along with, and far better than an empty band.
+    private static func plainLyrics(from track: LRCLIBTrack, state: MediaState) -> Lyrics? {
+        guard track.instrumental != true, let plain = track.plainLyrics else { return nil }
+        let lines = LyricsParser.spread(plain, over: state.duration ?? track.duration)
+        return lines.isEmpty ? nil : Lyrics(trackKey: state.artworkKey, lines: lines, isSynced: false)
     }
 
     // MARK: Request building and candidate selection (pure)
@@ -139,6 +211,11 @@ final class LyricsService {
         ])
     }
 
+    /// `GET /api/search?q=…` — LRCLIB's loosest matching, the last resort.
+    nonisolated static func freeTextSearchURL(artist: String, title: String) -> URL? {
+        url(path: "/api/search", items: [URLQueryItem(name: "q", value: "\(artist) \(title)")])
+    }
+
     private nonisolated static func url(path: String, items: [URLQueryItem]) -> URL? {
         var components = URLComponents(string: "https://lrclib.net")
         components?.path = path
@@ -149,7 +226,21 @@ final class LyricsService {
     /// Picks the search result worth using: it must actually carry synced lyrics, and among those
     /// the one whose length is closest to what the player reports wins.
     nonisolated static func bestCandidate(from results: [LRCLIBTrack], duration: TimeInterval?) -> LRCLIBTrack? {
-        let usable = results.filter { $0.instrumental != true && !($0.syncedLyrics ?? "").isEmpty }
+        closest(
+            results.filter { $0.instrumental != true && !($0.syncedLyrics ?? "").isEmpty },
+            to: duration
+        )
+    }
+
+    /// Same idea for records that only have unsynced text.
+    nonisolated static func bestPlainCandidate(from results: [LRCLIBTrack], duration: TimeInterval?) -> LRCLIBTrack? {
+        closest(
+            results.filter { $0.instrumental != true && !($0.plainLyrics ?? "").isEmpty },
+            to: duration
+        )
+    }
+
+    private nonisolated static func closest(_ usable: [LRCLIBTrack], to duration: TimeInterval?) -> LRCLIBTrack? {
         guard let duration else { return usable.first }
         return usable.min { lhs, rhs in
             abs((lhs.duration ?? .greatestFiniteMagnitude) - duration) < abs((rhs.duration ?? .greatestFiniteMagnitude) - duration)
@@ -165,6 +256,18 @@ final class LyricsService {
         let result = trimmed.trimmingCharacters(in: .whitespaces)
         return result.isEmpty || result == title ? nil : result
     }
+
+    /// The first credited artist of "A, B", "A & B", "A feat. B" or "A x B". `nil` when the credit
+    /// is already a single name.
+    nonisolated static func primaryArtist(_ artist: String) -> String? {
+        let separators = [", ", " & ", " feat. ", " Feat. ", " ft. ", " Ft. ", " x ", " X "]
+        var result = Substring(artist)
+        for separator in separators {
+            if let range = result.range(of: separator) { result = result[..<range.lowerBound] }
+        }
+        let trimmed = result.trimmingCharacters(in: .whitespaces)
+        return trimmed.isEmpty || trimmed == artist ? nil : trimmed
+    }
 }
 
 /// The subset of LRCLIB's track payload we use.
@@ -172,10 +275,12 @@ nonisolated struct LRCLIBTrack: Decodable, Equatable {
     let duration: Double?
     let instrumental: Bool?
     let syncedLyrics: String?
+    let plainLyrics: String?
 
-    init(duration: Double? = nil, instrumental: Bool? = false, syncedLyrics: String? = nil) {
+    init(duration: Double? = nil, instrumental: Bool? = false, syncedLyrics: String? = nil, plainLyrics: String? = nil) {
         self.duration = duration
         self.instrumental = instrumental
         self.syncedLyrics = syncedLyrics
+        self.plainLyrics = plainLyrics
     }
 }

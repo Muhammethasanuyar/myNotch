@@ -66,6 +66,24 @@ final class LyricsParserTests: XCTestCase {
         XCTAssertTrue(LyricsParser.parse("[not a timestamp]metin").isEmpty)
     }
 
+    func testSpreadGivesPlainTextAnEvenTimelineInsideTheTrack() {
+        let lines = LyricsParser.spread("bir\nikinci satır\n\nüç\n", over: 200)
+        XCTAssertEqual(lines.map(\.text), ["bir", "ikinci satır", "üç"], "blank lines are paragraph breaks, not silence")
+        XCTAssertGreaterThan(lines[0].time, 0, "leaves room for an intro")
+        XCTAssertLessThan(lines[2].time, 200, "and for an outro")
+        XCTAssertEqual(lines[1].time - lines[0].time, lines[2].time - lines[1].time, accuracy: 0.001, "evenly spaced")
+    }
+
+    func testSpreadWithoutADurationUsesFourSecondsPerLine() {
+        let lines = LyricsParser.spread("a\nb\nc", over: nil)
+        XCTAssertEqual(lines.count, 3)
+        XCTAssertEqual(lines[1].time - lines[0].time, 4 * (1 - 2 * 0.08), accuracy: 0.01)
+    }
+
+    func testSpreadOfNothingIsNothing() {
+        XCTAssertTrue(LyricsParser.spread("\n\n", over: 100).isEmpty)
+    }
+
     // MARK: Current line lookup
 
     private let lines = [
@@ -229,6 +247,28 @@ final class LyricsServiceTests: XCTestCase {
         XCTAssertNil(LyricsService.bestCandidate(from: [], duration: 200))
         let instrumental = [LRCLIBTrack(duration: 200, instrumental: true, syncedLyrics: "[00:01.00]x")]
         XCTAssertNil(LyricsService.bestCandidate(from: instrumental, duration: 200))
+    }
+
+    func testPlainRecordsAreOnlyAFallback() {
+        let plainOnly = [LRCLIBTrack(duration: 248, instrumental: false, plainLyrics: "sözler")]
+        XCTAssertNil(LyricsService.bestCandidate(from: plainOnly, duration: 248), "no synced lyrics here")
+        XCTAssertEqual(LyricsService.bestPlainCandidate(from: plainOnly, duration: 248)?.plainLyrics, "sözler")
+        XCTAssertNil(LyricsService.bestPlainCandidate(from: [LRCLIBTrack(duration: 1, instrumental: true, plainLyrics: "x")], duration: 1))
+    }
+
+    func testPrimaryArtistDropsCoCredits() {
+        XCTAssertEqual(LyricsService.primaryArtist("Fatma Turgut, Sagopa Kajmer"), "Fatma Turgut")
+        XCTAssertEqual(LyricsService.primaryArtist("Ezhel & Ufo361"), "Ezhel")
+        XCTAssertEqual(LyricsService.primaryArtist("Mabel Matiz feat. Sezen Aksu"), "Mabel Matiz")
+        XCTAssertNil(LyricsService.primaryArtist("Duman"), "nothing to strip")
+    }
+
+    func testFreeTextSearchURLUsesTheQParameter() throws {
+        let url = try XCTUnwrap(LyricsService.freeTextSearchURL(artist: "Duman", title: "Okyanus"))
+        let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
+        XCTAssertEqual(items.count, 1)
+        XCTAssertEqual(items.first?.name, "q")
+        XCTAssertEqual(items.first?.value, "Duman Okyanus")
     }
 
     func testTitleSimplificationStripsStreamingSuffixes() {

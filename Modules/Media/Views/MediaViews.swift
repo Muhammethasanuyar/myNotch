@@ -437,7 +437,7 @@ struct MediaLyricsView: View {
         let active = LyricsParser.index(at: elapsed, in: lyrics.lines) ?? -1
         return ZStack(alignment: .topLeading) {
             ForEach(window(around: active, count: lyrics.lines.count), id: \.self) { index in
-                line(lyrics.lines[index].text, distance: index - active)
+                line(lyrics.lines[index].text, distance: index - active, isSynced: lyrics.isSynced)
                     .offset(y: CGFloat(index - active) * Self.rowHeight)
             }
         }
@@ -447,10 +447,13 @@ struct MediaLyricsView: View {
         .animation(.easeOut(duration: 0.32), value: active)
     }
 
-    private func line(_ text: String, distance: Int) -> some View {
+    private func line(_ text: String, distance: Int, isSynced: Bool) -> some View {
         Text(text)
             .font(.system(size: distance == 0 ? 12 : 11, weight: distance == 0 ? .semibold : .regular))
-            .foregroundStyle(distance == 0 ? AnyShapeStyle(accent) : AnyShapeStyle(Color.white.opacity(0.35)))
+            // Unsynced text keeps the accent for itself: white says "roughly here", not "exactly now".
+            .foregroundStyle(distance == 0
+                             ? AnyShapeStyle(isSynced ? accent : Color.white.opacity(0.85))
+                             : AnyShapeStyle(Color.white.opacity(0.35)))
             .lineLimit(1)
             .truncationMode(.tail)
             .frame(height: Self.rowHeight, alignment: .leading)

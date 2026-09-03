@@ -11,6 +11,9 @@ nonisolated struct LyricsLine: Equatable, Sendable {
 nonisolated struct Lyrics: Equatable, Sendable {
     let trackKey: String
     let lines: [LyricsLine]
+    /// `false` when the timings are our even spread of plain text, not the real ones — the view
+    /// then drops the accent highlight so the approximation is not dressed up as precision.
+    var isSynced: Bool = true
 
     var isEmpty: Bool { lines.isEmpty }
 }
@@ -51,6 +54,27 @@ nonisolated enum LyricsParser {
             }
         }
         return lines.sorted { $0.time < $1.time }
+    }
+
+    /// Gives unsynced text a timeline by spreading its lines evenly over the track.
+    ///
+    /// Real songs are not that regular — intros and instrumental breaks bunch the words up — so
+    /// this is only ever a fallback for records that carry no timestamps. Blank lines are dropped
+    /// (they are paragraph breaks, not silence), and without a duration each line gets four seconds.
+    static func spread(_ plain: String, over duration: TimeInterval?) -> [LyricsLine] {
+        let texts = plain
+            .split(separator: "\n", omittingEmptySubsequences: true)
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+        guard !texts.isEmpty else { return [] }
+        let total = max(duration ?? Double(texts.count) * 4, Double(texts.count))
+        // Leave a little room at the start for the intro and at the end for the outro.
+        let lead = min(total * 0.08, 20)
+        let usable = total - 2 * lead
+        let step = usable / Double(texts.count)
+        return texts.enumerated().map { index, text in
+            LyricsLine(time: lead + step * Double(index), text: text)
+        }
     }
 
     /// The line playing at `time`, or `nil` before the first timestamp.

@@ -21,11 +21,16 @@ final class NotchPanel: NSPanel {
         isMovableByWindowBackground = false
         isReleasedWhenClosed = false
         animationBehavior = .none
-        // Phase 0: the whole footprint is click-through so the menu bar stays usable.
-        // Phase 1 replaces this with hit-testing limited to the visible shape.
-        ignoresMouseEvents = true
+        acceptsMouseMovedEvents = true
+        // `ignoresMouseEvents` is deliberately never set: the window server then passes clicks
+        // through transparent pixels on its own, so only the drawn shape catches the cursor.
     }
 
     override var canBecomeKey: Bool { false }
     override var canBecomeMain: Bool { false }
+
+    /// AppKit would otherwise nudge a window down to keep it below the menu bar; the notch lives at the edge.
+    override func constrainFrameRect(_ frameRect: NSRect, to screen: NSScreen?) -> NSRect {
+        frameRect
+    }
 }

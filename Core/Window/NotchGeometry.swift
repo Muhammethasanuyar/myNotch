@@ -11,6 +11,22 @@ nonisolated struct ScreenTopGeometry: Equatable, Sendable {
     let auxiliaryTopLeft: CGRect?
     /// `NSScreen.auxiliaryTopRightArea`: usable menu bar area right of the housing.
     let auxiliaryTopRight: CGRect?
+    /// `frame.maxY - visibleFrame.maxY`: the menu bar height, which floating surfaces sit below.
+    let menuBarHeight: CGFloat
+
+    init(
+        frame: CGRect,
+        safeAreaTop: CGFloat,
+        auxiliaryTopLeft: CGRect?,
+        auxiliaryTopRight: CGRect?,
+        menuBarHeight: CGFloat = 24
+    ) {
+        self.frame = frame
+        self.safeAreaTop = safeAreaTop
+        self.auxiliaryTopLeft = auxiliaryTopLeft
+        self.auxiliaryTopRight = auxiliaryTopRight
+        self.menuBarHeight = menuBarHeight
+    }
 }
 
 /// Pure notch geometry. Never hardcodes dimensions; everything derives from what the screen reports.
@@ -52,7 +68,8 @@ extension NSScreen {
             frame: frame,
             safeAreaTop: safeAreaInsets.top,
             auxiliaryTopLeft: auxiliaryTopLeftArea,
-            auxiliaryTopRight: auxiliaryTopRightArea
+            auxiliaryTopRight: auxiliaryTopRightArea,
+            menuBarHeight: frame.maxY - visibleFrame.maxY
         )
     }
 

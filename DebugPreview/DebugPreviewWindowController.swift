@@ -6,12 +6,15 @@ import SwiftUI
 final class DebugPreviewWindowController: NSWindowController {
     private let hostingView: NSHostingView<DebugPreviewView>
 
-    init(metrics: NotchLayoutMetrics) {
-        let hostingView = NSHostingView(rootView: DebugPreviewView(metrics: metrics))
+    private let liveModel: NotchViewModel
+
+    init(metrics: NotchLayoutMetrics, liveModel: NotchViewModel) {
+        self.liveModel = liveModel
+        let hostingView = NSHostingView(rootView: DebugPreviewView(metrics: metrics, liveModel: liveModel))
         self.hostingView = hostingView
 
         let window = NSWindow(
-            contentRect: CGRect(x: 0, y: 0, width: 760, height: 440),
+            contentRect: CGRect(x: 0, y: 0, width: 780, height: 660),
             styleMask: [.titled, .closable, .miniaturizable, .resizable],
             backing: .buffered,
             defer: false
@@ -30,7 +33,7 @@ final class DebugPreviewWindowController: NSWindowController {
 
     /// Refreshes the preview with the latest metrics and brings the window forward.
     func show(metrics: NotchLayoutMetrics) {
-        hostingView.rootView = DebugPreviewView(metrics: metrics)
+        hostingView.rootView = DebugPreviewView(metrics: metrics, liveModel: liveModel)
         NSApplication.shared.activate()
         window?.makeKeyAndOrderFront(nil)
     }

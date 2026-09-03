@@ -3,7 +3,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-xcodegen generate --use-cache --quiet
+xcodegen generate --quiet
 xcodebuild \
   -project MyNotch.xcodeproj \
   -scheme MyNotch \

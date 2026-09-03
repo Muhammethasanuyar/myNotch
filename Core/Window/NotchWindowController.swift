@@ -1,17 +1,26 @@
 import AppKit
 import SwiftUI
 
-/// Creates the notch panel, hosts the SwiftUI root view in it and keeps the panel aligned
-/// with the notch screen (or the main screen as a fallback) across display changes.
+/// Creates the notch panel, hosts the SwiftUI engine in it and keeps the panel aligned with the
+/// notch screen (or the main screen as a fallback) across display changes.
 final class NotchWindowController: NSWindowController {
+    let model: NotchViewModel
+    private let content: NotchContentProvider
     private let hostingView: NSHostingView<NotchRootView>
     private let debugTint: Bool
     private(set) var metrics: NotchLayoutMetrics = .placeholder
+    private var clickOutsideMonitor: Any?
 
-    init(debugTint: Bool) {
+    /// - Parameter collapsesOnOutsideClick: normally true; the Debug Preview's forced states turn it off
+    ///   so a screenshot session is not undone by an unrelated click.
+    init(model: NotchViewModel, content: NotchContentProvider, debugTint: Bool, collapsesOnOutsideClick: Bool = true) {
+        self.model = model
+        self.content = content
         self.debugTint = debugTint
 
-        let hostingView = NSHostingView(rootView: NotchRootView(metrics: .placeholder, debugTint: debugTint))
+        let hostingView = NSHostingView(
+            rootView: NotchRootView(model: model, metrics: .placeholder, content: content, debugTint: debugTint)
+        )
         // AppKit owns the panel geometry; SwiftUI must not push size constraints onto the window.
         hostingView.sizingOptions = []
         self.hostingView = hostingView
@@ -26,6 +35,9 @@ final class NotchWindowController: NSWindowController {
             name: NSApplication.didChangeScreenParametersNotification,
             object: nil
         )
+        if collapsesOnOutsideClick {
+            installClickOutsideMonitor()
+        }
     }
 
     @available(*, unavailable)
@@ -42,6 +54,16 @@ final class NotchWindowController: NSWindowController {
         reposition()
     }
 
+    /// Global monitors never receive events from our own window, so every click seen here
+    /// happened outside the notch and should collapse it.
+    private func installClickOutsideMonitor() {
+        clickOutsideMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
+            MainActor.assumeIsolated {
+                self?.model.collapse()
+            }
+        }
+    }
+
     private func reposition() {
         guard let panel = window else {
             assertionFailure("NotchWindowController lost its panel")
@@ -53,7 +75,7 @@ final class NotchWindowController: NSWindowController {
         }
         let geometry = screen.topGeometry
         metrics = NotchLayout.metrics(for: geometry, screenName: screen.localizedName)
-        hostingView.rootView = NotchRootView(metrics: metrics, debugTint: debugTint)
+        hostingView.rootView = NotchRootView(model: model, metrics: metrics, content: content, debugTint: debugTint)
         panel.setFrame(NotchLayout.panelFrame(for: geometry), display: true)
         panel.orderFrontRegardless()
     }

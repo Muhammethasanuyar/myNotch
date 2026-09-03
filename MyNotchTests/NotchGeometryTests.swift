@@ -91,14 +91,16 @@ final class NotchGeometryTests: XCTestCase {
     func testMetricsReportNotchSize() {
         let metrics = NotchLayout.metrics(for: notchedScreen, screenName: "Built-in")
         XCTAssertTrue(metrics.hasNotch)
+        XCTAssertEqual(metrics.style, .notch)
         XCTAssertEqual(metrics.notchSize, CGSize(width: 168, height: 37))
         XCTAssertEqual(metrics.panelSize, NotchLayout.expandedPanelSize)
         XCTAssertEqual(metrics.screenName, "Built-in")
     }
 
-    func testMetricsFallBackWithoutNotch() {
+    func testMetricsFallBackToFloatingStyleWithoutNotch() {
         let metrics = NotchLayout.metrics(for: plainScreen, screenName: "External")
         XCTAssertFalse(metrics.hasNotch)
-        XCTAssertEqual(metrics.notchSize, NotchLayout.fallbackNotchSize)
+        XCTAssertEqual(metrics.style, .floating)
+        XCTAssertEqual(metrics.notchSize, NotchLayout.floatingCompactSize)
     }
 }

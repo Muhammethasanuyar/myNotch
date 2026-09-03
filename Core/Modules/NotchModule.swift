@@ -5,8 +5,10 @@ import SwiftUI
 ///
 /// Modules never talk to `NotchViewModel`; they publish through the `EventBus` they receive in
 /// `start(context:)` and `ModuleManager` translates that into notch states.
+/// Not `Identifiable`: that protocol's `id` requirement is nonisolated and would force every
+/// module to spell out `nonisolated let id`, so the id lives here on the main actor instead.
 @MainActor
-protocol NotchModule: AnyObject, Identifiable {
+protocol NotchModule: AnyObject {
     /// Stable identifier, also used as `NotchState.expanded(moduleID:)`.
     var id: String { get }
     var displayName: String { get }

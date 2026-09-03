@@ -7,10 +7,12 @@ final class DebugPreviewWindowController: NSWindowController {
     private let hostingView: NSHostingView<DebugPreviewView>
 
     private let liveModel: NotchViewModel
+    private let manager: ModuleManager
 
-    init(metrics: NotchLayoutMetrics, liveModel: NotchViewModel) {
+    init(metrics: NotchLayoutMetrics, liveModel: NotchViewModel, manager: ModuleManager) {
         self.liveModel = liveModel
-        let hostingView = NSHostingView(rootView: DebugPreviewView(metrics: metrics, liveModel: liveModel))
+        self.manager = manager
+        let hostingView = NSHostingView(rootView: DebugPreviewView(metrics: metrics, liveModel: liveModel, manager: manager))
         self.hostingView = hostingView
 
         let window = NSWindow(
@@ -33,7 +35,7 @@ final class DebugPreviewWindowController: NSWindowController {
 
     /// Refreshes the preview with the latest metrics and brings the window forward.
     func show(metrics: NotchLayoutMetrics) {
-        hostingView.rootView = DebugPreviewView(metrics: metrics, liveModel: liveModel)
+        hostingView.rootView = DebugPreviewView(metrics: metrics, liveModel: liveModel, manager: manager)
         NSApplication.shared.activate()
         window?.makeKeyAndOrderFront(nil)
     }

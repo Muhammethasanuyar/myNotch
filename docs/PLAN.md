@@ -380,4 +380,5 @@ Ada/
 | MVP medya | Spotify + Apple Music (ikisi de) |
 | Visualizer | MVP'de sahte animasyon; gerçek FFT Faz 6 opsiyonel |
 | Test | XCTest (`MyNotchTests/`) |
-| Faz durumu | Faz 0 iskelet 2026-09-02; Faz 0.5 referans madenciliği 2026-09-03; Faz 1 notch motoru 2026-09-03 (NotchState/NotchTransition/NotchViewModel, NotchShape [DynamicNotchKit'ten MIT adapte], stil farkındalıklı NotchLayout, hover + dışarı tıklama, sahte içerik, Debug Preview playground, 34 test). Sıradaki: Faz 2 (modül sistemi) |
+| Faz durumu | Faz 0 iskelet 2026-09-02; Faz 0.5 referans madenciliği, Faz 1 notch motoru ve Faz 2 modül sistemi 2026-09-03 (NotchModule/ModuleContext, EventBus, saf ModuleResolver, ModuleManager, DemoModule; 54 test). Sıradaki: Faz 3 (medya modülü) |
+| EventBus | Combine yerine main-actor callback kaydı (`Core/Modules/EventBus.swift`): Swift 6'da `Sendable` gereksinimleri modül sözleşmesini kirletmesin diye. Abonelik token'ı bırakılınca bir sonraki main-actor turunda iptal olur, `invalidate()` anında iptal eder |

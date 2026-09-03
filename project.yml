@@ -24,6 +24,7 @@ targets:
     sources:
       - App
       - Core
+      - Modules
       - DebugPreview
       - Settings
     settings:

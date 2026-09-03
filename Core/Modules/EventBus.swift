@@ -14,23 +14,25 @@ final class EventBus {
         case activityChanged(moduleID: String)
     }
 
-    /// Cancels its subscription when released, so subscribers only need to hold the token.
+    /// Keeps a subscription alive. Call `invalidate()` to unsubscribe immediately; releasing the
+    /// token unsubscribes too, but only on the next main-actor turn (`deinit` cannot hop synchronously).
     final class Subscription {
-        private let cancel: () -> Void
-        private var isCancelled = false
+        private let token: UUID
+        private weak var bus: EventBus?
 
-        init(cancel: @escaping () -> Void) {
-            self.cancel = cancel
+        fileprivate init(token: UUID, bus: EventBus) {
+            self.token = token
+            self.bus = bus
         }
 
+        @MainActor
         func invalidate() {
-            guard !isCancelled else { return }
-            isCancelled = true
-            cancel()
+            bus?.removeHandler(token)
+            bus = nil
         }
 
         deinit {
-            if !isCancelled { cancel() }
+            bus?.scheduleRemoval(of: token)
         }
     }
 
@@ -39,15 +41,24 @@ final class EventBus {
     func subscribe(_ handler: @escaping (Message) -> Void) -> Subscription {
         let token = UUID()
         handlers[token] = handler
-        return Subscription { [weak self] in
-            self?.handlers.removeValue(forKey: token)
-        }
+        return Subscription(token: token, bus: self)
     }
 
     func post(_ message: Message) {
         // Snapshot first: a handler may subscribe or unsubscribe while being called.
-        for handler in handlers.values {
+        for handler in Array(handlers.values) {
             handler(message)
+        }
+    }
+
+    fileprivate func removeHandler(_ token: UUID) {
+        handlers.removeValue(forKey: token)
+    }
+
+    /// Called from a released `Subscription`, which runs outside the main actor.
+    fileprivate nonisolated func scheduleRemoval(of token: UUID) {
+        Task { @MainActor [weak self] in
+            self?.removeHandler(token)
         }
     }
 }

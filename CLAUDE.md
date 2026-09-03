@@ -1,7 +1,7 @@
 # MyNotch — macOS Dynamic Notch App
 
 MacBook notch'unu Dynamic Island benzeri canlı bir yüzeye çeviren menü bar uygulaması.
-Yol haritası, mimari ve kararlar: `docs/PLAN.md` (Faz 0 iskelet, Faz 0.5 referans madenciliği ve Faz 1 notch motoru tamam; sıradaki: Faz 2 modül sistemi — başlamadan `docs/harvest/README.md` "Öne çıkan bulgular" bölümünü oku).
+Yol haritası, mimari ve kararlar: `docs/PLAN.md` (Faz 0 iskelet, Faz 0.5 referans madenciliği, Faz 1 notch motoru ve Faz 2 modül sistemi tamam; sıradaki: Faz 3 medya modülü — başlamadan `docs/harvest/README.md` "Öne çıkan bulgular" bölümünü oku).
 
 ## Build & Run
 - Proje dosyası XcodeGen ile üretilir: `xcodegen generate`. `project.yml` tek gerçek kaynaktır; `MyNotch.xcodeproj` ve `Resources/Info.plist` üretilir, git'e girmez.
@@ -16,8 +16,10 @@ Yol haritası, mimari ve kararlar: `docs/PLAN.md` (Faz 0 iskelet, Faz 0.5 refera
 - Swift 6 dil modu. Uygulama hedefinde varsayılan izolasyon `MainActor`; saf yardımcılar (geometri, layout hesapları) `nonisolated` ve birim testli.
 - Notch ölçüleri her zaman `NSScreen.safeAreaInsets` / `auxiliaryTopLeftArea` / `auxiliaryTopRightArea`'dan hesaplanır (`Core/Window/NotchGeometry.swift`); sabit ölçü yok.
 - Notch panelinde `ignoresMouseEvents` set edilmez (true da false da): set edilince pencere sunucusunun piksel-alfa tabanlı tıklama geçirgenliği kapanır ve menü bar panelin altında tıklanmaz olur. Geçirgenlik çizilen şeklin alfa'sına, hover `.onHover` + `contentShape(NotchShape)`'e bırakılır (bkz. `docs/harvest/README.md`).
-- Durum makinesi: `Core/State/NotchState.swift` (closed/compact/expanded/popup), kurallar `NotchTransition` (saf, testli), zamanlama `NotchViewModel` (`@Observable`). Modül içeriği `NotchContentProvider` üzerinden gelir; Faz 2'de `ModuleManager` bu sağlayıcıyı üretir. Sahte içerik yalnızca `DebugPreview/FakeNotchContent.swift`'te yaşar.
-- Yeni özellik = yeni `NotchModule` (Faz 2'den itibaren); `Core/` dosyalarına modül-özel kod sızdırma.
+- Durum makinesi: `Core/State/NotchState.swift` (closed/compact/expanded/popup), kurallar `NotchTransition` (saf, testli), zamanlama `NotchViewModel` (`@Observable`). Modül içeriği `NotchContentProvider` üzerinden gelir; sağlayıcıyı `ModuleManager.contentProvider()` üretir.
+- Yeni özellik = `Modules/<Ad>/` altında yeni bir `NotchModule` + `AppDelegate`'te `ModuleManager.register(...)`; `Core/` dosyalarına modül-özel kod sızdırma.
+- Modüller `NotchViewModel`'e dokunmaz: `start(context:)` ile aldıkları `ModuleContext` üzerinden `activityChanged()` ve `post(event)` çağırır; öncelik çözümü (`urgent > live(priority) > idle`) saf `ModuleResolver`'da, uygulama `ModuleManager`'da.
+- `EventBus` bilinçli olarak Combine değil: her şey main-actor UI bağlantısı ve callback kaydı Swift 6 `Sendable` gereksinimlerini modül sözleşmesinden uzak tutuyor.
 - Animasyon parametreleri yalnızca `Core/State/Anim.swift` içinde tanımlanır; Debug Preview'daki slider'lar `NotchViewModel.animation` kopyasını değiştirir.
 - Private API yok (mediaremote-adapter hariç — sadece `Modules/Media/Generic` altında, feature flag arkasında).
 - Ana thread'de AppleScript/Process çalıştırma; hepsi async.
@@ -34,13 +36,14 @@ Yol haritası, mimari ve kararlar: `docs/PLAN.md` (Faz 0 iskelet, Faz 0.5 refera
 
 ## Debug Preview
 - Menü bar → "Debug Preview": notch içeriğini normal, yeniden boyutlanabilir bir pencerede render eder.
-- State butonları (closed/compact/expanded/popup) hem preview modeli hem gerçek notch için; floating stil simülasyonu; layout tint; animasyon slider'ları (open/close response & damping, hover gecikmesi) ve "Apply to real notch".
+- State butonları (closed/compact/expanded/popup) hem preview modeli hem gerçek notch için; modül paneli (aç/kapa, `DemoModule` için aktivite seçici ve "Next track", her modül için "Test popup"); floating stil simülasyonu; layout tint; animasyon slider'ları ve "Apply to real notch".
 - Gerçek notch'a deploy etmeden animasyon iterasyonu burada yapılır.
 - Launch arg'ları: `-debugTintNotch YES` (panel ayak izi kırmızı, şekil mavi), `-openDebugPreview YES` (açılışta preview penceresi), `-debugState closed|compact|expanded|popup` (durumu zorlar ve dışarı-tıklama monitörünü kapatır; ekran görüntüsü için), `-liveContent YES` (compact ile başla).
 
 ## Test
-- Mantık katmanları için XCTest (`MyNotchTests/`): `NotchGeometry`, `NotchLayout`, `NotchTransition`, `NotchViewModel` (async hover/popup zamanlaması dahil).
+- Mantık katmanları için XCTest (`MyNotchTests/`): `NotchGeometry`, `NotchLayout`, `NotchTransition`, `NotchViewModel` (async hover/popup zamanlaması), `ModuleResolver`, `EventBus`, `ModuleManager`.
 - UI değişikliğinde: Debug Preview ekran görüntüsü + gerçek notch'ta manuel senaryo listesi.
 
 ## Commit
-- Conventional Commits (`feat(scope): …`, `fix(scope): …`, `chore(scope): …`, `docs(scope): …`); onay almadan commit/push yapma.
+- Conventional Commits (`feat(scope): …`, `fix(scope): …`, `chore(scope): …`, `docs(scope): …`); mesajlarda yapay zeka referansı yok.
+- Faz/iş parçası bittiğinde build + test yeşilse onay sormadan commit'le ve `origin main`'e push et (kullanıcı 2026-09-03'te yetki verdi). Geri alınamaz işlemler (force-push, geçmiş yeniden yazma) için yine onay al.

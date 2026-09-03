@@ -380,4 +380,4 @@ Ada/
 | MVP medya | Spotify + Apple Music (ikisi de) |
 | Visualizer | MVP'de sahte animasyon; gerçek FFT Faz 6 opsiyonel |
 | Test | XCTest (`MyNotchTests/`) |
-| Faz durumu | Faz 0 iskelet bu tarihte kuruldu. Sıradaki: Faz 0.5 (referans madenciliği), Faz 1 (notch motoru) |
+| Faz durumu | Faz 0 iskelet 2026-09-02; Faz 0.5 referans madenciliği 2026-09-03; Faz 1 notch motoru 2026-09-03 (NotchState/NotchTransition/NotchViewModel, NotchShape [DynamicNotchKit'ten MIT adapte], stil farkındalıklı NotchLayout, hover + dışarı tıklama, sahte içerik, Debug Preview playground, 34 test). Sıradaki: Faz 2 (modül sistemi) |

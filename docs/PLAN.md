@@ -107,7 +107,7 @@ Bitince neyi aynen aldığını, neyi bilinçli değiştirdiğini 5 maddede öze
 ### 4.1 Notch Penceresi (AppKit katmanı)
 
 - `NSPanel`, `borderless + nonactivatingPanel`, `isOpaque = false`, `backgroundColor = .clear`, `hasShadow` sadece expanded'da.
-- `level = .screenSaver` (menü barın üstünde kalsın), `collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]` → **tam ekran uygulamalarda da görünür.**
+- `level = .screenSaver` (menü barın üstünde kalsın), `collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]` → **tam ekran uygulamalarda da görünür.** *Doğrulandı 2026-09-03 (macOS 26.6.2, 16" M4 Pro):* TextEdit tam ekrandayken panel `CGWindowListCopyWindowInfo`'da `onscreen=true`, layer 1000 ve ekran görüntüsünde tam ekran uygulamanın üzerinde görünüyor — özel CGS/SkyLight API'sine gerek yok.
 - Konumlama: notch'lu ekranın üst-ortası. Pencere her zaman "expanded" boyutunda dursun; içerik SwiftUI ile küçülüp büyüsün (pencere resize animasyonu titrek olur, içerik animasyonu akıcıdır).
 - **Notch tespiti (runtime, hardcode yok):**
 

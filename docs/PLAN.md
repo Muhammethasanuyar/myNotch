@@ -216,6 +216,7 @@ end tell
 - **Compact:** solda 20×20 yuvarlatılmış albüm kapağı, sağda 4–5 çubuklu equalizer animasyonu (çalarken dalgalanır, pause'da düz çizgiye iner).
 - **Expanded:** büyük artwork (köşe 12), başlık/sanatçı, sürüklenebilir progress bar (seek), önceki/oynat-duraklat/sonraki, ses kaydırıcısı, kaynak ikonu (Spotify/Music). Arka plan: artwork'ten çıkarılan baskın renkle (basit `CIAreaAverage`) hafif tint + `ultraThinMaterial`.
 - **Popup (parça değişimi):** notch genişler, eski artwork sola kayıp küçülürken yeni artwork + parça adı sağdan gelir; 2.5 sn sonra compact'a küçülür. (İstediğin "büyüme–küçülme" animasyonu burası.)
+- **Şarkı sözleri (2026-09-03 eklendi):** expanded'da başlık ile progress bar arasındaki boşlukta senkron sözler akar — aktif satır kapak vurgu renginde, sonraki satır soluk, `.easeOut(0.32)` ile yukarı kayar; yalnızca expanded'dayken ve çalarken 4 Hz'de günceller. Kaynak **LRCLIB** (`lrclib.net`, ücretsiz, anahtarsız): önce `/api/get` (tam eşleşme), senkron söz yoksa `/api/search`, o da olmazsa sadeleştirilmiş başlıkla ikinci arama; sonuç parça başına önbelleklenir (bulunamayanlar dahil). **Gizlilik:** sanatçı/parça/albüm/süre lrclib.net'e gider; `lyricsEnabled` bayrağıyla kapatılabilir, Faz 5'te Ayarlar'a anahtar olarak çıkacak.
 - **Visualizer kararı:** MVP'de "sahte ama şık" — çalma durumuna bağlı animasyonlu çubuklar (gerçek FFT değil). Faz 6'da opsiyonel gerçek visualizer: ScreenCaptureKit sistem sesi yakalama (Ekran Kaydı izni ister!) + `Accelerate/vDSP` FFT, 8–16 bant. Varsayılan kapalı; izin maliyeti yüzünden ayardan açılır.
 
 ### 5.3 Kabul kriterleri (Faz 3 çıkışı)
@@ -381,4 +382,5 @@ Ada/
 | Visualizer | MVP'de sahte animasyon; gerçek FFT Faz 6 opsiyonel |
 | Test | XCTest (`MyNotchTests/`) |
 | Faz durumu | Faz 0 iskelet 2026-09-02; Faz 0.5, Faz 1 (notch motoru) ve Faz 2 (modül sistemi) 2026-09-03; Faz 3 medya modülü 2026-09-03 (Spotify + Apple Music sağlayıcıları, AppleScriptRunner, MediaController, artwork + accent, scrubber/transport, parça değişimi popup'ı; 78 test). Sıradaki: Faz 4 (Claude usage). Elle yapılacak doğrulamalar: `docs/manual-tests.md` |
+| Şarkı sözleri | LRCLIB (`/api/get` → `/api/search` → sadeleştirilmiş başlıkla arama), parça başına önbellek, `lyricsEnabled` bayrağı. AppleScript sayıları locale'e göre virgüllü döndürdüğü için tüm süre/konum alanları tam sayı **milisaniye** olarak alınır |
 | EventBus | Combine yerine main-actor callback kaydı (`Core/Modules/EventBus.swift`): Swift 6'da `Sendable` gereksinimleri modül sözleşmesini kirletmesin diye. Abonelik token'ı bırakılınca bir sonraki main-actor turunda iptal olur, `invalidate()` anında iptal eder |

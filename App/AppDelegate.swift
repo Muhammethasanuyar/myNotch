@@ -29,7 +29,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         notchController.show()
         notchWindowController = notchController
 
-        if options.hasLiveContent {
+        // `-liveContent YES` / `-demoLive YES`: makes the demo module live so the engine can be
+        // exercised without a real player running.
+        if options.hasLiveContent || options.demoLive {
             demo.setActivity(.live)
         }
         if let stateName = options.debugState {
@@ -60,16 +62,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func applyDebugState(named name: String, demo: DemoModule) {
         switch name {
         case "closed":
-            demo.setActivity(.idle)
             model.override(.closed)
         case "compact":
-            demo.setActivity(.live)
             model.override(.compact)
         case "expanded":
-            demo.setActivity(.live)
-            model.override(.expanded(moduleID: demo.id))
+            // Whoever owns the notch: with a player running this is the media module.
+            model.override(.expanded(moduleID: model.defaultModuleID))
         case "popup":
-            demo.setActivity(.live)
             model.showPopup(
                 NotchEvent(
                     moduleID: demo.id,

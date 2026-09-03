@@ -11,13 +11,16 @@ nonisolated struct LaunchOptions: Equatable, Sendable {
     let hasLiveContent: Bool
     /// Forces a state at launch: `closed`, `compact`, `expanded` or `popup`.
     let debugState: String?
+    /// Makes the demo module live, for exercising the engine without a real player.
+    let demoLive: Bool
 
     static func read(from defaults: UserDefaults) -> LaunchOptions {
         LaunchOptions(
             debugTintNotch: defaults.bool(forKey: Key.debugTintNotch),
             openDebugPreview: defaults.bool(forKey: Key.openDebugPreview),
             hasLiveContent: defaults.bool(forKey: Key.liveContent),
-            debugState: defaults.string(forKey: Key.debugState)
+            debugState: defaults.string(forKey: Key.debugState),
+            demoLive: defaults.bool(forKey: Key.demoLive)
         )
     }
 
@@ -26,5 +29,6 @@ nonisolated struct LaunchOptions: Equatable, Sendable {
         static let openDebugPreview = "openDebugPreview"
         static let liveContent = "liveContent"
         static let debugState = "debugState"
+        static let demoLive = "demoLive"
     }
 }

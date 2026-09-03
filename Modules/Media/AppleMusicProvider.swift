@@ -37,7 +37,7 @@ struct AppleMusicProvider: MediaProvider {
     tell application "Music"
         if player state is stopped then return ""
         set sep to (character id 1)
-        return (name of current track) & sep & (artist of current track) & sep & (album of current track) & sep & (database ID of current track as text) & sep & (player state as text) & sep & (duration of current track as text) & sep & (player position as text)
+        return (name of current track) & sep & (artist of current track) & sep & (album of current track) & sep & (database ID of current track as text) & sep & (player state as text) & sep & ((round (duration of current track * 1000)) as text) & sep & ((round (player position * 1000)) as text)
     end tell
     """
 
@@ -71,13 +71,14 @@ struct AppleMusicProvider: MediaProvider {
 
     // MARK: Parsing
 
-    /// Music reports both the duration and the position in seconds.
+    /// Turns the fetch script's output into a state. Like Spotify's, both time fields arrive as
+    /// integer milliseconds so a locale's decimal comma can never reach the parser.
     nonisolated static func parse(_ output: String, at now: Date) -> MediaState? {
         guard let fields = MediaScript.fields(output, expected: 7) else { return nil }
         let title = fields[0]
         guard !title.isEmpty else { return nil }
 
-        let duration = Double(fields[5])
+        let duration = MediaScript.milliseconds(fields[5]).map { $0 / 1000 }
         return MediaState(
             providerID: "appleMusic",
             providerName: "Music",
@@ -87,7 +88,7 @@ struct AppleMusicProvider: MediaProvider {
             album: fields[2],
             isPlaying: fields[4] == "playing",
             duration: (duration ?? 0) > 0 ? duration : nil,
-            elapsed: Double(fields[6]) ?? 0,
+            elapsed: (MediaScript.milliseconds(fields[6]) ?? 0) / 1000,
             elapsedAt: now,
             artwork: nil
         )

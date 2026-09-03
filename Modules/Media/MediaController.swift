@@ -16,6 +16,9 @@ final class MediaController {
     /// Called after every state change with the previous value, so the module can announce a track change.
     var onStateChange: (@MainActor (MediaState?, MediaState?) -> Void)?
 
+    /// Timed lyrics for the current track; the expanded player scrolls them.
+    let lyrics = LyricsService()
+
     private let providers: [any MediaProvider]
     private let cache = ArtworkCache()
     @ObservationIgnored private var activeProviderID: String?
@@ -62,6 +65,7 @@ final class MediaController {
         pollTask = nil
         refreshTask?.cancel()
         refreshTask = nil
+        lyrics.clear()
         updateState(nil)
     }
 
@@ -140,6 +144,11 @@ final class MediaController {
         let previous = state
         state = newState
         if newState == nil { artwork = nil }
+        // Lyrics are per track, so only a new item triggers a lookup — play/pause and scrubbing
+        // must never hit the network.
+        if previous?.artworkKey != newState?.artworkKey {
+            lyrics.load(for: newState)
+        }
         onStateChange?(previous, newState)
     }
 

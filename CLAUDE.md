@@ -21,6 +21,7 @@ Yol haritası, mimari ve kararlar: `docs/PLAN.md` (Faz 0–3 tamam: iskelet, ref
 - Modüller `NotchViewModel`'e dokunmaz: `start(context:)` ile aldıkları `ModuleContext` üzerinden `activityChanged()` ve `post(event)` çağırır; öncelik çözümü (`urgent > live(priority) > idle`) saf `ModuleResolver`'da, uygulama `ModuleManager`'da.
 - `EventBus` bilinçli olarak Combine değil: her şey main-actor UI bağlantısı ve callback kaydı Swift 6 `Sendable` gereksinimlerini modül sözleşmesinden uzak tutuyor.
 - Animasyon parametreleri yalnızca `Core/State/Anim.swift` içinde tanımlanır; Debug Preview'daki slider'lar `NotchViewModel.animation` kopyasını değiştirir.
+- Ağ erişimi gerektiren modül parçaları (ör. `Modules/Media/LyricsService.swift` → LRCLIB) kapatılabilir bir bayrağın arkasında durur ve dışarı ne gönderdiğini dosya başlığında yazar.
 - Private API yok (mediaremote-adapter hariç — sadece `Modules/Media/Generic` altında, feature flag arkasında).
 - Ana thread'de AppleScript/Process çalıştırma; hepsi async. AppleScript `AppleScriptRunner` (osascript + özel seri kuyruk) üzerinden gider; sağlayıcılar script'i üretir ve çıktıyı saf `parse` fonksiyonlarıyla ayrıştırır (testli). Medya güncellemeleri olay güdümlüdür (dağıtık bildirimler), playhead yerel olarak ekstrapole edilir; poll yalnızca kaçan olaylar için 15 sn / 60 sn.
 - Hataları sessizce yutma; açıkça fırlat ya da `assertionFailure` ile görünür kıl.

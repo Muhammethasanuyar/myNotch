@@ -14,7 +14,7 @@ final class MediaProviderTests: XCTestCase {
     func testSpotifyParsesAPlayingTrackAndConvertsMilliseconds() {
         let output = joined([
             "Say It Ain't So", "Weezer", "Weezer", "spotify:track:abc",
-            "https://i.scdn.co/image/abc", "playing", "255000", "61.5"
+            "https://i.scdn.co/image/abc", "playing", "255000", "61500"
         ])
         let state = SpotifyProvider.parse(output, at: now)
 
@@ -58,8 +58,8 @@ final class MediaProviderTests: XCTestCase {
 
     // MARK: Apple Music
 
-    func testAppleMusicParsesSecondsNotMilliseconds() {
-        let output = joined(["Teardrop", "Massive Attack", "Mezzanine", "12345", "playing", "330", "12"])
+    func testAppleMusicParsesMilliseconds() {
+        let output = joined(["Teardrop", "Massive Attack", "Mezzanine", "12345", "playing", "330000", "12000"])
         let state = AppleMusicProvider.parse(output, at: now)
 
         XCTAssertEqual(state?.providerID, "appleMusic")
@@ -79,6 +79,15 @@ final class MediaProviderTests: XCTestCase {
         let script = AppleMusicProvider.artworkScript(destination: "/tmp/art.bin")
         XCTAssertTrue(script.contains("POSIX file \"/tmp/art.bin\""))
         XCTAssertTrue(script.contains("close access handle"))
+    }
+
+    func testTimeFieldsSurviveALocaleDecimalComma() {
+        // AppleScript renders reals with the user's separator; the scripts round to whole
+        // milliseconds, but a stray comma must still not zero the playhead.
+        let output = joined(["Track", "Artist", "Album", "id", "", "playing", "255000", "61500,5"])
+        XCTAssertEqual(SpotifyProvider.parse(output, at: now)?.elapsed ?? 0, 61.5005, accuracy: 0.0001)
+        XCTAssertEqual(MediaScript.milliseconds("243690,5") ?? 0, 243690.5, accuracy: 0.001)
+        XCTAssertNil(MediaScript.milliseconds("not a number"))
     }
 
     // MARK: Shared

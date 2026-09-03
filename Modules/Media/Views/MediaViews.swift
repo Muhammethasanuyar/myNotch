@@ -84,7 +84,9 @@ struct MediaExpandedView: View {
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
 
-                Spacer(minLength: 4)
+                MediaLyricsView(state: state, service: controller.lyrics, accent: controller.artwork?.accent ?? .white)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+
                 MediaScrubber(state: state, accent: controller.artwork?.accent ?? .white) { position in
                     controller.send(.seek(position))
                 }
@@ -268,5 +270,73 @@ struct EqualizerBars: View {
         let a = sin(time * 5.2 + phase) * 0.5 + 0.5
         let b = sin(time * 9.7 + phase * 2.1) * 0.5 + 0.5
         return CGFloat(0.25 + (a * 0.6 + b * 0.4) * 0.75)
+    }
+}
+
+/// Synced lyrics that advance with the track, the way a player's lyrics strip does: the line being
+/// sung sits at the top in the artwork's accent colour, the next one waits below it dimmed, and the
+/// stack slides up as the song moves on.
+///
+/// It exists only while the notch is expanded and ticks at 4 Hz only while playing, so a closed or
+/// paused notch costs nothing.
+struct MediaLyricsView: View {
+    let state: MediaState
+    let service: LyricsService
+    let accent: Color
+
+    /// Height of one line; two of them fit the gap above the scrubber.
+    private let rowHeight: CGFloat = 17
+
+    var body: some View {
+        switch service.status {
+        case .loaded(let lyrics) where !lyrics.isEmpty:
+            TimelineView(.periodic(from: .now, by: state.isPlaying ? 0.25 : 3600)) { context in
+                scroller(lyrics: lyrics, at: state.liveElapsed(at: context.date))
+            }
+        case .loading:
+            Text("Lyrics…")
+                .font(.system(size: 11))
+                .foregroundStyle(.white.opacity(0.25))
+                .frame(maxWidth: .infinity, alignment: .leading)
+        case .idle, .unavailable, .loaded:
+            // Nothing for this track: leave the gap empty rather than apologising for it.
+            Color.clear
+        }
+    }
+
+    private func scroller(lyrics: Lyrics, at elapsed: TimeInterval) -> some View {
+        // Before the first timestamp the intro is still running, so nothing is highlighted yet.
+        let active = LyricsParser.index(at: elapsed, in: lyrics.lines) ?? -1
+        return ZStack(alignment: .topLeading) {
+            ForEach(window(around: active, count: lyrics.lines.count), id: \.self) { index in
+                line(lyrics.lines[index].text, distance: index - active)
+                    .offset(y: CGFloat(index - active) * rowHeight)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .topLeading)
+        .frame(height: rowHeight * 2, alignment: .top)
+        .clipped()
+        .animation(.easeOut(duration: 0.32), value: active)
+    }
+
+    private func line(_ text: String, distance: Int) -> some View {
+        Text(text)
+            .font(.system(size: distance == 0 ? 12 : 11, weight: distance == 0 ? .semibold : .regular))
+            .foregroundStyle(distance == 0 ? AnyShapeStyle(accent) : AnyShapeStyle(Color.white.opacity(0.35)))
+            .lineLimit(1)
+            .truncationMode(.tail)
+            .frame(height: rowHeight, alignment: .leading)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            // The line that just finished fades as it leaves the top of the window.
+            .opacity(distance < 0 ? 0 : 1)
+    }
+
+    /// Only the lines around the current one are rendered; a 300-line LRC file must not become
+    /// 300 views.
+    private func window(around active: Int, count: Int) -> [Int] {
+        let lower = max(0, active - 1)
+        let upper = min(count - 1, max(active, 0) + 2)
+        guard lower <= upper else { return [] }
+        return Array(lower...upper)
     }
 }

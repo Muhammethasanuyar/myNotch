@@ -31,7 +31,7 @@ struct SpotifyProvider: MediaProvider {
     tell application "Spotify"
         if player state is stopped then return ""
         set sep to (character id 1)
-        return (name of current track) & sep & (artist of current track) & sep & (album of current track) & sep & (id of current track) & sep & (artwork url of current track) & sep & (player state as text) & sep & (duration of current track as text) & sep & (player position as text)
+        return (name of current track) & sep & (artist of current track) & sep & (album of current track) & sep & (id of current track) & sep & (artwork url of current track) & sep & (player state as text) & sep & ((duration of current track) as text) & sep & ((round (player position * 1000)) as text)
     end tell
     """
 
@@ -48,15 +48,17 @@ struct SpotifyProvider: MediaProvider {
 
     // MARK: Parsing
 
-    /// Turns the fetch script's output into a state. Spotify reports the duration in
-    /// **milliseconds** and the position in seconds.
+    /// Turns the fetch script's output into a state.
+    ///
+    /// Both time fields arrive as **integer milliseconds**: AppleScript renders reals with the
+    /// user's decimal separator (a comma in a Turkish locale), which `Double(_:)` would reject, so
+    /// the script rounds them to whole milliseconds instead.
     nonisolated static func parse(_ output: String, at now: Date) -> MediaState? {
         guard let fields = MediaScript.fields(output, expected: 8) else { return nil }
         let title = fields[0]
         guard !title.isEmpty else { return nil }
 
-        let durationMilliseconds = Double(fields[6])
-        let duration = durationMilliseconds.map { $0 / 1000 }
+        let duration = MediaScript.milliseconds(fields[6]).map { $0 / 1000 }
         return MediaState(
             providerID: "spotify",
             providerName: "Spotify",
@@ -66,7 +68,7 @@ struct SpotifyProvider: MediaProvider {
             album: fields[2],
             isPlaying: fields[5] == "playing",
             duration: (duration ?? 0) > 0 ? duration : nil,
-            elapsed: Double(fields[7]) ?? 0,
+            elapsed: (MediaScript.milliseconds(fields[7]) ?? 0) / 1000,
             elapsedAt: now,
             artwork: URL(string: fields[4]).map { MediaArtworkSource.url($0) }
         )

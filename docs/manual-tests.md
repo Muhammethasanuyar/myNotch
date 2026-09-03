@@ -46,6 +46,14 @@ Ad-hoc imza her build'de değiştiği için iznin tekrar sorulması normaldir.
 3. Transport ve seek çalışır (Music süreyi saniye verir).
 4. Her iki uygulama da açıkken: son olay gönderen kazanır; diğerine geçince bir sonraki bildirimde kaynak değişir (expanded'da sağ üstteki kaynak ikonu değişir).
 
+### Şarkı sözleri
+
+1. Sözleri olan bir parça çal → başlık ile progress bar arasında aktif satır kapak renginde, altında sonraki satır soluk görünür; parça ilerledikçe yukarı kayar.
+2. Söz aralığının dışında (intro / outro) alan boş kalır — bu doğru davranış, sözler o anda yok demektir.
+3. Sözü olmayan bir parça: alan boş kalır, hata gösterilmez.
+4. Kapatma: `defaults write com.emre.mynotch lyricsEnabled -bool NO` → yeniden başlat, alan hep boş olur. Geri açmak için `defaults delete com.emre.mynotch lyricsEnabled`.
+5. Ağ yokken: alan boş kalır, uygulama takılmaz (istek 10 sn'de zaman aşımına uğrar).
+
 ### Debug Preview
 
 - Modül panelinde `media` satırı görünür; "Test popup" gerçek notch'ta popup tetikler.

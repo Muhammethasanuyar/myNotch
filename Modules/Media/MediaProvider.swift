@@ -32,6 +32,15 @@ extension MediaProvider {
 nonisolated enum MediaScript {
     static let separator = "\u{01}"
 
+    /// Reads a millisecond field.
+    ///
+    /// The scripts round every time to a whole millisecond because AppleScript renders reals with
+    /// the user's decimal separator — `243,69` in a Turkish locale, which `Double(_:)` rejects.
+    /// A separator is still tolerated here in case an app ever returns one.
+    static func milliseconds(_ field: String) -> Double? {
+        Double(field.replacingOccurrences(of: ",", with: "."))
+    }
+
     /// Splits a fetch script's output; `nil` when the app returned nothing or an unexpected shape.
     static func fields(_ output: String, expected: Int) -> [String]? {
         guard !output.isEmpty else { return nil }

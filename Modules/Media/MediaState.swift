@@ -95,7 +95,22 @@ nonisolated enum MediaCommand: Equatable, Sendable {
     case toggleShuffle
     /// Steps through the player's repeat modes; each provider knows its own cycle.
     case cycleRepeat
-    case setFavorite(Bool)
+    /// `trackID` is the player's own identifier (Music ignores it and uses the current track).
+    case setFavorite(Bool, trackID: String)
+}
+
+/// How liking works for a player right now, so the heart can explain itself.
+nonisolated enum MediaFavoriteSupport: Equatable, Sendable {
+    /// Tap to toggle.
+    case available
+    /// Tap to start the sign-in that makes it available.
+    case needsConnection(hint: String)
+    /// Something must be set up first; the hint says what.
+    case needsSetup(hint: String)
+    /// The player offers no way at all.
+    case unsupported(reason: String)
+
+    var isAvailable: Bool { self == .available }
 }
 
 /// What a player lets other apps **change**. Reading is a separate matter: Spotify reports its

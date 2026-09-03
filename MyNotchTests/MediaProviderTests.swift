@@ -61,7 +61,7 @@ final class MediaProviderTests: XCTestCase {
     func testTransportCapabilitiesComeFromTheScriptingDictionaries() {
         // Spotify advertises writable shuffle and repeat but ignores the writes, and `starred`
         // errors, so nothing here is actually controllable from outside.
-        let spotify = SpotifyProvider(runner: StubRunner()).capabilities
+        let spotify = SpotifyProvider(runner: StubRunner(), library: unconnectedLibrary()).capabilities
         XCTAssertFalse(spotify.canShuffle)
         XCTAssertFalse(spotify.canRepeat)
         XCTAssertFalse(spotify.canFavorite)
@@ -72,13 +72,41 @@ final class MediaProviderTests: XCTestCase {
         XCTAssertTrue(music.hasRepeatModes, "Music repeats off, all or one")
     }
 
+    @MainActor
+    func testFavoriteSupportFollowsTheSpotifyConnection() throws {
+        let library = unconnectedLibrary()
+        let spotify = SpotifyProvider(runner: StubRunner(), library: library)
+        guard case .needsSetup = spotify.favoriteSupport else {
+            return XCTFail("without a client ID the heart must explain the setup, got \(spotify.favoriteSupport)")
+        }
+
+        library.defaults.set("client-id", forKey: SpotifyLibraryClient.clientIDKey)
+        library.refreshConfiguration()
+        guard case .needsConnection = spotify.favoriteSupport else {
+            return XCTFail("with a client ID but no tokens the heart must offer to connect, got \(spotify.favoriteSupport)")
+        }
+        XCTAssertFalse(spotify.capabilities.canFavorite)
+
+        XCTAssertEqual(AppleMusicProvider(runner: StubRunner()).favoriteSupport, .available)
+    }
+
+    /// A library client with no client ID and no stored tokens, isolated from the real defaults and disk.
+    @MainActor
+    private func unconnectedLibrary() -> SpotifyLibraryClient {
+        let suite = "MediaProviderTests-\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suite)!
+        addTeardownBlock { defaults.removePersistentDomain(forName: suite) }
+        let store = SpotifyTokenStore(fileURL: FileManager.default.temporaryDirectory.appendingPathComponent("\(suite)/tokens.json"))
+        return SpotifyLibraryClient(store: store, defaults: defaults)
+    }
+
     func testShuffleAndRepeatScripts() {
         XCTAssertEqual(SpotifyProvider.script(for: .toggleShuffle), "tell application \"Spotify\" to set shuffling to not shuffling")
         XCTAssertEqual(SpotifyProvider.script(for: .cycleRepeat), "tell application \"Spotify\" to set repeating to not repeating")
-        XCTAssertTrue(SpotifyProvider.script(for: .setFavorite(true)).isEmpty, "nothing to send; Spotify cannot do it")
+        XCTAssertTrue(SpotifyProvider.script(for: .setFavorite(true, trackID: "spotify:track:x")).isEmpty, "nothing to send; Spotify cannot do it")
 
         XCTAssertEqual(AppleMusicProvider.script(for: .toggleShuffle), "tell application \"Music\" to set shuffle enabled to not shuffle enabled")
-        XCTAssertEqual(AppleMusicProvider.script(for: .setFavorite(true)), "tell application \"Music\" to set favorited of current track to true")
+        XCTAssertEqual(AppleMusicProvider.script(for: .setFavorite(true, trackID: "")), "tell application \"Music\" to set favorited of current track to true")
         XCTAssertTrue(AppleMusicProvider.script(for: .cycleRepeat).contains("set song repeat to all"))
     }
 

@@ -24,6 +24,7 @@ Yol haritası, mimari ve kararlar: `docs/PLAN.md` (Faz 0–3 tamam: iskelet, ref
 - Ağ erişimi gerektiren modül parçaları (ör. `Modules/Media/LyricsService.swift` → LRCLIB) kapatılabilir bir bayrağın arkasında durur ve dışarı ne gönderdiğini dosya başlığında yazar.
 - Private API yok (mediaremote-adapter hariç — sadece `Modules/Media/Generic` altında, feature flag arkasında).
 - Ana thread'de AppleScript/Process çalıştırma; hepsi async. AppleScript `AppleScriptRunner` (osascript + özel seri kuyruk) üzerinden gider; sağlayıcılar script'i üretir ve çıktıyı saf `parse` fonksiyonlarıyla ayrıştırır (testli). Medya güncellemeleri olay güdümlüdür (dağıtık bildirimler), playhead yerel olarak ekstrapole edilir; poll yalnızca kaçan olaylar için 15 sn / 60 sn.
+- Spotify favorileri Web API + PKCE ile (`Modules/Media/Spotify/`): client secret yok; kullanıcı kendi client ID'sini `spotifyClientID` default'uyla verir; redirect `http://127.0.0.1:48219/callback` sabittir; token'lar Application Support'ta 0600 dosyada (Keychain Faz 5). Ağa yalnızca kullanıcı bağlandıysa çıkılır, dışarı giden veri parça ID'sidir. Kalbin durumu `MediaProvider.favoriteSupport` ile anlatılır; kontrol gizlenmez, tıklama eksik adımı başlatır.
 - Hataları sessizce yutma; açıkça fırlat ya da `assertionFailure` ile görünür kıl.
 
 ## Referans repolar ve skill'ler

@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 
 /// Spotify through its official scripting interface. Playback changes arrive as
@@ -12,24 +13,76 @@ struct SpotifyProvider: MediaProvider {
     /// Spotify's dictionary advertises `shuffling` and `repeating` as writable, but the app
     /// silently ignores writes to both (measured 2026-09-04), and `starred` errors with -10000.
     /// Their values still read correctly, so the buttons show the real state without being usable.
-    let capabilities = MediaCapabilities(canShuffle: false, canRepeat: false, canFavorite: false, hasRepeatModes: false)
+    /// Liking goes through the Web API instead, when the user has connected it.
+    var capabilities: MediaCapabilities {
+        MediaCapabilities(canShuffle: false, canRepeat: false, canFavorite: library.connection == .connected, hasRepeatModes: false)
+    }
+
+    var favoriteSupport: MediaFavoriteSupport {
+        switch library.connection {
+        case .connected:
+            return .available
+        case .connecting:
+            return .needsConnection(hint: "Waiting for Spotify in the browser…")
+        case .disconnected:
+            return .needsConnection(hint: "Connect Spotify to save tracks (opens the browser once)")
+        case .notConfigured:
+            return .needsSetup(hint: "Set a Spotify client ID: defaults write com.emre.mynotch spotifyClientID <id> — click to open the developer dashboard")
+        }
+    }
 
     private let runner: any AppleScriptRunning
+    private let library: SpotifyLibraryClient
 
-    init(runner: any AppleScriptRunning) {
+    init(runner: any AppleScriptRunning, library: SpotifyLibraryClient) {
         self.runner = runner
+        self.library = library
     }
 
     func fetch() async throws -> MediaState? {
         let start = Date()
         let output = try await runner.run(Self.fetchScript)
-        return Self.parse(output, at: MediaScript.sampleDate(start: start, finish: Date()))
+        guard var state = Self.parse(output, at: MediaScript.sampleDate(start: start, finish: Date())) else { return nil }
+        // The scripting interface cannot say whether a track is saved; the Web API can, once per track.
+        if let bare = Self.bareTrackID(state.trackID), let saved = await library.isSaved(trackID: bare) {
+            state.isFavorite = saved
+        }
+        return state
     }
 
     func send(_ command: MediaCommand) async throws {
+        if case .setFavorite(let saved, let trackID) = command {
+            guard let bare = Self.bareTrackID(trackID) else { return }
+            try await library.setSaved(saved, trackID: bare)
+            return
+        }
         let script = Self.script(for: command)
         guard !script.isEmpty else { return }
         _ = try await runner.run(script)
+    }
+
+    func connectFavorites() {
+        switch library.connection {
+        case .notConfigured:
+            library.refreshConfiguration()
+            if library.connection == .notConfigured {
+                NSWorkspace.shared.open(URL(string: "https://developer.spotify.com/dashboard")!)
+            } else {
+                library.connect()
+            }
+        case .disconnected:
+            library.connect()
+        case .connecting, .connected:
+            break
+        }
+    }
+
+    /// `spotify:track:5P2q…` → `5P2q…`. Episodes and local files have no library entry, so `nil`.
+    nonisolated static func bareTrackID(_ id: String) -> String? {
+        let prefix = "spotify:track:"
+        guard id.hasPrefix(prefix) else { return nil }
+        let bare = String(id.dropFirst(prefix.count))
+        return bare.isEmpty ? nil : bare
     }
 
     // MARK: Scripts

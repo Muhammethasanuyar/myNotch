@@ -50,8 +50,28 @@ Ad-hoc imza her build'de değiştiği için iznin tekrar sorulması normaldir.
 
 1. Butonlar kart genişliğince ortalı: shuffle · önceki · beyaz daire içinde oynat/duraklat · sonraki · repeat; kalp solda.
 2. **Apple Music:** shuffle, repeat (kapalı → tümü → tek) ve kalp çalışır; ikonlar Music'teki gerçek durumu yansıtır ve tıklayınca anında değişir (iyimser güncelleme, ~0,4 sn sonra teyit).
-3. **Spotify:** shuffle/repeat/kalp soluk ve tıklanamaz — Spotify bu yazımları yok sayıyor. Yine de shuffle/repeat Spotify'da açıksa ikon vurgulu görünmeli. Üzerine gelince tooltip nedeni söyler.
+3. **Spotify:** shuffle/repeat soluk ve tıklanamaz — Spotify bu yazımları yok sayıyor. Yine de Spotify'da açıksa ikon vurgulu görünmeli; tooltip nedeni söyler. Kalp bağlantı kurulmadan soluk ama **tıklanabilir**; tooltip sıradaki adımı söyler (aşağıdaki bölüm).
 4. Önceki/oynat/sonraki her iki uygulamada da ilk tıklamada çalışır (başka uygulama önde olsa bile).
+
+### Spotify favoriler (Web API)
+
+Spotify'ın scripting arayüzü parça kaydedemez (`starred` -10000 verir), bu yüzden kalp Web API ile çalışır ve bir kerelik kurulum ister:
+
+```bash
+# 1) https://developer.spotify.com/dashboard → Create app; Redirect URI: http://127.0.0.1:48219/callback; API: Web API
+# 2) client ID'yi uygulamaya ver (yeniden başlatma gerekmez, kalbe tıklayınca yeniden okunur)
+defaults write com.emre.mynotch spotifyClientID <client-id>
+```
+
+1. **Client ID yokken** kalbe tıkla → tarayıcıda Spotify Dashboard açılır; tooltip `defaults write` komutunu gösterir. Kalp soluk kalır.
+2. **Client ID varken** kalbe tıkla → tarayıcıda Spotify onay ekranı ("MyNotch ... kütüphaneni görüntülemek ve değiştirmek istiyor"). Onayla → sekmede "Spotify connected. You can close this tab." görünür; notch'ta kalp en geç ~2 sn içinde gerçek durumu alır (parça kütüphanedeyse dolu).
+3. Kalbe tıkla → anında dolar; Spotify'da **Beğenilen Şarkılar**'da parça görünür. Tekrar tıkla → çıkar.
+4. **Zaten beğenilmiş** bir parçaya geç → kalp dolu gelir (parça başına tek `contains` sorgusu; sonrası önbellekten).
+5. Onayı **reddet** (tarayıcıda Cancel) → kalp soluk kalır, uygulama takılmaz, tekrar tıklanabilir. Tarayıcıyı hiç dönmeden kapatırsan dinleyici 5 dk sonra zaman aşımına uğrar.
+6. **Ağ yokken** kalbe tıkla → iyimser dolar, ~0,4 sn sonra eski haline döner (yazma başarısız, log'da görünür); okuma 30 sn boyunca tekrar denenmez.
+7. **Yeniden başlatma:** token dosyası (`~/Library/Application Support/MyNotch/spotify-oauth.json`, 0600) sayesinde bağlantı kalır; süresi dolan access token refresh token ile sessizce yenilenir.
+8. **Bağlantıyı kesmek:** dosyayı sil ve uygulamayı yeniden başlat (Faz 5'te Ayarlar'a düğme olarak gelecek). Spotify hesabındaki yetkiyi geri alırsan (401) uygulama da bağlantısız duruma düşer ve kalp yeniden "bağlan" moduna geçer.
+9. **Bölüm/yerel dosya:** podcast bölümlerinde ve yerel dosyalarda kalp etkisizdir (kütüphane girdisi yok).
 
 ### Şarkı sözleri
 

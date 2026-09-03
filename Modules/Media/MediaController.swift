@@ -1,5 +1,6 @@
 import AppKit
 import Observation
+import os
 
 /// Single interface over the media providers: listens for their change notifications, keeps the
 /// current state, loads artwork and forwards transport commands.
@@ -22,6 +23,7 @@ final class MediaController {
     private let providers: [any MediaProvider]
     private let cache = ArtworkCache()
     @ObservationIgnored private var activeProviderID: String?
+    private static let log = Logger(subsystem: "com.emre.mynotch", category: "media")
     @ObservationIgnored private var observerTasks: [Task<Void, Never>] = []
     @ObservationIgnored private var pollTask: Task<Void, Never>?
     /// How many expanded players are on screen (the notch and the Debug Preview can both show one).
@@ -34,7 +36,15 @@ final class MediaController {
 
     convenience init() {
         let runner = AppleScriptRunner()
-        self.init(providers: [SpotifyProvider(runner: runner), AppleMusicProvider(runner: runner)])
+        let library = SpotifyLibraryClient()
+        self.init(providers: [SpotifyProvider(runner: runner, library: library), AppleMusicProvider(runner: runner)])
+        // Once Spotify is connected, re-read the track so the heart reflects the library.
+        library.onChange = { [weak self] in self?.refresh() }
+    }
+
+    /// How the heart should behave for the active player.
+    var favoriteSupport: MediaFavoriteSupport {
+        activeProvider?.favoriteSupport ?? .unsupported(reason: "Nothing is playing")
     }
 
     var activeProvider: (any MediaProvider)? {
@@ -190,7 +200,12 @@ final class MediaController {
     func send(_ command: MediaCommand) {
         guard let provider = activeProvider else { return }
         Task { [weak self] in
-            try? await provider.send(command)
+            do {
+                try await provider.send(command)
+            } catch {
+                // The refresh below rolls the optimistic UI back; the log says why.
+                Self.log.error("\(provider.id, privacy: .public) rejected \(String(describing: command), privacy: .public): \(error)")
+            }
             // Give the app a moment to apply it, then read the truth back.
             try? await Task.sleep(for: .milliseconds(350))
             self?.refresh(preferring: provider.id)
@@ -228,11 +243,19 @@ final class MediaController {
         send(.cycleRepeat)
     }
 
+    /// Toggles the favourite when the player allows it; otherwise starts whatever would allow it.
     func toggleFavorite() {
-        guard var current = state, capabilities.canFavorite else { return }
-        let favorite = !current.isFavorite
-        current.isFavorite = favorite
-        updateState(current)
-        send(.setFavorite(favorite))
+        guard var current = state, let provider = activeProvider else { return }
+        switch provider.favoriteSupport {
+        case .available:
+            let favorite = !current.isFavorite
+            current.isFavorite = favorite
+            updateState(current)
+            send(.setFavorite(favorite, trackID: current.trackID))
+        case .needsConnection, .needsSetup:
+            provider.connectFavorites()
+        case .unsupported:
+            break
+        }
     }
 }

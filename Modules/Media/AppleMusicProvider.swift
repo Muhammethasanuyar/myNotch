@@ -78,7 +78,7 @@ struct AppleMusicProvider: MediaProvider {
         case .previous: body = "previous track"
         case .seek(let position): body = "set player position to \(max(0, position))"
         case .toggleShuffle: body = "set shuffle enabled to not shuffle enabled"
-        case .setFavorite(let favorite): body = "set favorited of current track to \(favorite)"
+        case .setFavorite(let favorite, _): body = "set favorited of current track to \(favorite)"
         case .cycleRepeat:
             // Music walks off → all → one, the order its own controls use.
             return """

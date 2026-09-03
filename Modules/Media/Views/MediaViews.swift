@@ -163,7 +163,7 @@ struct MediaControlBar: View {
             }
 
             HStack {
-                favoriteButton(capabilities: capabilities)
+                favoriteButton
                 Spacer(minLength: 0)
             }
         }
@@ -180,15 +180,31 @@ struct MediaControlBar: View {
         ) { controller.togglePlayPause() }
     }
 
-    @ViewBuilder
-    private func favoriteButton(capabilities: MediaCapabilities) -> some View {
-        MediaControlButton(
-            symbol: state.isFavorite ? "heart.fill" : "heart",
+    /// What the heart shows for the active player. Until a player can save tracks the heart stays
+    /// dimmed but clickable: the tap starts whatever makes it work and the tooltip says what that is.
+    private var favoriteAppearance: (symbol: String, hint: String, tint: Color, isClickable: Bool) {
+        switch controller.favoriteSupport {
+        case .available:
+            return (state.isFavorite ? "heart.fill" : "heart",
+                    state.isFavorite ? "Remove from favourites" : "Add to favourites",
+                    tint(isOn: state.isFavorite, isEnabled: true),
+                    true)
+        case .needsConnection(let hint), .needsSetup(let hint):
+            return ("heart", hint, tint(isOn: false, isEnabled: false), true)
+        case .unsupported(let reason):
+            return ("heart", reason, tint(isOn: false, isEnabled: false), false)
+        }
+    }
+
+    private var favoriteButton: some View {
+        let appearance = favoriteAppearance
+        return MediaControlButton(
+            symbol: appearance.symbol,
             size: 13,
-            tint: tint(isOn: state.isFavorite, isEnabled: capabilities.canFavorite),
-            isEnabled: capabilities.canFavorite
+            tint: appearance.tint,
+            isEnabled: appearance.isClickable
         ) { controller.toggleFavorite() }
-        .help(capabilities.canFavorite ? "Add to favourites" : unsupported("saving tracks"))
+        .help(appearance.hint)
     }
 }
 

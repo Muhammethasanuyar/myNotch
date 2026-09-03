@@ -1,7 +1,11 @@
 import AppKit
 
-/// One media app MyNotch can read and control. Providers are stateless: they own their scripts and
-/// parsing, and the controller decides which one is active.
+/// One media app MyNotch can read and control. Providers own their scripts and parsing; the
+/// controller decides which one is active.
+///
+/// Main-actor because providers may consult main-actor state (Spotify's Web API connection); the
+/// work itself still happens off the main thread inside `AppleScriptRunner` and `URLSession`.
+@MainActor
 protocol MediaProvider: Sendable {
     var id: String { get }
     var displayName: String { get }
@@ -12,22 +16,30 @@ protocol MediaProvider: Sendable {
     var symbolName: String { get }
     /// What this player lets us do, taken from its scripting dictionary.
     var capabilities: MediaCapabilities { get }
+    /// How the favourite button should behave for this player right now.
+    var favoriteSupport: MediaFavoriteSupport { get }
 
     /// Current playback, or `nil` when the app is stopped or has nothing loaded.
     func fetch() async throws -> MediaState?
     func send(_ command: MediaCommand) async throws
     /// Writes the current artwork somewhere readable, if the app cannot hand out a URL.
     func prepareArtwork(destination: URL) async throws -> Bool
+    /// Starts whatever sign-in `favoriteSupport == .needsConnection` refers to.
+    func connectFavorites()
 }
 
 extension MediaProvider {
     /// Whether the app is up. Checked before every script so we never launch an app by talking to it.
-    @MainActor
     func isRunning() -> Bool {
         !NSRunningApplication.runningApplications(withBundleIdentifier: bundleIdentifier).isEmpty
     }
 
     func prepareArtwork(destination: URL) async throws -> Bool { false }
+    func connectFavorites() {}
+
+    var favoriteSupport: MediaFavoriteSupport {
+        capabilities.canFavorite ? .available : .unsupported(reason: "\(displayName) does not let other apps save tracks")
+    }
 }
 
 /// Field separator used by the fetch scripts: a control character that cannot appear in a title.

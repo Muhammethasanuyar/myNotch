@@ -417,13 +417,20 @@ struct MediaLyricsView: View {
     /// cannot resize it or spill into the title above and the scrubber below.
     static let bandHeight: CGFloat = rowHeight * 2
 
+    @State private var isHovering = false
+
     var body: some View {
         switch service.status {
         case .loaded(let lyrics) where !lyrics.isEmpty:
+            // Community timings do not always sit on the recording being played, so the user's
+            // per-song correction is folded into the lead: a positive shift shows lines later.
+            let lead = LyricsService.lead - service.shift(for: state)
             // Driven by the exact line-change instants, so a line never appears a tick late.
-            TimelineView(.explicit(schedule(for: lyrics))) { context in
-                scroller(lyrics: lyrics, at: state.liveElapsed(at: context.date) + LyricsService.lead)
+            TimelineView(.explicit(schedule(for: lyrics, lead: lead))) { context in
+                scroller(lyrics: lyrics, at: state.liveElapsed(at: context.date) + lead)
             }
+            .overlay(alignment: .topTrailing) { nudgeControls }
+            .onHover { isHovering = $0 }
         case .loading:
             Text("Lyrics…")
                 .font(.system(size: 11))
@@ -436,16 +443,57 @@ struct MediaLyricsView: View {
     }
 
     /// While playing, wake exactly when the next lines start; while paused, render once.
-    private func schedule(for lyrics: Lyrics) -> [Date] {
+    private func schedule(for lyrics: Lyrics, lead: TimeInterval) -> [Date] {
         let now = Date()
         guard state.isPlaying else { return [now] }
         return LyricsParser.boundaries(
             lines: lyrics.lines,
             anchor: state.elapsedAt,
             elapsed: state.elapsed,
-            lead: LyricsService.lead,
+            lead: lead,
             after: now
         )
+    }
+
+    /// Two taps fix lyrics that run ahead of or behind the song, and the fix is kept for that song.
+    /// The buttons appear on hover; the amount stays visible as long as a correction is in force.
+    private var nudgeControls: some View {
+        let shift = service.shift(for: state)
+        return HStack(spacing: 3) {
+            if isHovering {
+                nudgeButton("minus", help: "Show lyrics earlier") { service.nudge(state, by: -LyricsService.shiftStep) }
+            }
+            if shift != 0 {
+                Text(Self.shiftLabel(shift))
+                    .font(.system(size: 9, weight: .semibold).monospacedDigit())
+                    .contentShape(Rectangle())
+                    .notchTap { service.resetShift(for: state) }
+                    .help("Lyrics timing for this song — click to reset")
+            }
+            if isHovering {
+                nudgeButton("plus", help: "Show lyrics later") { service.nudge(state, by: LyricsService.shiftStep) }
+            }
+        }
+        .foregroundStyle(.white.opacity(0.85))
+        .padding(.horizontal, isHovering || shift != 0 ? 5 : 0)
+        .frame(height: 16)
+        .background(.black.opacity(0.78), in: Capsule())
+        .opacity(isHovering || shift != 0 ? 1 : 0)
+        .animation(Anim.subtle, value: isHovering)
+    }
+
+    private func nudgeButton(_ symbol: String, help: String, action: @escaping () -> Void) -> some View {
+        Image(systemName: symbol)
+            .font(.system(size: 9, weight: .bold))
+            .frame(width: 14, height: 14)
+            .contentShape(Rectangle())
+            .notchTap(perform: action)
+            .help(help)
+    }
+
+    /// "+0.5 s" shows lines later, "−1.0 s" earlier.
+    nonisolated static func shiftLabel(_ shift: TimeInterval) -> String {
+        String(format: "%@%.1f s", shift > 0 ? "+" : "−", abs(shift))
     }
 
     private func scroller(lyrics: Lyrics, at elapsed: TimeInterval) -> some View {

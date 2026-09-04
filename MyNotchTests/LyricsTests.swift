@@ -179,7 +179,7 @@ final class LyricsTimingTests: XCTestCase {
 }
 
 final class LyricsServiceTests: XCTestCase {
-    private func state(title: String, artist: String, album: String = "Album", duration: TimeInterval? = 237) -> MediaState {
+    private func state(title: String = "Song", artist: String = "Artist", album: String = "Album", duration: TimeInterval? = 237) -> MediaState {
         MediaState(
             providerID: "spotify",
             providerName: "Spotify",
@@ -231,29 +231,32 @@ final class LyricsServiceTests: XCTestCase {
             LRCLIBTrack(duration: 248, instrumental: false, syncedLyrics: nil),
             LRCLIBTrack(duration: 248.2, instrumental: false, syncedLyrics: "[00:10.00]satır")
         ]
-        XCTAssertEqual(LyricsService.bestCandidate(from: results, duration: 248)?.syncedLyrics, "[00:10.00]satır")
+        XCTAssertEqual(LyricsService.bestCandidate(from: results, for: state(duration: 248))?.syncedLyrics, "[00:10.00]satır")
     }
 
-    func testCandidateClosestInLengthWins() {
+    func testCandidateClosestInLengthWinsAndFarCutsAreRefused() {
         let results = [
             LRCLIBTrack(duration: 180, instrumental: false, syncedLyrics: "[00:01.00]kısa"),
             LRCLIBTrack(duration: 246, instrumental: false, syncedLyrics: "[00:01.00]doğru"),
+            LRCLIBTrack(duration: 250, instrumental: false, syncedLyrics: "[00:01.00]yakın"),
             LRCLIBTrack(duration: 400, instrumental: false, syncedLyrics: "[00:01.00]uzun")
         ]
-        XCTAssertEqual(LyricsService.bestCandidate(from: results, duration: 248)?.syncedLyrics, "[00:01.00]doğru")
+        XCTAssertEqual(LyricsService.bestCandidate(from: results, for: state(duration: 247))?.syncedLyrics, "[00:01.00]doğru")
+        XCTAssertNil(LyricsService.bestCandidate(from: [results[0], results[3]], for: state(duration: 247)),
+                     "timings from a cut a minute shorter or longer cannot fit this one")
     }
 
     func testInstrumentalsAndEmptyResultsAreRejected() {
-        XCTAssertNil(LyricsService.bestCandidate(from: [], duration: 200))
+        XCTAssertNil(LyricsService.bestCandidate(from: [], for: state(duration: 200)))
         let instrumental = [LRCLIBTrack(duration: 200, instrumental: true, syncedLyrics: "[00:01.00]x")]
-        XCTAssertNil(LyricsService.bestCandidate(from: instrumental, duration: 200))
+        XCTAssertNil(LyricsService.bestCandidate(from: instrumental, for: state(duration: 200)))
     }
 
     func testPlainRecordsAreOnlyAFallback() {
         let plainOnly = [LRCLIBTrack(duration: 248, instrumental: false, plainLyrics: "sözler")]
-        XCTAssertNil(LyricsService.bestCandidate(from: plainOnly, duration: 248), "no synced lyrics here")
-        XCTAssertEqual(LyricsService.bestPlainCandidate(from: plainOnly, duration: 248)?.plainLyrics, "sözler")
-        XCTAssertNil(LyricsService.bestPlainCandidate(from: [LRCLIBTrack(duration: 1, instrumental: true, plainLyrics: "x")], duration: 1))
+        XCTAssertNil(LyricsService.bestCandidate(from: plainOnly, for: state(duration: 248)), "no synced lyrics here")
+        XCTAssertEqual(LyricsService.bestPlainCandidate(from: plainOnly, for: state(duration: 248))?.plainLyrics, "sözler")
+        XCTAssertNil(LyricsService.bestPlainCandidate(from: [LRCLIBTrack(duration: 1, instrumental: true, plainLyrics: "x")], for: state(duration: 1)))
     }
 
     func testPrimaryArtistDropsCoCredits() {

@@ -12,11 +12,22 @@ import Observation
 final class LyricsService {
     private(set) var status: LyricsStatus = .idle
 
+    /// Per-song timing corrections the user made with the nudge controls, in seconds: positive
+    /// shows the lyrics later. Keyed by `LyricsMatch.songKey` so a correction follows the song from
+    /// one player to another, and kept in `UserDefaults` so it survives a relaunch.
+    private(set) var shifts: [String: TimeInterval]
+
     /// Results per track. Definitive misses are cached too, so a track without lyrics is not looked
     /// up again; transient failures are not, so a flaky network does not hide lyrics for good.
     @ObservationIgnored private var cache: [String: LyricsStatus] = [:]
     @ObservationIgnored private var loadTask: Task<Void, Never>?
     @ObservationIgnored private let session: URLSession
+    @ObservationIgnored private let defaults: UserDefaults
+
+    static let shiftsKey = "lyricsShifts"
+    /// One tap of the nudge control.
+    static let shiftStep: TimeInterval = 0.5
+    static let maxShift: TimeInterval = 15
 
     /// Off by default only if the user turned it off (`-lyricsEnabled NO`).
     var isEnabled: Bool {
@@ -36,8 +47,33 @@ final class LyricsService {
     /// How long to wait before retrying after a network failure.
     static let retryDelay: Duration = .seconds(8)
 
-    init(session: URLSession = .shared) {
+    init(session: URLSession = .shared, defaults: UserDefaults = .standard) {
         self.session = session
+        self.defaults = defaults
+        shifts = defaults.dictionary(forKey: Self.shiftsKey) as? [String: TimeInterval] ?? [:]
+    }
+
+    // MARK: Timing corrections
+
+    /// How much later than the file says this song's lyrics should show; negative is earlier.
+    func shift(for state: MediaState) -> TimeInterval {
+        shifts[LyricsMatch.songKey(artist: state.artist, title: state.title)] ?? 0
+    }
+
+    /// Moves this song's lyrics by `delta` seconds and remembers it.
+    func nudge(_ state: MediaState, by delta: TimeInterval) {
+        let key = LyricsMatch.songKey(artist: state.artist, title: state.title)
+        let value = min(Self.maxShift, max(-Self.maxShift, (shifts[key] ?? 0) + delta))
+        if abs(value) < 0.001 {
+            shifts.removeValue(forKey: key)
+        } else {
+            shifts[key] = value
+        }
+        defaults.set(shifts, forKey: Self.shiftsKey)
+    }
+
+    func resetShift(for state: MediaState) {
+        nudge(state, by: -shift(for: state))
     }
 
     /// Loads lyrics for `state`, reusing anything already looked up for that track.
@@ -109,12 +145,12 @@ final class LyricsService {
         var sawFailure = false
 
         func consider(_ candidates: [LRCLIBTrack]) -> Lyrics? {
-            if let best = bestCandidate(from: candidates, duration: state.duration),
+            if let best = bestCandidate(from: candidates, for: state),
                let lyrics = syncedLyrics(from: best, state: state) {
                 return lyrics
             }
             if plainFallback == nil {
-                plainFallback = bestPlainCandidate(from: candidates, duration: state.duration)
+                plainFallback = bestPlainCandidate(from: candidates, for: state)
             }
             return nil
         }
@@ -223,28 +259,17 @@ final class LyricsService {
         return components?.url
     }
 
-    /// Picks the search result worth using: it must actually carry synced lyrics, and among those
-    /// the one whose length is closest to what the player reports wins.
-    nonisolated static func bestCandidate(from results: [LRCLIBTrack], duration: TimeInterval?) -> LRCLIBTrack? {
-        closest(
-            results.filter { $0.instrumental != true && !($0.syncedLyrics ?? "").isEmpty },
-            to: duration
-        )
+    /// The search result worth using for synced lyrics: this song (title and artist agree), a cut
+    /// of the same length, a file whose timings actually span the track. Ranking lives in
+    /// `LyricsMatch`; a free-text search can return anything, so nothing here is taken on trust.
+    nonisolated static func bestCandidate(from results: [LRCLIBTrack], for state: MediaState) -> LRCLIBTrack? {
+        LyricsMatch.best(results, for: state, synced: true)
     }
 
-    /// Same idea for records that only have unsynced text.
-    nonisolated static func bestPlainCandidate(from results: [LRCLIBTrack], duration: TimeInterval?) -> LRCLIBTrack? {
-        closest(
-            results.filter { $0.instrumental != true && !($0.plainLyrics ?? "").isEmpty },
-            to: duration
-        )
-    }
-
-    private nonisolated static func closest(_ usable: [LRCLIBTrack], to duration: TimeInterval?) -> LRCLIBTrack? {
-        guard let duration else { return usable.first }
-        return usable.min { lhs, rhs in
-            abs((lhs.duration ?? .greatestFiniteMagnitude) - duration) < abs((rhs.duration ?? .greatestFiniteMagnitude) - duration)
-        }
+    /// Same for records that only have unsynced text. Length matters little here — the text is
+    /// spread over the track we are playing anyway — but it still has to be this song.
+    nonisolated static func bestPlainCandidate(from results: [LRCLIBTrack], for state: MediaState) -> LRCLIBTrack? {
+        LyricsMatch.best(results, for: state, synced: false)
     }
 
     /// Strips the decorations streaming services add — "Song - Remastered 2011", "Song (Live)" —
@@ -270,17 +295,25 @@ final class LyricsService {
     }
 }
 
-/// The subset of LRCLIB's track payload we use.
+/// The subset of LRCLIB's track payload we use. The names are what lets `LyricsMatch` tell this
+/// song from the others a loose search drags in.
 nonisolated struct LRCLIBTrack: Decodable, Equatable {
     let duration: Double?
     let instrumental: Bool?
     let syncedLyrics: String?
     let plainLyrics: String?
+    let trackName: String?
+    let artistName: String?
+    let albumName: String?
 
-    init(duration: Double? = nil, instrumental: Bool? = false, syncedLyrics: String? = nil, plainLyrics: String? = nil) {
+    init(duration: Double? = nil, instrumental: Bool? = false, syncedLyrics: String? = nil, plainLyrics: String? = nil,
+         trackName: String? = nil, artistName: String? = nil, albumName: String? = nil) {
         self.duration = duration
         self.instrumental = instrumental
         self.syncedLyrics = syncedLyrics
         self.plainLyrics = plainLyrics
+        self.trackName = trackName
+        self.artistName = artistName
+        self.albumName = albumName
     }
 }

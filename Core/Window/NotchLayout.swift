@@ -51,6 +51,10 @@ nonisolated enum NotchLayout {
     static let expandedContentSize = CGSize(width: 420, height: 150)
     /// Inset between the shape's edge and expanded content.
     static let expandedContentInset: CGFloat = 15
+    /// Gap between the bottom of the housing and expanded content. Strokes and shadows bleed a few
+    /// points past their frames, and the housing's corners are rounded; without this a ring drawn
+    /// flush against the housing reads as tucked underneath it.
+    static let expandedTopGap: CGFloat = 8
     /// Extra width a popup adds around the housing, and how far it drops below it.
     static let popupExtraWidth: CGFloat = 240
     static let popupExtraHeight: CGFloat = 16
@@ -123,7 +127,7 @@ nonisolated enum NotchLayout {
             case .popup:
                 return CGSize(width: notch.width + popupExtraWidth + 2 * radii.ear, height: notch.height + popupExtraHeight)
             case .expanded:
-                return CGSize(width: expandedContentSize.width + 2 * radii.ear, height: notch.height + expandedContentSize.height)
+                return CGSize(width: expandedContentSize.width + 2 * radii.ear, height: notch.height + expandedTopGap + expandedContentSize.height)
             }
         case .floating:
             switch state {
@@ -144,9 +148,9 @@ nonisolated enum NotchLayout {
         metrics.style == .notch ? 0 : metrics.menuBarHeight + floatingTopGap
     }
 
-    /// Where expanded content starts below the surface's top edge.
+    /// Where expanded content starts below the surface's top edge: under the housing plus a gap.
     static func expandedTopInset(for metrics: NotchLayoutMetrics) -> CGFloat {
-        metrics.style == .notch ? metrics.notchSize.height : expandedContentInset
+        metrics.style == .notch ? metrics.notchSize.height + expandedTopGap : expandedContentInset
     }
 
     static func metrics(for geometry: ScreenTopGeometry, screenName: String) -> NotchLayoutMetrics {

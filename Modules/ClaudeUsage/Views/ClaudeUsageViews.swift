@@ -47,63 +47,78 @@ struct ClaudeCompactTrailing: View {
     }
 }
 
-/// A limit as a ring with the percentage inside.
+/// A limit as two arcs: the thick one is how much of the allowance is used, the thin one outside it
+/// how much of the window has passed — so pace is visible without a word. Both arcs sweep in when
+/// the card opens and glide when the numbers change.
 struct UsageRing: View {
     let window: UsageWindow?
+    let kind: UsageWindowKind
     let thresholds: UsageThresholds
-    var diameter: CGFloat = 56
-    var lineWidth: CGFloat = 6
+    let now: Date
+    var diameter: CGFloat = 62
     var dimmed = false
+
+    @State private var appeared = false
+
+    private var usage: Double { appeared ? (window?.utilization ?? 0) : 0 }
+    private var elapsed: Double { appeared ? (window?.elapsedFraction(kind: kind, at: now) ?? 0) : 0 }
 
     var body: some View {
         ZStack {
             Circle()
-                .stroke(.white.opacity(0.12), lineWidth: lineWidth)
+                .stroke(.white.opacity(0.08), lineWidth: 2)
+            Circle()
+                .trim(from: 0, to: elapsed)
+                .stroke(.white.opacity(0.4), style: StrokeStyle(lineWidth: 2, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+            Circle()
+                .stroke(.white.opacity(0.12), lineWidth: 6)
+                .padding(7)
             if let window {
                 Circle()
-                    .trim(from: 0, to: max(0.005, window.utilization))
+                    .trim(from: 0, to: max(0.004, usage))
                     .stroke(
                         ClaudeStyle.ringColor(level: ClaudeUsageRules.level(for: window.utilization, thresholds: thresholds)),
-                        style: StrokeStyle(lineWidth: lineWidth, lineCap: .round)
+                        style: StrokeStyle(lineWidth: 6, lineCap: .round)
                     )
                     .rotationEffect(.degrees(-90))
-                    .animation(.easeOut(duration: 0.6), value: window.utilization)
-                VStack(spacing: -1) {
-                    Text("\(Int((window.utilization * 100).rounded()))%")
-                        .font(.system(size: diameter * 0.26, weight: .semibold, design: .rounded).monospacedDigit())
-                    Text("used")
-                        .font(.system(size: diameter * 0.13))
-                        .foregroundStyle(.secondary)
-                }
-            } else {
-                Text("—")
-                    .font(.system(size: diameter * 0.3, weight: .medium))
+                    .padding(7)
+            }
+            VStack(spacing: -2) {
+                Text(window.map { "\(Int(($0.utilization * 100).rounded()))%" } ?? "—")
+                    .font(.system(size: diameter * 0.23, weight: .semibold, design: .rounded).monospacedDigit())
+                    .contentTransition(.numericText())
+                Text(kind.badge)
+                    .font(.system(size: diameter * 0.13, weight: .medium, design: .rounded))
                     .foregroundStyle(.secondary)
             }
         }
         .frame(width: diameter, height: diameter)
         .opacity(dimmed ? 0.5 : 1)
+        .animation(.spring(response: 0.9, dampingFraction: 0.85), value: usage)
+        .animation(.easeOut(duration: 0.7), value: elapsed)
+        .onAppear { appeared = true }
     }
 }
 
-/// The module's full interface: the two official limits as rings, and beside them what today
-/// cost, which models did the work and how fast the current block is burning. Every number
-/// carries its label and a tooltip: a status screen should not need decoding.
+/// The module's full interface, built to be read as shapes rather than sentences: two rings for
+/// the limits, a row of icon chips for today's numbers, a split bar for the models, a status dot.
+/// Words are kept for what only words can say, and the rest lives in tooltips.
 struct ClaudeDashboardView: View {
     let service: ClaudeUsageService
     let namespace: Namespace.ID
 
-    /// Width of the label column in the details ("Today", "Models", "Burn").
-    private static let labelWidth: CGFloat = 38
-
     var body: some View {
-        HStack(alignment: .top, spacing: 14) {
-            rings
-            Rectangle()
-                .fill(.white.opacity(0.12))
-                .frame(width: 1)
-                .padding(.vertical, 4)
-            details
+        // Once a minute, so the thin "time passed" arcs keep moving while the card is open.
+        TimelineView(.periodic(from: .now, by: 60)) { context in
+            HStack(alignment: .top, spacing: 14) {
+                rings(at: context.date)
+                Rectangle()
+                    .fill(.white.opacity(0.12))
+                    .frame(width: 1)
+                    .padding(.vertical, 6)
+                details
+            }
         }
         .foregroundStyle(.white)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -111,51 +126,45 @@ struct ClaudeDashboardView: View {
 
     // MARK: Rings
 
-    private var rings: some View {
-        HStack(alignment: .top, spacing: 10) {
-            ring(kind: .fiveHour)
-            ring(kind: .sevenDay)
+    private func rings(at now: Date) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            ring(kind: .fiveHour, at: now)
+            ring(kind: .sevenDay, at: now)
         }
     }
 
-    private func ring(kind: UsageWindowKind) -> some View {
+    private func ring(kind: UsageWindowKind, at now: Date) -> some View {
         let window = service.snapshot?[kind]
-        let remaining = window?.remaining(at: Date()).map(ClaudeUsageRules.formatRemaining)
-        return VStack(spacing: 4) {
-            UsageRing(window: window, thresholds: service.thresholds, dimmed: service.isStale)
-            Text("\(kind.title) limit")
-                .font(.system(size: 10, weight: .semibold))
-                .lineLimit(1)
-            Text(resetLabel(window: window, remaining: remaining))
-                .font(.system(size: 9).monospacedDigit())
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-                .lineLimit(2)
+        let remaining = window?.remaining(at: now).map(ClaudeUsageRules.formatRemaining)
+        return VStack(spacing: 6) {
+            UsageRing(window: window, kind: kind, thresholds: service.thresholds, now: now, dimmed: service.isStale)
+            HStack(spacing: 3) {
+                Image(systemName: "arrow.counterclockwise")
+                    .font(.system(size: 8, weight: .semibold))
+                Text(remaining ?? "—")
+                    .font(.system(size: 9, weight: .medium).monospacedDigit())
+                    .contentTransition(.numericText())
+            }
+            .foregroundStyle(.secondary)
         }
-        .frame(width: 74)
+        .frame(width: 66)
         .help(ringHelp(kind: kind, window: window, remaining: remaining))
     }
 
-    private func resetLabel(window: UsageWindow?, remaining: String?) -> String {
-        if let remaining { return "resets in\n\(remaining)" }
-        return window == nil ? "no data\nyet" : " "
-    }
-
     private func ringHelp(kind: UsageWindowKind, window: UsageWindow?, remaining: String?) -> String {
-        guard let window else { return "Anthropic has not reported this limit yet" }
+        guard let window else { return "Anthropic has not reported the \(kind.title.lowercased()) limit yet" }
         let used = Int((window.utilization * 100).rounded())
-        let reset = remaining.map { "; it resets in \($0)" } ?? ""
-        return "\(used)% of your \(kind.title.lowercased()) allowance is used\(reset)"
+        let reset = remaining.map { "; the window resets in \($0)" } ?? ""
+        return "\(kind.title) limit: \(used)% used\(reset). The thin outer arc is how much of the window has passed."
     }
 
     // MARK: Details
 
     private var details: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 8) {
             header
-            todayLine
-            modelsLine
-            burnLine
+            statChips
+            modelsRow
             Spacer(minLength: 0)
             footer
         }
@@ -165,174 +174,181 @@ struct ClaudeDashboardView: View {
     private var header: some View {
         HStack(spacing: 6) {
             Image(systemName: "asterisk")
-                .font(.system(size: 12, weight: .bold))
+                .font(.system(size: 13, weight: .bold))
                 .foregroundStyle(service.isWorking ? ClaudeStyle.accent : .white.opacity(0.6))
                 .symbolEffect(.pulse, options: .repeating, isActive: service.isWorking)
                 .matchedGeometryEffect(id: ClaudeUsageModule.markID, in: namespace)
-            // The title never wraps; whatever is short on room is the status beside it.
             Text("Claude Code")
                 .font(.headline)
                 .lineLimit(1)
                 .fixedSize()
                 .layoutPriority(1)
             Spacer(minLength: 4)
-            Text(statusText)
-                .font(.caption2)
-                .foregroundStyle(service.isWorking ? ClaudeStyle.accent : .secondary)
-                .lineLimit(1)
-                .truncationMode(.middle)
-                .help(service.isWorking ? "Claude Code is writing to a session log right now" : "The project Claude Code last worked in")
+            if service.isWorking {
+                // Working: the project it is in, and a ripple that only runs while it does.
+                HStack(spacing: 4) {
+                    if let project = service.session?.customTitle ?? service.session?.projectName {
+                        Text(project)
+                            .font(.caption2)
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                    }
+                    Image(systemName: "ellipsis")
+                        .font(.system(size: 12, weight: .bold))
+                        .symbolEffect(.variableColor.iterative.reversing, options: .repeating, isActive: true)
+                }
+                .foregroundStyle(ClaudeStyle.accent)
+                .transition(.opacity)
+                .help("Claude Code is writing to a session log right now")
+            }
+        }
+        .animation(Anim.subtle, value: service.isWorking)
+    }
+
+    /// Today's numbers as icon chips: spend, tokens, and the pace of the current block.
+    @ViewBuilder
+    private var statChips: some View {
+        HStack(spacing: 6) {
+            switch service.costState {
+            case .ready:
+                if let today = service.cost?.today {
+                    statChip("dollarsign.circle", value: costValue(for: today), help: costHelp(for: today))
+                    statChip("number", value: ClaudeUsageRules.formatTokens(today.totalTokens), help: "Tokens used today, in and out, cache included")
+                } else {
+                    statChip("dollarsign.circle", value: "0", help: "Nothing spent today yet")
+                }
+                if let block = service.cost?.activeBlock, let rate = block.burnRate,
+                   let burn = ClaudeUsageRules.burnDescription(
+                       tokensPerMinute: rate.tokensPerMinuteForIndicator ?? rate.tokensPerMinute,
+                       costPerHour: rate.costPerHour,
+                       projectedCost: block.projection?.totalCost
+                   ) {
+                    statChip("flame", value: burn.value.replacingOccurrences(of: " tok/min", with: "/min"),
+                             help: "Pace of the current 5-hour block: \(burn.value)" + (burn.detail.map { ", \($0)" } ?? ""))
+                }
+            case .notInstalled:
+                statChip("arrow.down.circle", value: "ccusage", help: "Spend and tokens come from the ccusage tool — install it with `brew install ccusage`")
+            case .failed:
+                statChip("exclamationmark.circle", value: "ccusage", help: "ccusage failed; see the log")
+            case .unknown:
+                EmptyView()
+            }
         }
     }
 
-    private var statusText: String {
-        let project = service.session?.customTitle ?? service.session?.projectName
-        if service.isWorking { return project.map { "Working · \($0)" } ?? "Working…" }
-        if let project { return "Idle · \(project)" }
-        return service.hasLogs ? "Idle" : "No sessions yet"
-    }
-
-    /// "Today  9.5M tokens · $62.89": a label, the number, and a detail — or why there is none.
-    private func statLine(_ label: String, value: String, detail: String? = nil) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: 5) {
-            Text(label)
+    private func statChip(_ symbol: String, value: String, help: String) -> some View {
+        HStack(spacing: 4) {
+            Image(systemName: symbol)
                 .font(.system(size: 10, weight: .semibold))
                 .foregroundStyle(.secondary)
-                .frame(width: Self.labelWidth, alignment: .leading)
             Text(value)
-                .font(.subheadline.weight(.semibold).monospacedDigit())
-            if let detail {
-                Text("· \(detail)")
-                    .font(.caption.monospacedDigit())
-                    .foregroundStyle(.secondary)
-            }
+                .font(.system(size: 11, weight: .semibold, design: .rounded).monospacedDigit())
+                .contentTransition(.numericText())
         }
+        .padding(.horizontal, 7)
+        .frame(height: 20)
+        .background(.white.opacity(0.09), in: Capsule())
         .lineLimit(1)
-    }
-
-    @ViewBuilder
-    private var todayLine: some View {
-        switch service.costState {
-        case .ready:
-            if let today = service.cost?.today {
-                statLine("Today", value: "\(ClaudeUsageRules.formatTokens(today.totalTokens)) tokens", detail: costDetail(for: today))
-                    .help(costHelp(for: today))
-            } else if service.cost != nil {
-                statLine("Today", value: "nothing yet")
-            } else {
-                statLine("Today", value: "reading…")
-            }
-        case .notInstalled:
-            statLine("Today", value: "needs ccusage", detail: "brew install ccusage")
-                .help("Token counts and cost come from the ccusage tool; install it and the numbers appear")
-        case .failed:
-            statLine("Today", value: "ccusage failed", detail: "see log")
-        case .unknown:
-            EmptyView()
-        }
+        .help(help)
     }
 
     /// ccusage prices from an offline table; a model it does not know comes out as $0, which is
-    /// not the same as free, so the line says which one.
-    private func costDetail(for today: CCUsageDay) -> String {
-        if today.totalCost > 0 { return ClaudeUsageRules.formatCost(today.totalCost) }
-        // Short, because the line is narrow; the tooltip names the model.
+    /// not free, so that shows as a dash and the tooltip names the model.
+    private func costValue(for today: CCUsageDay) -> String {
+        if today.totalCost > 0 { return ClaudeUsageRules.formatCost(today.totalCost).replacingOccurrences(of: "$", with: "") }
         let unpriced = today.modelBreakdowns.contains { $0.cost == 0 && ($0.outputTokens > 0 || $0.inputTokens > 0) }
-        return unpriced ? "no price" : "$0.00"
+        return unpriced ? "—" : "0"
     }
 
     private func costHelp(for today: CCUsageDay) -> String {
         let unpriced = today.modelBreakdowns.filter { $0.cost == 0 }.map { CCUsageParser.prettyModelName($0.modelName) }
-        var help = "Tokens and spend today, from ccusage (offline price table)."
+        var help = today.totalCost > 0 ? "Spent today: \(ClaudeUsageRules.formatCost(today.totalCost))." : "Spent today, as far as ccusage can tell."
         if !unpriced.isEmpty {
             help += " No price is known for \(unpriced.joined(separator: ", ")), so those tokens count as $0."
         }
         return help
     }
 
+    /// Which models did today's work: one chip for one model, a segmented bar for several.
     @ViewBuilder
-    private var modelsLine: some View {
+    private var modelsRow: some View {
         if let today = service.cost?.today {
             let shares = ModelShare.compute(today.modelBreakdowns)
             if shares.count > 1 {
-                VStack(alignment: .leading, spacing: 3) {
-                    HStack(alignment: .firstTextBaseline, spacing: 5) {
-                        Text("Models")
-                            .font(.system(size: 10, weight: .semibold))
-                            .foregroundStyle(.secondary)
-                            .frame(width: Self.labelWidth, alignment: .leading)
-                        ModelShareLegend(shares: shares)
-                    }
-                    ModelShareBar(shares: shares)
-                        .padding(.leading, Self.labelWidth + 5)
-                }
-                .help(today.totalCost > 0
-                      ? "How today's spend splits across models"
-                      : "How today's output tokens split across models (no prices to split)")
+                ModelShareBar(shares: shares)
+                    .help(today.totalCost > 0
+                          ? "How today's spend splits across models"
+                          : "How today's output tokens split across models (no prices to split)")
             } else if let only = shares.first {
-                statLine("Model", value: only.name, detail: "all of today's work")
+                HStack(spacing: 4) {
+                    Circle()
+                        .fill(ClaudeStyle.accent)
+                        .frame(width: 6, height: 6)
+                    Text(only.name)
+                        .font(.system(size: 9, weight: .medium))
+                        .foregroundStyle(.secondary)
+                }
+                .help("Every token today went through \(only.name)")
             }
         }
     }
 
-    @ViewBuilder
-    private var burnLine: some View {
-        if let block = service.cost?.activeBlock, let rate = block.burnRate,
-           let burn = ClaudeUsageRules.burnDescription(
-               tokensPerMinute: rate.tokensPerMinuteForIndicator ?? rate.tokensPerMinute,
-               costPerHour: rate.costPerHour,
-               projectedCost: block.projection?.totalCost
-           ) {
-            statLine("Burn", value: burn.value, detail: burn.detail)
-                .help("Pace of the current 5-hour block: input and output tokens per minute, spend per hour, and the spend expected by the time the block resets")
-        }
-    }
-
+    /// A dot says whether the numbers are fresh; words appear only when something needs doing.
     private var footer: some View {
         HStack(spacing: 6) {
-            Image(systemName: footerSymbol)
-                .font(.system(size: 9))
-            Text(footerText)
-                .lineLimit(1)
-                .help(service.auth == .ok ? "The official 5-hour and weekly limits, read from Anthropic every five minutes" : footerText)
+            Circle()
+                .fill(statusColor)
+                .frame(width: 7, height: 7)
+                .shadow(color: statusColor.opacity(0.6), radius: 3)
+            if let action = actionText {
+                Text(action)
+                    .font(.system(size: 10))
+                    .foregroundStyle(ClaudeStyle.warning)
+                    .lineLimit(1)
+            }
             Spacer(minLength: 4)
             if let plan = service.subscriptionType, !plan.isEmpty {
                 Text(plan.capitalized)
                     .font(.system(size: 9, weight: .semibold))
+                    .foregroundStyle(.secondary)
                     .padding(.horizontal, 5)
                     .padding(.vertical, 1)
-                    .background(.white.opacity(0.14), in: Capsule())
+                    .background(.white.opacity(0.12), in: Capsule())
                     .help("Your Claude plan, as recorded in Claude Code's sign-in")
             }
         }
-        .font(.system(size: 10))
-        .foregroundStyle(service.auth == .ok ? .secondary : ClaudeStyle.warning)
+        .help(statusHelp)
+        .animation(Anim.subtle, value: statusColor)
     }
 
-    private var footerSymbol: String {
+    private var statusColor: Color {
         switch service.auth {
-        case .ok: return service.isStale ? "clock" : "checkmark.circle"
-        case .signedOut, .tokenExpired, .reauthRequired: return "person.crop.circle.badge.exclamationmark"
-        case .rateLimited: return "hourglass"
-        case .unreachable: return "wifi.exclamationmark"
+        case .ok: return service.isStale ? ClaudeStyle.warning : Color(red: 0.36, green: 0.8, blue: 0.5)
+        case .rateLimited, .unreachable: return ClaudeStyle.warning
+        case .signedOut, .tokenExpired, .reauthRequired: return ClaudeStyle.critical
         }
     }
 
-    private var footerText: String {
+    /// Something the user must do; `nil` when there is nothing to say.
+    private var actionText: String? {
+        switch service.auth {
+        case .ok, .rateLimited, .unreachable: return nil
+        case .signedOut: return "Sign in with `claude`"
+        case .tokenExpired: return "Run `claude` to refresh the token"
+        case .reauthRequired: return "Run `claude /login`"
+        }
+    }
+
+    private var statusHelp: String {
         switch service.auth {
         case .ok:
             guard let fetched = service.snapshot?.fetchedAt else { return "Waiting for Anthropic's first reading" }
-            return "Limits updated \(ClaudeUsageRules.formatRemaining(Date().timeIntervalSince(fetched))) ago"
-        case .signedOut:
-            return "Sign in with `claude` in Terminal to see limits"
-        case .tokenExpired:
-            return "Token expired — run `claude` once to refresh it"
-        case .reauthRequired:
-            return "Run `claude /login` — the token lacks a new scope"
-        case .rateLimited(let until):
-            return "Rate limited · retry at \(until.formatted(date: .omitted, time: .shortened))"
-        case .unreachable:
-            return service.snapshot == nil ? "Anthropic unreachable" : "Anthropic unreachable · showing last reading"
+            return "Limits read from Anthropic \(ClaudeUsageRules.formatRemaining(Date().timeIntervalSince(fetched))) ago" + (service.isStale ? " — older than 15 minutes" : "")
+        case .signedOut: return "No Claude Code sign-in found on this Mac; run `claude` in Terminal once"
+        case .tokenExpired: return "The access token has expired; running `claude` refreshes it"
+        case .reauthRequired: return "The token lacks a scope the usage endpoint now needs; only `claude /login` fixes that"
+        case .rateLimited(let until): return "Anthropic rate-limited the usage endpoint; retrying at \(until.formatted(date: .omitted, time: .shortened))"
+        case .unreachable: return service.snapshot == nil ? "Anthropic could not be reached" : "Anthropic could not be reached; showing the last reading"
         }
     }
 }
@@ -348,42 +364,40 @@ private enum ModelShareStyle {
     }
 }
 
-/// "● Opus 5 74%  ● Fable 5.1 26%"
-private struct ModelShareLegend: View {
-    let shares: [ModelShare]
-
-    var body: some View {
-        HStack(spacing: 8) {
-            ForEach(Array(shares.prefix(3).enumerated()), id: \.offset) { index, share in
-                HStack(spacing: 3) {
-                    Circle()
-                        .fill(ModelShareStyle.color(index))
-                        .frame(width: 6, height: 6)
-                    Text("\(share.name) \(Int((share.share * 100).rounded()))%")
-                        .font(.system(size: 9).monospacedDigit())
-                        .foregroundStyle(.secondary)
-                }
-            }
-        }
-        .lineLimit(1)
-    }
-}
-
-/// One thin bar split into segments, one colour per model. Drawn only for two or more models — a
-/// single segment would just look like a meter stuck at full.
+/// A thin bar split into one segment per model, each segment's name under it. Drawn only for two
+/// or more models — a single segment would just look like a meter stuck at full.
 private struct ModelShareBar: View {
     let shares: [ModelShare]
 
+    @State private var appeared = false
+
     var body: some View {
-        GeometryReader { proxy in
-            HStack(spacing: 2) {
-                ForEach(Array(shares.enumerated()), id: \.offset) { index, share in
-                    Capsule()
-                        .fill(ModelShareStyle.color(index))
-                        .frame(width: max(3, (proxy.size.width - 2 * CGFloat(shares.count - 1)) * share.share))
+        VStack(alignment: .leading, spacing: 3) {
+            GeometryReader { proxy in
+                HStack(spacing: 2) {
+                    ForEach(Array(shares.enumerated()), id: \.offset) { index, share in
+                        Capsule()
+                            .fill(ModelShareStyle.color(index))
+                            .frame(width: max(3, (proxy.size.width - 2 * CGFloat(shares.count - 1)) * (appeared ? share.share : 1 / Double(shares.count))))
+                    }
                 }
             }
+            .frame(height: 5)
+            HStack(spacing: 8) {
+                ForEach(Array(shares.prefix(3).enumerated()), id: \.offset) { index, share in
+                    HStack(spacing: 3) {
+                        Circle()
+                            .fill(ModelShareStyle.color(index))
+                            .frame(width: 5, height: 5)
+                        Text("\(share.name) \(Int((share.share * 100).rounded()))%")
+                            .font(.system(size: 9).monospacedDigit())
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+            .lineLimit(1)
         }
-        .frame(height: 4)
+        .animation(.spring(response: 0.8, dampingFraction: 0.85), value: appeared)
+        .onAppear { appeared = true }
     }
 }

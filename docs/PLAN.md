@@ -246,7 +246,7 @@ Claude Code her oturumu yerel JSONL olarak yazar: `~/.claude/projects/<proje>/<s
 ### 6.2 UI durumları
 
 - **Compact:** solda ✳ ikonu (aktif oturumda pulsing, boşta soluk), sağda bugünkü maliyet mini etiketi (ör. `$4.20`) veya aktif oturumda akan token sayacı.
-- **Expanded (mini dashboard):**
+- **Expanded (mini dashboard) — 2026-09-05 görsel yeniden tasarım:** kullanıcı metin ağırlıklı ekranı reddetti ("yazı ile bilgilendirmeyi olabildiğince azalt, görsel ve animasyon odaklı"). Kart artık halkalar (kullanım yayı + pencere zamanı yayı, açılışta süpürme animasyonu), ikon+sayı çipleri, parçalı model çubuğu ve durum noktasından oluşur; metin yalnızca yapılacak iş varken (sign-in) görünür, açıklamalar tooltip'te. Ayrıca expanded içerik çentikten `expandedTopGap` (8 pt) aşağıda başlar — halka çizgisi çerçevesinden taşıp çentiğin altına giriyordu. Önceki plan maddeleri:
   - 5 saatlik ve haftalık pencereler için **progress ring** (resmi endpoint verisi; erişilemezse ccusage blok tahminine zarifçe düş),
   - bugün: toplam maliyet, input/output token,
   - model kırılımı (Opus/Sonnet payı, yatay mini bar),

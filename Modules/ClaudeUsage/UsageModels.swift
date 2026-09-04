@@ -32,6 +32,30 @@ nonisolated enum UsageWindowKind: String, Sendable, CaseIterable {
         case .sevenDay: return "Weekly"
         }
     }
+
+    /// Fits inside a ring.
+    var badge: String {
+        switch self {
+        case .fiveHour: return "5h"
+        case .sevenDay: return "7d"
+        }
+    }
+
+    /// How long the window lasts, so the ring can show how far into it we are.
+    var length: TimeInterval {
+        switch self {
+        case .fiveHour: return 5 * 3600
+        case .sevenDay: return 7 * 86_400
+        }
+    }
+}
+
+extension UsageWindow {
+    /// How much of a window of `kind` has already passed, 0…1, from its reset time.
+    func elapsedFraction(kind: UsageWindowKind, at now: Date) -> Double? {
+        guard let remaining = remaining(at: now) else { return nil }
+        return min(1, max(0, 1 - remaining / kind.length))
+    }
 }
 
 /// What one successful call to the usage endpoint told us, or what survived from earlier calls.

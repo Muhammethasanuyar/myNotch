@@ -41,6 +41,8 @@ final class SpotifyLibraryClient {
     @ObservationIgnored private var savedCache: [String: (saved: Bool, at: Date)] = [:]
     /// After a failed lookup the API is left alone for a while instead of being asked every poll.
     @ObservationIgnored private var retryAfter: Date = .distantPast
+    /// Lookups in flight, so overlapping refreshes share one request.
+    @ObservationIgnored private var lookups: [String: Task<Bool?, Never>] = [:]
     @ObservationIgnored private var connectTask: Task<Void, Never>?
 
     static let clientIDKey = "spotifyClientID"
@@ -124,23 +126,35 @@ final class SpotifyLibraryClient {
     // MARK: Library
 
     /// Whether the item is in the user's library; `nil` when not connected or the call failed.
+    ///
+    /// The request runs in its own task on purpose: the media controller cancels a refresh when the
+    /// next one starts, and a cancelled lookup would otherwise count as a failure and silence the
+    /// heart for `lookupBackoff`. This way the answer lands in the cache for the next refresh.
     func isSaved(uri: String) async -> Bool? {
         guard connection == .connected else { return nil }
         if let cached = savedCache[uri], Date().timeIntervalSince(cached.at) < Self.cacheLifetime {
             return cached.saved
         }
+        if let inFlight = lookups[uri] { return await inFlight.value }
         guard Date() >= retryAfter else { return nil }
-        do {
-            let flags = try await send(authorized(Self.containsURL(uri: uri)), decoding: [Bool].self)
-            guard let saved = flags.first else { return nil }
-            savedCache[uri] = (saved, Date())
-            return saved
-        } catch {
-            lastError = String(describing: error)
-            retryAfter = Date().addingTimeInterval(Self.lookupBackoff)
-            Self.log.error("library lookup for \(uri, privacy: .public) failed: \(error)")
-            return nil
+
+        let lookup = Task<Bool?, Never> { [weak self] in
+            guard let self else { return nil }
+            defer { lookups[uri] = nil }
+            do {
+                let flags = try await send(authorized(Self.containsURL(uri: uri)), decoding: [Bool].self)
+                guard let saved = flags.first else { return nil }
+                savedCache[uri] = (saved, Date())
+                return saved
+            } catch {
+                lastError = String(describing: error)
+                retryAfter = Date().addingTimeInterval(Self.lookupBackoff)
+                Self.log.error("library lookup for \(uri, privacy: .public) failed: \(error)")
+                return nil
+            }
         }
+        lookups[uri] = lookup
+        return await lookup.value
     }
 
     func setSaved(_ saved: Bool, uri: String) async throws {

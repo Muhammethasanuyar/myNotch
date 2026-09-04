@@ -210,6 +210,31 @@ final class SpotifyLibraryTests: XCTestCase {
         XCTAssertEqual(changes, 1)
     }
 
+    @MainActor
+    func testLookupSurvivesTheCallerBeingCancelled() async throws {
+        let defaults = try isolatedDefaults()
+        let store = temporaryStore()
+        defer { store.clear() }
+        try store.save(SpotifyTokens(accessToken: "a", refreshToken: "r", expiresAt: .distantFuture))
+
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.protocolClasses = [StubURLProtocol.self]
+        StubURLProtocol.reset { _ in (200, Data("[true]".utf8)) }
+        let client = SpotifyLibraryClient(store: store, session: URLSession(configuration: configuration), defaults: defaults)
+
+        // The media controller cancels a refresh as soon as the next one starts.
+        let lookup = Task { await client.isSaved(uri: "spotify:track:abc") }
+        lookup.cancel()
+        let saved = await lookup.value
+        XCTAssertEqual(saved, true, "a superseded refresh must not abort the lookup")
+
+        let again = await client.isSaved(uri: "spotify:track:abc")
+        XCTAssertEqual(again, true, "and the answer is cached")
+        XCTAssertEqual(StubURLProtocol.requests.count, 1)
+        XCTAssertEqual(StubURLProtocol.requests.first?.url?.path, "/v1/me/library/contains")
+        XCTAssertEqual(StubURLProtocol.requests.first?.value(forHTTPHeaderField: "Authorization"), "Bearer a")
+    }
+
     // MARK: Helpers
 
     private func form(_ body: String) -> [String: String] {
@@ -231,4 +256,29 @@ final class SpotifyLibraryTests: XCTestCase {
         addTeardownBlock { UserDefaults(suiteName: suite)?.removePersistentDomain(forName: suite) }
         return defaults
     }
+}
+
+/// Answers every request of a `URLSession` from a closure, recording what was asked.
+private final class StubURLProtocol: URLProtocol {
+    nonisolated(unsafe) private static var handler: (@Sendable (URLRequest) -> (Int, Data))?
+    nonisolated(unsafe) private(set) static var requests: [URLRequest] = []
+
+    static func reset(_ handler: @escaping @Sendable (URLRequest) -> (Int, Data)) {
+        Self.handler = handler
+        requests = []
+    }
+
+    override class func canInit(with request: URLRequest) -> Bool { true }
+    override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
+
+    override func startLoading() {
+        Self.requests.append(request)
+        let (status, body) = Self.handler?(request) ?? (500, Data())
+        let response = HTTPURLResponse(url: request.url!, statusCode: status, httpVersion: nil, headerFields: nil)!
+        client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+        client?.urlProtocol(self, didLoad: body)
+        client?.urlProtocolDidFinishLoading(self)
+    }
+
+    override func stopLoading() {}
 }

@@ -150,6 +150,54 @@ nonisolated enum ClaudeUsageRules {
         return (value, detail)
     }
 
+    // MARK: Explanations shown while the cursor rests on an indicator
+
+    static func ringExplanation(kind: UsageWindowKind, window: UsageWindow?, now: Date) -> String {
+        guard let window else { return "\(kind.title) limit — Anthropic has not reported it yet." }
+        let used = Int((window.utilization * 100).rounded())
+        var text = "\(kind.title) limit — \(used)% of the allowance used"
+        if let remaining = window.remaining(at: now) {
+            text += ", resets in \(formatRemaining(remaining))"
+        }
+        if let elapsed = window.elapsedFraction(kind: kind, at: now) {
+            text += ". Outer arc: \(Int((elapsed * 100).rounded()))% of the window has passed."
+        } else {
+            text += "."
+        }
+        return text
+    }
+
+    static func spendExplanation(day: CCUsageDay) -> String {
+        let unpriced = day.modelBreakdowns.filter { $0.cost == 0 && ($0.outputTokens > 0 || $0.inputTokens > 0) }
+            .map { CCUsageParser.prettyModelName($0.modelName) }
+        var text = day.totalCost > 0 ? "Spent today: \(formatCost(day.totalCost)), priced by ccusage's offline table." : "Spend today, as far as ccusage can price it."
+        if !unpriced.isEmpty {
+            text += " No price is known for \(unpriced.joined(separator: ", ")) — its tokens count as $0."
+        }
+        return text
+    }
+
+    static func tokensExplanation(day: CCUsageDay) -> String {
+        "Tokens today: \(formatTokens(day.totalTokens)) — \(formatTokens(day.inputTokens)) in, \(formatTokens(day.outputTokens)) out, \(formatTokens(day.cacheReadTokens + day.cacheCreationTokens)) cache."
+    }
+
+    static func paceExplanation(tokensPerMinute: Double?, costPerHour: Double?, projectedCost: Double?, blockEnd: Date, now: Date) -> String {
+        guard let burn = burnDescription(tokensPerMinute: tokensPerMinute, costPerHour: costPerHour, projectedCost: projectedCost) else {
+            return "Pace of the current 5-hour block."
+        }
+        var text = "Current 5-hour block: \(burn.value)"
+        if let detail = burn.detail { text += ", \(detail)" }
+        text += ". Block ends in \(formatRemaining(max(0, blockEnd.timeIntervalSince(now))))."
+        return text
+    }
+
+    static func modelsExplanation(shares: [ModelShare], bySpend: Bool) -> String {
+        guard !shares.isEmpty else { return "No model has done work today." }
+        if shares.count == 1, let only = shares.first { return "All of today's work went through \(only.name)." }
+        let parts = shares.map { "\($0.name) \(Int(($0.share * 100).rounded()))%" }.joined(separator: ", ")
+        return "Today's work by model, \(bySpend ? "by spend" : "by output tokens (no prices)"): \(parts)."
+    }
+
     /// Ring colour by fill: calm, then warning, then critical.
     static func level(for utilization: Double, thresholds: UsageThresholds) -> Int {
         if utilization >= thresholds.critical { return 2 }

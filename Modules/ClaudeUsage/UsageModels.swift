@@ -19,6 +19,12 @@ nonisolated struct UsageWindow: Equatable, Sendable {
         guard let resetsAt else { return false }
         return resetsAt <= now
     }
+
+    /// How much of a window of `kind` has already passed, 0…1, worked back from its reset time.
+    func elapsedFraction(kind: UsageWindowKind, at now: Date) -> Double? {
+        guard let remaining = remaining(at: now) else { return nil }
+        return min(1, max(0, 1 - remaining / kind.length))
+    }
 }
 
 /// Which limit a reading or an alert is about.
@@ -50,13 +56,6 @@ nonisolated enum UsageWindowKind: String, Sendable, CaseIterable {
     }
 }
 
-extension UsageWindow {
-    /// How much of a window of `kind` has already passed, 0…1, from its reset time.
-    func elapsedFraction(kind: UsageWindowKind, at now: Date) -> Double? {
-        guard let remaining = remaining(at: now) else { return nil }
-        return min(1, max(0, 1 - remaining / kind.length))
-    }
-}
 
 /// What one successful call to the usage endpoint told us, or what survived from earlier calls.
 nonisolated struct UsageSnapshot: Equatable, Sendable {

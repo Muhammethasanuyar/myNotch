@@ -444,6 +444,30 @@ final class ClaudeUsageRulesTests: XCTestCase {
         XCTAssertEqual(priced?.detail, "$32.22/h · ≈$151 by reset")
     }
 
+    func testExplanationsSpellOutTheIndicators() {
+        let now = Date(timeIntervalSince1970: 1_800_000_000)
+        let window = UsageWindow(utilization: 0.26, resetsAt: now.addingTimeInterval(4 * 3600 + 26 * 60))
+        XCTAssertEqual(
+            ClaudeUsageRules.ringExplanation(kind: .fiveHour, window: window, now: now),
+            "5-hour limit — 26% of the allowance used, resets in 4h 26m. Outer arc: 11% of the window has passed."
+        )
+        XCTAssertEqual(ClaudeUsageRules.ringExplanation(kind: .sevenDay, window: nil, now: now), "Weekly limit — Anthropic has not reported it yet.")
+
+        var day = try! CCUsageParser.daily(from: Data(#"{"daily":[{"date":"2026-09-05","inputTokens":30267,"outputTokens":312091,"cacheCreationTokens":1707713,"cacheReadTokens":62103462,"totalTokens":64153533,"totalCost":0,"modelBreakdowns":[{"modelName":"claude-fable-5-1","inputTokens":30137,"outputTokens":203469,"cost":0}]}]}"#.utf8)).daily[0]
+        XCTAssertEqual(ClaudeUsageRules.tokensExplanation(day: day), "Tokens today: 64.2M — 30K in, 312K out, 63.8M cache.")
+        XCTAssertEqual(ClaudeUsageRules.spendExplanation(day: day), "Spend today, as far as ccusage can price it. No price is known for Fable 5.1 — its tokens count as $0.")
+        day = try! CCUsageParser.daily(from: Data(#"{"daily":[{"date":"2026-09-05","totalTokens":10,"totalCost":27.68,"modelBreakdowns":[{"modelName":"claude-opus-5","outputTokens":5,"cost":27.68}]}]}"#.utf8)).daily[0]
+        XCTAssertEqual(ClaudeUsageRules.spendExplanation(day: day), "Spent today: $27.68, priced by ccusage's offline table.")
+
+        XCTAssertEqual(
+            ClaudeUsageRules.paceExplanation(tokensPerMinute: 3279, costPerHour: 32.22, projectedCost: 151, blockEnd: now.addingTimeInterval(2 * 3600), now: now),
+            "Current 5-hour block: 3K tok/min, $32.22/h · ≈$151 by reset. Block ends in 2h."
+        )
+        let shares = [ModelShare(name: "Opus 5", share: 0.74), ModelShare(name: "Fable 5.1", share: 0.26)]
+        XCTAssertEqual(ClaudeUsageRules.modelsExplanation(shares: shares, bySpend: true), "Today's work by model, by spend: Opus 5 74%, Fable 5.1 26%.")
+        XCTAssertEqual(ClaudeUsageRules.modelsExplanation(shares: [shares[1]], bySpend: false), "All of today's work went through Fable 5.1.")
+    }
+
     func testCompactLabelPrefersTheLimit() {
         XCTAssertEqual(ClaudeUsageRules.compactLabel(fiveHour: UsageWindow(utilization: 0.42, resetsAt: nil), todayCost: 9), "42%")
         XCTAssertEqual(ClaudeUsageRules.compactLabel(fiveHour: nil, todayCost: 27.68), "$27.68")

@@ -12,6 +12,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let options = LaunchOptions.read(from: .standard)
 
         let manager = ModuleManager(model: model)
+        // Registered first: with nothing live, hovering the notch opens whoever comes first, and
+        // the usage dashboard is worth a look at any time while an idle player is not.
+        manager.register(ClaudeUsageModule())
         manager.register(MediaModule())
         // The demo module only exists to exercise the engine, so it never ships in a release build.
         let demo = DemoModule()
@@ -35,7 +38,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             demo.setActivity(.live)
         }
         if let stateName = options.debugState {
-            applyDebugState(named: stateName, demo: demo)
+            applyDebugState(named: stateName, moduleID: options.debugModule, demo: demo)
         }
         if options.debugBanner {
             // From the demo module, so it lands as a banner inside whatever module is expanded.
@@ -68,16 +71,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         controller.show(metrics: metrics)
     }
 
-    /// `-debugState <name>`: forces a state at launch so it can be screenshotted.
-    private func applyDebugState(named name: String, demo: DemoModule) {
+    /// `-debugState <name>`: forces a state at launch so it can be screenshotted;
+    /// `-debugModule <id>` picks the module the expanded state opens.
+    private func applyDebugState(named name: String, moduleID: String?, demo: DemoModule) {
         switch name {
         case "closed":
             model.override(.closed)
         case "compact":
             model.override(.compact)
         case "expanded":
-            // Whoever owns the notch: with a player running this is the media module.
-            model.override(.expanded(moduleID: model.defaultModuleID))
+            // Whoever owns the notch (with a player running, the media module) unless told otherwise.
+            model.override(.expanded(moduleID: moduleID ?? model.defaultModuleID))
         case "popup":
             model.showPopup(
                 NotchEvent(

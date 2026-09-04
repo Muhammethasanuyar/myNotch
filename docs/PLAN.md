@@ -254,12 +254,12 @@ Claude Code her oturumu yerel JSONL olarak yazar: `~/.claude/projects/<proje>/<s
 
 ### 6.3 Kabul kriterleri (Faz 4 çıkışı)
 
-- [ ] Claude Code'da mesaj atınca ≤5 sn içinde notch'taki sayaç/animasyon tepki verir.
-- [ ] Expanded'daki bugün-maliyeti, `npx ccusage daily` çıktısıyla tutarlıdır.
-- [ ] Progress ring'deki 5 saatlik doluluk, Claude Code içindeki `/usage` görünümüyle tutarlıdır.
-- [ ] Kimlik bulunamadığında modül "auth gerekli — `claude` çalıştır" durumunu gösterir, token'a asla yazmaz.
-- [ ] %80 blok eşiğinde popup bir kez tetiklenir (spam yok).
-- [ ] ccusage/Node yoksa modül zarifçe "kurulum gerekli" durumuna düşer, uygulama çökmez.
+- [x] Claude Code'da mesaj atınca ≤5 sn içinde notch'taki sayaç/animasyon tepki verir — FSEvents 0,3 sn + 0,25 sn debounce; gerçek dosya testi `ProjectsWatcherTests`. (Müzik çalarken şerit medya modülünde kalır: öncelik 10 > 5.)
+- [x] Expanded'daki bugün-maliyeti `ccusage claude daily --json` çıktısıdır (aynı araç; 2026-09-04: 27,68 $).
+- [x] Progress ring'deki 5 saatlik doluluk resmi `/api/oauth/usage` verisidir (2026-09-04 canlı: %6 / haftalık %52). Claude Code `/usage` ile elle karşılaştırma `docs/manual-tests.md`'de.
+- [x] Kimlik bulunamadığında alt satır "Sign in with `claude`" der; kod yolu yalnızca okur (Keychain'e, dosyaya, refresh ucuna yazan tek satır yok).
+- [x] %80 / %95 eşiklerinde popup pencere başına bir kez (`ThresholdMemory`, reset zamanına anahtarlı, ısınma korumalı; testli).
+- [x] ccusage/Node yoksa `CCUsageState.notInstalled` → "Cost needs ccusage · brew install ccusage"; halkalar bağımsız çalışır.
 
 ## 7. Backlog Modüller (MVP sonrası fikir havuzu)
 
@@ -303,7 +303,7 @@ Ada/
 | **1 — Notch motoru** | NotchShape, closed/compact/expanded state machine, hover ile aç/kapa animasyonu, tam ekran + çoklu ekran davranışı, notch'suz Mac fallback | Sahte içerikle akışkan morph animasyonu; fullscreen'de görünür |
 | **2 — Modül sistemi** | NotchModule protokolü, ModuleManager, öncelik çözümü, EventBus, DemoModule ile popup akışı | Demo modül compact/expanded/popup üçlüsünü gösterir |
 | **3 — Medya modülü** | SpotifyProvider + AppleMusicProvider, compact (kapak+equalizer), expanded kontroller, parça değişim popup'ı, artwork rengi | §5.3 kabul kriterleri |
-| **4 — Claude Usage** | UsageFetcher (codex-island'dan adapte: kimlik çözümü + resmi 5h/7g pencereleri), CCUsageRunner (json, maliyet), ProjectsWatcher, compact sayaç + pulsing, dashboard, eşik popup'ları | §6.3 kabul kriterleri |
+| **4 — Claude Usage** ✅ 2026-09-04 | `Modules/ClaudeUsage/`: `ClaudeCredentials` (env → Keychain via `/usr/bin/security` → dosya, salt-okunur), `UsageFetcher` (resmi 5 sa / 7 gün), `CCUsageRunner` (`ccusage@20` npx/binary, `--offline`), `ProjectsWatcher` (FSEvents), `ClaudeUsageService` (5 dk poll, 429 cooldown, uyanma grace, sign-in izleme), dashboard (halkalar, maliyet, model kırılımı, blok), eşik popup'ları | §6.3 kabul kriterleri |
 | **5 — Ayarlar & cila** | Settings penceresi (modül aç/kapa, hover gecikmesi, eşikler, ekran seçimi), launch at login, onboarding izin akışı, CPU/enerji ölçümü | Instruments'ta boşta <%1 CPU; temiz Mac'te kurulum akışı sorunsuz |
 | **6 — Gelişmiş** | Gerçek visualizer (CoreAudio process tap — spitfiresb/notch'un yaklaşımı — veya ScreenCaptureKit + vDSP, opsiyonel), mediaremote-adapter generic provider (`test` komutlu AppleScript fallback ile), native JSONL parser, ilk backlog modülü | Ayarlardan açılabilir, kapalıyken sıfır maliyet |
 
@@ -383,8 +383,11 @@ Ada/
 | MVP medya | Spotify + Apple Music (ikisi de) |
 | Visualizer | MVP'de sahte animasyon; gerçek FFT Faz 6 opsiyonel |
 | Test | XCTest (`MyNotchTests/`) |
-| Faz durumu | Faz 0 iskelet 2026-09-02; Faz 0.5, Faz 1 (notch motoru) ve Faz 2 (modül sistemi) 2026-09-03; Faz 3 medya modülü 2026-09-03 (Spotify + Apple Music sağlayıcıları, AppleScriptRunner, MediaController, artwork + accent, scrubber/transport, parça değişimi popup'ı; 78 test). Sıradaki: Faz 4 (Claude usage). Elle yapılacak doğrulamalar: `docs/manual-tests.md` |
+| Faz durumu | Faz 0 iskelet 2026-09-02; Faz 0.5, Faz 1 (notch motoru) ve Faz 2 (modül sistemi) 2026-09-03; Faz 3 medya modülü 2026-09-03 (Spotify + Apple Music sağlayıcıları, AppleScriptRunner, MediaController, artwork + accent, scrubber/transport, parça değişimi popup'ı; 78 test). Faz 4 Claude usage 2026-09-04 (194 test). Sıradaki: Faz 5 (ayarlar & cila). Elle yapılacak doğrulamalar: `docs/manual-tests.md` |
 | Şarkı sözleri | LRCLIB (`/api/get` → `/api/search` → sadeleştirilmiş başlıkla arama), parça başına önbellek, `lyricsEnabled` bayrağı. Satır değişimi poll ile değil, satır başlangıçlarından üretilen **kesin zaman çizelgesiyle** (`TimelineView(.explicit)`) yapılır; her uyanış sınırdan 30 ms sonraya kaydırılır (erken ateşleyen zamanlayıcı bir önceki satırı seçip her satırı bir satır geciktiriyordu). `lyricsLeadSeconds` (varsayılan 0,15 sn) sözleri sesin biraz önünde tutar; Bluetooth gecikmesi için negatif verilebilir. AppleScript sayıları locale'e göre virgüllü döndürdüğü için tüm süre/konum alanları tam sayı **milisaniye** olarak alınır |
 | Spotify favori | AppleScript `starred` yazılamaz (-10000) → Spotify Web API + PKCE (`Modules/Media/Spotify/`): kullanıcı kendi client ID'sini getirir (`spotifyClientID` default'u), loopback port 48219 sabit, token dosyası 0600. `MediaFavoriteSupport` kalbin `available` / `needsConnection` / `needsSetup` / `unsupported` durumlarını taşır; kalp hiçbir durumda gizlenmez, tıklama eksik adımı başlatır |
 | Hover toleransı | Karttan çıkan imleç `NotchLayout.graceRect` bölgesindeyse (kart + 32/28 pt kenar payı, ekran üst kenarına kadar) kart en fazla `closeDelay` = 0,8 s daha açık kalır (Debug Preview'da 0–1 s slider); bölgeden çıkınca ya da süre dolunca anında kapanır, süre yenilenmez. İmleç 40 ms'de bir yalnızca bu pencere boyunca `NSEvent.mouseLocation` ile izlenir. Görünmez alan **çizilmez** (alfa tabanlı tıklama geçirgenliğini bozar ve tıklamaları yutar) |
+| Claude usage kimliği | Salt-okunur: `CLAUDE_CODE_OAUTH_TOKEN` → Keychain (`Claude Code-credentials[-hash]`, keşif `kSecReturnAttributes` ile, sır `/usr/bin/security find-generic-password -w` ile — ACL uyarısı yok; 2026-09-04'te ilk çalıştırmada uyarı çıkmadı) → `.credentials.json`. Token asla loglanmaz, hiçbir yere yazılmaz, refresh yapılmaz (Anthropic eski refresh token'ı görünce tüm aileyi iptal eder). `expiresAt` ms; süresi dolmuşsa istek atılmaz |
+| Claude usage endpoint | `GET https://api.anthropic.com/api/oauth/usage`, `anthropic-beta: oauth-2025-04-20`, `User-Agent: claude-code/2.1.121` → 2026-09-04'te 200 (UA'sız varyant denenmedi; UA masrafsız, gönderiliyor). Poll 5 dk (`SuspendingClock`: uyku sayılmaz), 429 → 900 sn cooldown + tek retry, uyanmada 60 sn grace, `>15 dk` bayat = soluk. Başarısız poll son iyi değeri korur (reset geçmiş pencereler düşer) |
+| ccusage | `ccusage` binary'si bulunursa o, yoksa `npx --yes ccusage@20` (nvm/Homebrew/bun/npm-global dizinleri taranır; GUI PATH'i kısıtlı). Ölçüm 2026-09-04: blocks 2,8 sn, daily 0,9 sn (~300 MB log). Her çağrı `--offline`; kadans: aktivite bittikten 20 sn sonra, çalışma sürerken en geç 2 dk'da bir. `Decodable` varsayılan değerleri kaçan anahtarları **kapsamaz** → DTO'lar elle `decodeIfPresent` |
 | EventBus | Combine yerine main-actor callback kaydı (`Core/Modules/EventBus.swift`): Swift 6'da `Sendable` gereksinimleri modül sözleşmesini kirletmesin diye. Abonelik token'ı bırakılınca bir sonraki main-actor turunda iptal olur, `invalidate()` anında iptal eder |

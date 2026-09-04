@@ -95,3 +95,17 @@ defaults write com.emre.mynotch spotifyClientID <client-id>
 
 - Modül panelinde `media` satırı görünür; "Test popup" gerçek notch'ta popup tetikler.
 - `demo` modülü yalnızca Debug build'de kayıtlı; medya canlıyken öncelik (10 > 0) medyada kalır.
+
+## Faz 4 — Claude usage modülü
+
+Hazırlık: Claude Code ile en az bir kez giriş yapılmış olmalı (`claude`). Maliyet için `ccusage` (`brew install ccusage` ya da `npm i -g ccusage`); yoksa uygulama nvm/Homebrew dizinlerinde `npx` arar ve `npx --yes ccusage@20` kullanır (ilk çalıştırma paketi indirir). Panel: `scripts/run.sh --args -debugState expanded -debugModule claude`.
+
+1. **Halkalar:** 5-hour ve Weekly yüzdeleri Claude Code'daki `/usage` çıktısıyla aynı olmalı (2026-09-04: %6 / %52 eşleşti). Altında sıfırlanmaya kalan süre (↺ 4h 12m). Alt satır "Limits updated <1m ago".
+2. **Plan çipi:** "Team"/"Max"/"Pro" — kimlikteki `subscriptionType`.
+3. **Maliyet:** "$X today · N tokens" = `ccusage claude daily --json --since <bugün> --offline` toplamı; model kırılım çubuğu maliyet payına göre (maliyeti 0 olan model 0%). Blok satırı `blocks --active` ile aynı saatler.
+4. **Çalışıyor algısı (≤5 sn):** Claude Code'da bir mesaj gönder → panel başlığı "Working · <proje>" olur ve ✳ nabız gibi atar; 10 sn sessizlikten sonra "Idle". Müzik çalmıyorsa compact şeritte ✳ + yüzde görünür; müzik çalarken şerit medyada kalır (öncelik 10 > 5), popup'lar yine gelir.
+5. **Kimlik yok:** `security find-generic-password -s "Claude Code-credentials"` boş dönen bir hesapta alt satır "Sign in with `claude` in Terminal to see limits"; `claude` ile giriş yapınca ≤10 sn içinde halkalar dolar (5 sn'lik metadata izleme). Keychain şifresi **sorulmamalı**.
+6. **Eşik popup'ı:** 5 saatlik pencere %80'i geçince bir kez "5-hour limit at 8x%" popup'ı; %95'te ikinci; aynı pencerede tekrar yok; pencere sıfırlanınca "5-hour window reset". Debug Preview → `claude` satırı → "Test popup" genel popup yolunu dener.
+7. **ccusage yok:** `defaults write com.emre.mynotch ccusagePath /nonexistent` ile bile npx bulunursa çalışır; nvm/npx de yoksa "Cost needs ccusage · brew install ccusage" satırı, halkalar etkilenmez. Geri almak için `defaults delete com.emre.mynotch ccusagePath`.
+8. **Ağ yok:** alt satır "Anthropic unreachable · showing last reading", halkalar soluk; 15 dk'dan eski okuma soluk kalır.
+9. **Uyku/uyanma:** kapağı kapatıp açınca ilk istek en erken 60 sn sonra; log'da (`log stream --predicate 'subsystem == "com.emre.mynotch"'`) tek poll görünmeli, seri istek yok.

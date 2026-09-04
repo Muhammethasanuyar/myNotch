@@ -11,6 +11,8 @@ nonisolated struct LaunchOptions: Equatable, Sendable {
     let hasLiveContent: Bool
     /// Forces a state at launch: `closed`, `compact`, `expanded` or `popup`.
     let debugState: String?
+    /// With `-debugState expanded`, which module to open instead of whoever owns the notch.
+    let debugModule: String?
     /// Makes the demo module live, for exercising the engine without a real player.
     let demoLive: Bool
     /// Posts a long-lived event from the demo module, so the banner strip another module gets
@@ -23,6 +25,7 @@ nonisolated struct LaunchOptions: Equatable, Sendable {
             openDebugPreview: defaults.bool(forKey: Key.openDebugPreview),
             hasLiveContent: defaults.bool(forKey: Key.liveContent),
             debugState: defaults.string(forKey: Key.debugState),
+            debugModule: defaults.string(forKey: Key.debugModule),
             demoLive: defaults.bool(forKey: Key.demoLive),
             debugBanner: defaults.bool(forKey: Key.debugBanner)
         )
@@ -33,6 +36,7 @@ nonisolated struct LaunchOptions: Equatable, Sendable {
         static let openDebugPreview = "openDebugPreview"
         static let liveContent = "liveContent"
         static let debugState = "debugState"
+        static let debugModule = "debugModule"
         static let demoLive = "demoLive"
         static let debugBanner = "debugBanner"
     }

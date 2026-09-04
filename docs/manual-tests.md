@@ -66,7 +66,7 @@ defaults write com.emre.mynotch spotifyClientID <client-id>
 1. **Client ID yokken** kalbe tıkla → tarayıcıda Spotify Dashboard açılır; tooltip `defaults write` komutunu gösterir. Kalp soluk kalır.
 2. **Client ID varken** kalbe tıkla → tarayıcıda Spotify onay ekranı ("MyNotch ... kütüphaneni görüntülemek ve değiştirmek istiyor"). Onayla → sekmede "Spotify connected. You can close this tab." görünür; notch'ta kalp en geç ~2 sn içinde gerçek durumu alır (parça kütüphanedeyse dolu).
 3. Kalbe tıkla → anında dolar; Spotify'da **Beğenilen Şarkılar**'da parça görünür. Tekrar tıkla → çıkar.
-4. **Zaten beğenilmiş** bir parçaya geç → kalp dolu gelir (parça başına tek `contains` sorgusu; sonrası önbellekten).
+4. **Zaten beğenilmiş** bir parçaya geç → kalp dolu gelir (URI başına tek `contains` sorgusu; 60 sn önbellek). Spotify'ın kendi içinde beğen/kaldır → notch en geç ~1 dk içinde yakalar.
 5. Onayı **reddet** (tarayıcıda Cancel) → kalp soluk kalır, uygulama takılmaz, tekrar tıklanabilir. Tarayıcıyı hiç dönmeden kapatırsan dinleyici 5 dk sonra zaman aşımına uğrar.
 6. **Ağ yokken** kalbe tıkla → iyimser dolar, ~0,4 sn sonra eski haline döner (yazma başarısız, log'da görünür); okuma 30 sn boyunca tekrar denenmez.
 7. **Yeniden başlatma:** token dosyası (`~/Library/Application Support/MyNotch/spotify-oauth.json`, 0600) sayesinde bağlantı kalır; süresi dolan access token refresh token ile sessizce yenilenir.

@@ -143,4 +143,6 @@ nonisolated enum SpotifyLibraryError: Error, Equatable {
     case timedOut
     case httpStatus(Int)
     case malformedResponse(String)
+    /// Local files and ads have no library entry.
+    case notSaveable(String)
 }

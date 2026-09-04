@@ -44,7 +44,7 @@ struct SpotifyProvider: MediaProvider {
         let output = try await runner.run(Self.fetchScript)
         guard var state = Self.parse(output, at: MediaScript.sampleDate(start: start, finish: Date())) else { return nil }
         // The scripting interface cannot say whether a track is saved; the Web API can, once per track.
-        if let bare = Self.bareTrackID(state.trackID), let saved = await library.isSaved(trackID: bare) {
+        if let uri = Self.libraryURI(state.trackID), let saved = await library.isSaved(uri: uri) {
             state.isFavorite = saved
         }
         return state
@@ -52,8 +52,8 @@ struct SpotifyProvider: MediaProvider {
 
     func send(_ command: MediaCommand) async throws {
         if case .setFavorite(let saved, let trackID) = command {
-            guard let bare = Self.bareTrackID(trackID) else { return }
-            try await library.setSaved(saved, trackID: bare)
+            guard let uri = Self.libraryURI(trackID) else { throw SpotifyLibraryError.notSaveable(trackID) }
+            try await library.setSaved(saved, uri: uri)
             return
         }
         let script = Self.script(for: command)
@@ -77,12 +77,12 @@ struct SpotifyProvider: MediaProvider {
         }
     }
 
-    /// `spotify:track:5P2q…` → `5P2q…`. Episodes and local files have no library entry, so `nil`.
-    nonisolated static func bareTrackID(_ id: String) -> String? {
-        let prefix = "spotify:track:"
-        guard id.hasPrefix(prefix) else { return nil }
-        let bare = String(id.dropFirst(prefix.count))
-        return bare.isEmpty ? nil : bare
+    /// The URI the library API accepts for the current item. Local files (`spotify:local:…`) and
+    /// ads have no library entry, so `nil`.
+    nonisolated static func libraryURI(_ id: String) -> String? {
+        let prefixes = ["spotify:track:", "spotify:episode:"]
+        guard let prefix = prefixes.first(where: { id.hasPrefix($0) }), id.count > prefix.count else { return nil }
+        return id
     }
 
     // MARK: Scripts

@@ -118,13 +118,27 @@ final class SpotifyLibraryTests: XCTestCase {
         XCTAssertNil(store.load())
     }
 
-    // MARK: Track ids
+    // MARK: Library requests
 
-    func testBareTrackIDOnlyAcceptsTracks() {
-        XCTAssertEqual(SpotifyProvider.bareTrackID("spotify:track:4uLU6hMCjMI75M1A2tKUQC"), "4uLU6hMCjMI75M1A2tKUQC")
-        XCTAssertNil(SpotifyProvider.bareTrackID("spotify:episode:abc"))
-        XCTAssertNil(SpotifyProvider.bareTrackID("spotify:track:"))
-        XCTAssertNil(SpotifyProvider.bareTrackID(""))
+    func testLibraryURIOnlyAcceptsTracksAndEpisodes() {
+        XCTAssertEqual(SpotifyProvider.libraryURI("spotify:track:4uLU6hMCjMI75M1A2tKUQC"), "spotify:track:4uLU6hMCjMI75M1A2tKUQC")
+        XCTAssertEqual(SpotifyProvider.libraryURI("spotify:episode:abc"), "spotify:episode:abc")
+        XCTAssertNil(SpotifyProvider.libraryURI("spotify:local:::Song:0"))
+        XCTAssertNil(SpotifyProvider.libraryURI("spotify:ad:xyz"))
+        XCTAssertNil(SpotifyProvider.libraryURI("spotify:track:"))
+        XCTAssertNil(SpotifyProvider.libraryURI(""))
+    }
+
+    func testLibraryURLsUseTheCurrentEndpoints() throws {
+        // `/v1/me/tracks` and `/v1/me/tracks/contains` are deprecated and answer 403 (measured 2026-09-04).
+        let contains = try XCTUnwrap(URLComponents(url: SpotifyLibraryClient.containsURL(uri: "spotify:track:abc"), resolvingAgainstBaseURL: false))
+        XCTAssertEqual(contains.host, "api.spotify.com")
+        XCTAssertEqual(contains.path, "/v1/me/library/contains")
+        XCTAssertEqual(contains.queryItems, [URLQueryItem(name: "uris", value: "spotify:track:abc")])
+
+        let library = try XCTUnwrap(URLComponents(url: SpotifyLibraryClient.libraryURL(uri: "spotify:track:abc"), resolvingAgainstBaseURL: false))
+        XCTAssertEqual(library.path, "/v1/me/library")
+        XCTAssertEqual(library.queryItems, [URLQueryItem(name: "uris", value: "spotify:track:abc")])
     }
 
     // MARK: Loopback server

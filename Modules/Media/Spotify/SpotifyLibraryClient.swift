@@ -1,6 +1,7 @@
 import AppKit
 import Foundation
 import Observation
+import os
 
 /// Whether MyNotch can talk to the user's Spotify library.
 nonisolated enum SpotifyConnection: Equatable, Sendable {
@@ -13,7 +14,11 @@ nonisolated enum SpotifyConnection: Equatable, Sendable {
 
 /// Spotify's own scripting interface cannot save a track (its `starred` property errors), so
 /// liking goes through the Web API instead: a PKCE authorization the user completes once in the
-/// browser, then `/v1/me/tracks`.
+/// browser, then `/v1/me/library`.
+///
+/// Endpoint note (measured 2026-09-04): the older `/v1/me/tracks` and `/v1/me/tracks/contains`
+/// are deprecated and answer a bare 403 "Forbidden" even with the right scopes — not the
+/// "Insufficient client scope" a missing scope produces. The replacements take Spotify URIs.
 ///
 /// The user brings their own client ID (Spotify's development mode is per-app and per-user), set
 /// with `defaults write com.emre.mynotch spotifyClientID <id>`, and registers
@@ -31,14 +36,17 @@ final class SpotifyLibraryClient {
     private let session: URLSession
     let defaults: UserDefaults
     @ObservationIgnored private var tokens: SpotifyTokens?
-    /// Saved-state per track id, so the 2 s poll never turns into 2 s API calls.
-    @ObservationIgnored private var savedCache: [String: Bool] = [:]
+    /// Saved-state per URI, so the 2 s poll never turns into 2 s API calls. Entries age out so a
+    /// like made in Spotify itself shows up within a minute.
+    @ObservationIgnored private var savedCache: [String: (saved: Bool, at: Date)] = [:]
     /// After a failed lookup the API is left alone for a while instead of being asked every poll.
     @ObservationIgnored private var retryAfter: Date = .distantPast
     @ObservationIgnored private var connectTask: Task<Void, Never>?
 
     static let clientIDKey = "spotifyClientID"
     static let lookupBackoff: TimeInterval = 30
+    static let cacheLifetime: TimeInterval = 60
+    private static let log = Logger(subsystem: "com.emre.mynotch", category: "spotify-library")
 
     var clientID: String? {
         let value = defaults.string(forKey: Self.clientIDKey)?.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -115,40 +123,61 @@ final class SpotifyLibraryClient {
 
     // MARK: Library
 
-    /// Whether `trackID` is in the user's library; `nil` when not connected or the call failed.
-    func isSaved(trackID: String) async -> Bool? {
+    /// Whether the item is in the user's library; `nil` when not connected or the call failed.
+    func isSaved(uri: String) async -> Bool? {
         guard connection == .connected else { return nil }
-        if let cached = savedCache[trackID] { return cached }
+        if let cached = savedCache[uri], Date().timeIntervalSince(cached.at) < Self.cacheLifetime {
+            return cached.saved
+        }
         guard Date() >= retryAfter else { return nil }
         do {
-            let flags = try await send(authorized(get: "https://api.spotify.com/v1/me/tracks/contains?ids=\(trackID)"),
-                                       decoding: [Bool].self)
+            let flags = try await send(authorized(Self.containsURL(uri: uri)), decoding: [Bool].self)
             guard let saved = flags.first else { return nil }
-            savedCache[trackID] = saved
+            savedCache[uri] = (saved, Date())
             return saved
         } catch {
             lastError = String(describing: error)
             retryAfter = Date().addingTimeInterval(Self.lookupBackoff)
+            Self.log.error("library lookup for \(uri, privacy: .public) failed: \(error)")
             return nil
         }
     }
 
-    func setSaved(_ saved: Bool, trackID: String) async throws {
+    func setSaved(_ saved: Bool, uri: String) async throws {
         guard connection == .connected else { throw SpotifyLibraryError.notConnected }
-        var request = try await authorized(get: "https://api.spotify.com/v1/me/tracks?ids=\(trackID)")
+        var request = try await authorized(Self.libraryURL(uri: uri))
         request.httpMethod = saved ? "PUT" : "DELETE"
         let (_, response) = try await session.data(for: request)
         guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
             throw SpotifyLibraryError.httpStatus((response as? HTTPURLResponse)?.statusCode ?? -1)
         }
-        savedCache[trackID] = saved
+        savedCache[uri] = (saved, Date())
+    }
+
+    // MARK: Requests (pure)
+
+    /// `GET /v1/me/library/contains?uris=…`
+    nonisolated static func containsURL(uri: String) -> URL {
+        url(path: "/v1/me/library/contains", uri: uri)
+    }
+
+    /// `PUT` / `DELETE /v1/me/library?uris=…`
+    nonisolated static func libraryURL(uri: String) -> URL {
+        url(path: "/v1/me/library", uri: uri)
+    }
+
+    private nonisolated static func url(path: String, uri: String) -> URL {
+        var components = URLComponents(string: "https://api.spotify.com")!
+        components.path = path
+        components.queryItems = [URLQueryItem(name: "uris", value: uri)]
+        return components.url!
     }
 
     // MARK: Private
 
-    private func authorized(get url: String) async throws -> URLRequest {
+    private func authorized(_ url: URL) async throws -> URLRequest {
         let token = try await validAccessToken()
-        var request = URLRequest(url: URL(string: url)!)
+        var request = URLRequest(url: url)
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         request.timeoutInterval = 10
         return request

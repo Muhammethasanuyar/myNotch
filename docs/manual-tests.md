@@ -14,7 +14,8 @@ Ekran görüntüsü almak için terminalin **Ekran Kaydı** iznine ihtiyacı var
 
 ## Faz 1 — Notch motoru (2026-09-03 doğrulandı)
 
-- [x] Hover: imleç notch'a gelince ~0,15 s sonra expanded açılır, ayrılınca kapanır.
+- [x] Hover: imleç notch'a gelince ~0,15 s sonra expanded açılır; ayrılınca **1,5 s sonra** kapanır (2026-09-04'e kadar 0,1 s idi).
+- [ ] Hover toleransı (2026-09-04): expanded'dayken imleci kartın 32 pt yanına / 28 pt altına taşır ve orada bekle → kart açık kalır. Daha uzağa götür → en geç 1,5 s içinde kapanır (bölgede beklemişsen en fazla 3 s). Çıkıp 1,5 s içinde geri dön → kapanmaz. Debug Preview'daki "Close delay" slider'ı gecikmeyi değiştirir ("Apply to real notch").
 - [x] Tıklama geçirgenliği: şeffaf piksele yapılan tıklama alttaki uygulamaya geçer ve notch kapanır.
 - [x] Tam ekran: tam ekran bir uygulamanın üzerinde panel görünür kalır (özel CGS API'si olmadan).
 - [x] Dört durum (closed / compact / expanded / popup) gerçek notch'ta doğru çizilir.

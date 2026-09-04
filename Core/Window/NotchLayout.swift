@@ -59,6 +59,8 @@ nonisolated enum NotchLayout {
     /// Strip reserved above expanded content while another module's banner is showing, so the two
     /// never overlap.
     static let bannerHeight: CGFloat = 28
+    /// How far beyond the expanded surface the cursor may wander and still count as on it.
+    static let graceMargin = CGSize(width: 32, height: 28)
 
     struct CornerRadii: Equatable, Sendable {
         let ear: CGFloat
@@ -150,6 +152,21 @@ nonisolated enum NotchLayout {
             menuBarHeight: geometry.menuBarHeight,
             panelSize: expandedPanelSize
         )
+    }
+
+    /// Screen-space zone around the expanded surface within which the cursor still counts as
+    /// hovering. The surface hangs centred from the panel's top edge; the zone reaches up to the
+    /// screen edge (the housing sits there) and `graceMargin` beyond the surface on every side.
+    static func graceRect(panelFrame: CGRect, metrics: NotchLayoutMetrics) -> CGRect {
+        let size = shapeSize(for: .expanded(moduleID: ""), metrics: metrics, showsBanner: true)
+        let top = topInset(for: metrics)
+        let surface = CGRect(
+            x: panelFrame.midX - size.width / 2,
+            y: panelFrame.maxY - top - size.height,
+            width: size.width,
+            height: size.height + top
+        )
+        return surface.insetBy(dx: -graceMargin.width, dy: -graceMargin.height)
     }
 
     /// Panel frame centred on the housing (or on the screen when there is none), flush with the screen top.

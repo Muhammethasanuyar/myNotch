@@ -14,8 +14,14 @@ final class NotchViewModel {
 
     /// Time the cursor must rest on the surface before it expands.
     var hoverDelay: TimeInterval = 0.15
-    /// Grace period after the cursor leaves, so brushing the edge does not flicker.
-    var closeDelay: TimeInterval = 0.1
+    /// Grace period after the cursor leaves the expanded surface before it closes; coming back in
+    /// time keeps it open, and a cursor resting inside `graceRect` earns another period.
+    var closeDelay: TimeInterval = 1.5
+    /// Screen zone around the expanded surface where the cursor still counts as on it. Set by the
+    /// window layer; `nil` means only the drawn shape counts.
+    var graceRect: CGRect?
+    /// Where the cursor is, in screen coordinates. Injectable so tests can steer it.
+    var cursorLocation: () -> CGPoint = { NSEvent.mouseLocation }
     var animation = Anim.Settings.default
     var hapticsEnabled = true
     /// Module shown when hover expands from closed or compact. Phase 2 lets ModuleManager decide.
@@ -45,14 +51,22 @@ final class NotchViewModel {
         } else {
             hoverTask = Task { [weak self] in
                 guard let self else { return }
-                try? await Task.sleep(for: .seconds(closeDelay))
-                guard !Task.isCancelled, !isHovering else { return }
+                repeat {
+                    try? await Task.sleep(for: .seconds(closeDelay))
+                    guard !Task.isCancelled, !isHovering else { return }
+                } while isCursorInGraceZone
                 if let target = NotchTransition.stateOnHoverExit(from: state, hasLiveContent: hasLiveContent) {
                     banner = nil
                     state = target
                 }
             }
         }
+    }
+
+    /// Whether the cursor is lingering just outside the expanded surface, which does not count as leaving.
+    private var isCursorInGraceZone: Bool {
+        guard state.isExpanded, let graceRect else { return false }
+        return graceRect.contains(cursorLocation())
     }
 
     /// Modules report whether they have something worth showing beside the housing.

@@ -126,15 +126,19 @@ struct DebugPreviewView: View {
                                                            set: { preview.animation.closeDamping = $0 }), range: 0.4...1.0)
                     slider("Hover delay", value: Binding(get: { preview.hoverDelay },
                                                          set: { preview.hoverDelay = $0 }), range: 0...1.0)
+                    slider("Close delay", value: Binding(get: { preview.closeDelay },
+                                                         set: { preview.closeDelay = $0 }), range: 0...3.0)
                 }
                 HStack {
                     Button("Reset") {
                         previewModel.animation = .default
                         previewModel.hoverDelay = 0.15
+                        previewModel.closeDelay = 1.5
                     }
                     Button("Apply to real notch") {
                         liveModel.animation = previewModel.animation
                         liveModel.hoverDelay = previewModel.hoverDelay
+                        liveModel.closeDelay = previewModel.closeDelay
                     }
                 }
             }

@@ -77,6 +77,7 @@ final class NotchWindowController: NSWindowController {
         metrics = NotchLayout.metrics(for: geometry, screenName: screen.localizedName)
         hostingView.rootView = NotchRootView(model: model, metrics: metrics, content: content, debugTint: debugTint)
         panel.setFrame(NotchLayout.panelFrame(for: geometry), display: true)
+        model.graceRect = NotchLayout.graceRect(panelFrame: panel.frame, metrics: metrics)
         panel.orderFrontRegardless()
     }
 

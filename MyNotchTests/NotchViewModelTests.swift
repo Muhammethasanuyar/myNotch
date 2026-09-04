@@ -73,6 +73,50 @@ final class NotchViewModelTests: XCTestCase {
         XCTAssertEqual(model.state, .closed)
     }
 
+    func testComingBackWithinTheGracePeriodKeepsTheCardOpen() async throws {
+        let model = makeModel()
+        model.closeDelay = 0.1
+        model.hoverChanged(true)
+        try await Task.sleep(for: .milliseconds(100))
+        XCTAssertTrue(model.state.isExpanded)
+
+        model.hoverChanged(false)
+        try await Task.sleep(for: .milliseconds(30))
+        model.hoverChanged(true)
+        try await Task.sleep(for: .milliseconds(200))
+        XCTAssertTrue(model.state.isExpanded, "a brief excursion must not close the card")
+    }
+
+    func testACursorRestingInTheGraceZoneEarnsAnotherPeriod() async throws {
+        let model = makeModel()
+        model.closeDelay = 0.05
+        model.graceRect = CGRect(x: 0, y: 0, width: 100, height: 100)
+        var cursor = CGPoint(x: 50, y: 50)
+        model.cursorLocation = { cursor }
+        model.hoverChanged(true)
+        try await Task.sleep(for: .milliseconds(100))
+        XCTAssertTrue(model.state.isExpanded)
+
+        model.hoverChanged(false)
+        try await Task.sleep(for: .milliseconds(150))
+        XCTAssertTrue(model.state.isExpanded, "hovering just outside the card is not leaving")
+
+        cursor = CGPoint(x: 500, y: 500)
+        try await Task.sleep(for: .milliseconds(150))
+        XCTAssertEqual(model.state, .closed, "once the cursor is really gone the next period closes it")
+    }
+
+    func testTheGraceZoneOnlyMattersWhileExpanded() async throws {
+        let model = makeModel()
+        model.graceRect = CGRect(x: 0, y: 0, width: 100, height: 100)
+        model.cursorLocation = { CGPoint(x: 50, y: 50) }
+        model.hoverDelay = 0.1
+        model.hoverChanged(true)
+        model.hoverChanged(false)
+        try await Task.sleep(for: .milliseconds(200))
+        XCTAssertEqual(model.state, .closed, "leaving before expansion cancels it regardless of the zone")
+    }
+
     func testLeavingBeforeTheDelayCancelsExpansion() async throws {
         let model = makeModel()
         model.hoverDelay = 0.1

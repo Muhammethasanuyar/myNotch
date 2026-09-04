@@ -94,4 +94,26 @@ final class NotchLayoutTests: XCTestCase {
         XCTAssertEqual(radii.bottom, radii.top)
         XCTAssertEqual(NotchLayout.shapeSize(for: .compact, metrics: floating), NotchLayout.floatingCompactSize)
     }
+
+    func testGraceZoneSurroundsTheExpandedCardUpToTheScreenEdge() {
+        let metrics = notched
+        let panel = CGRect(x: 100, y: 800, width: 600, height: 240)
+        let card = NotchLayout.shapeSize(for: .expanded(moduleID: "m"), metrics: metrics, showsBanner: true)
+        let zone = NotchLayout.graceRect(panelFrame: panel, metrics: metrics)
+
+        XCTAssertEqual(zone.midX, panel.midX, accuracy: 0.001)
+        XCTAssertEqual(zone.width, card.width + 2 * NotchLayout.graceMargin.width, accuracy: 0.001)
+        XCTAssertEqual(zone.maxY, panel.maxY + NotchLayout.graceMargin.height, accuracy: 0.001, "reaches past the screen edge")
+        XCTAssertEqual(zone.minY, panel.maxY - card.height - NotchLayout.graceMargin.height, accuracy: 0.001)
+    }
+
+    func testFloatingGraceZoneCoversTheMenuBarGap() {
+        let metrics = floating
+        let panel = CGRect(x: 100, y: 800, width: 600, height: 240)
+        let card = NotchLayout.shapeSize(for: .expanded(moduleID: "m"), metrics: metrics, showsBanner: true)
+        let zone = NotchLayout.graceRect(panelFrame: panel, metrics: metrics)
+
+        XCTAssertEqual(zone.maxY, panel.maxY + NotchLayout.graceMargin.height, accuracy: 0.001)
+        XCTAssertEqual(zone.minY, panel.maxY - NotchLayout.topInset(for: metrics) - card.height - NotchLayout.graceMargin.height, accuracy: 0.001)
+    }
 }

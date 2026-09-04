@@ -208,8 +208,8 @@ struct MediaControlBar: View {
     }
 }
 
-/// One control. Taps go through a drag gesture: inside a non-activating panel a plain tap is
-/// otherwise swallowed as the window-activation click.
+/// One control. Taps go through `notchTap`, because a plain tap inside a non-activating panel is
+/// swallowed as the window-activation click.
 struct MediaControlButton: View {
     let symbol: String
     var size: CGFloat = 15
@@ -237,12 +237,7 @@ struct MediaControlButton: View {
         .animation(.easeOut(duration: 0.12), value: isHovering)
         .contentShape(Rectangle())
         .onHover { isHovering = $0 }
-        .gesture(
-            DragGesture(minimumDistance: 0).onEnded { value in
-                let inside = abs(value.translation.width) < 20 && abs(value.translation.height) < 20
-                if inside && isEnabled { action() }
-            }
-        )
+        .notchTap(isEnabled: isEnabled, perform: action)
         .allowsHitTesting(isEnabled)
     }
 }

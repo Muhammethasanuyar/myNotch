@@ -16,6 +16,19 @@ final class MediaModule: NotchModule {
     let controller: MediaController
     @ObservationIgnored private var context: ModuleContext?
 
+    /// Named after the player itself ("Spotify"), with that app's icon, and offered as soon as the
+    /// app is up — before anything plays.
+    var screen: ModuleScreen {
+        let provider = controller.displayProvider
+        return ModuleScreen(
+            id: id,
+            title: provider?.displayName ?? displayName,
+            symbolName: provider?.symbolName ?? "music.note",
+            appBundleIdentifier: provider?.bundleIdentifier,
+            isAvailable: controller.hasRunningPlayer
+        )
+    }
+
     init(controller: MediaController = MediaController()) {
         self.controller = controller
     }

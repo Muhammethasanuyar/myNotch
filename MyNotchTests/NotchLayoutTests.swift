@@ -65,6 +65,34 @@ final class NotchLayoutTests: XCTestCase {
         }
     }
 
+    func testTheScreenSwitcherGrowsTheCardAndStacksWithABanner() {
+        let plain = NotchLayout.shapeSize(for: .expanded(moduleID: "media"), metrics: notched)
+        let withSwitcher = NotchLayout.shapeSize(for: .expanded(moduleID: "media"), metrics: notched, showsSwitcher: true)
+        XCTAssertEqual(withSwitcher.width, plain.width)
+        XCTAssertEqual(withSwitcher.height, plain.height + NotchLayout.switcherHeight)
+
+        let both = NotchLayout.shapeSize(for: .expanded(moduleID: "media"), metrics: notched, showsBanner: true, showsSwitcher: true)
+        XCTAssertEqual(both.height, plain.height + NotchLayout.bannerHeight + NotchLayout.switcherHeight)
+    }
+
+    func testOnlyTheExpandedStateReservesSwitcherSpace() {
+        for state in [NotchState.closed, .compact, .popup(sampleEvent)] {
+            XCTAssertEqual(
+                NotchLayout.shapeSize(for: state, metrics: notched, showsSwitcher: true),
+                NotchLayout.shapeSize(for: state, metrics: notched),
+                "\(state) has no switcher; it belongs to the expanded card"
+            )
+        }
+    }
+
+    func testTheTallestExpandedCardStillFitsThePanel() {
+        for metrics in [notched, floating] {
+            let size = NotchLayout.shapeSize(for: .expanded(moduleID: "media"), metrics: metrics, showsBanner: true, showsSwitcher: true)
+            XCTAssertLessThanOrEqual(size.height + NotchLayout.topInset(for: metrics), metrics.panelSize.height,
+                                     "a card with both strips must leave room for its shadow")
+        }
+    }
+
     func testEveryStateFitsInsideThePanel() {
         let states: [NotchState] = [.closed, .compact, .popup(sampleEvent), .expanded(moduleID: "debug")]
         for metrics in [notched, floating] {
@@ -98,19 +126,21 @@ final class NotchLayoutTests: XCTestCase {
     func testGraceZoneSurroundsTheExpandedCardUpToTheScreenEdge() {
         let metrics = notched
         let panel = CGRect(x: 100, y: 800, width: 600, height: 240)
-        let card = NotchLayout.shapeSize(for: .expanded(moduleID: "m"), metrics: metrics, showsBanner: true)
+        let card = NotchLayout.shapeSize(for: .expanded(moduleID: "m"), metrics: metrics, showsBanner: true, showsSwitcher: true)
         let zone = NotchLayout.graceRect(panelFrame: panel, metrics: metrics)
 
         XCTAssertEqual(zone.midX, panel.midX, accuracy: 0.001)
         XCTAssertEqual(zone.width, card.width + 2 * NotchLayout.graceMargin.width, accuracy: 0.001)
         XCTAssertEqual(zone.maxY, panel.maxY + NotchLayout.graceMargin.height, accuracy: 0.001, "reaches past the screen edge")
         XCTAssertEqual(zone.minY, panel.maxY - card.height - NotchLayout.graceMargin.height, accuracy: 0.001)
+        XCTAssertTrue(zone.contains(CGPoint(x: panel.midX, y: panel.maxY - card.height + 1)),
+                      "the zone must cover the card at its tallest, switcher included")
     }
 
     func testFloatingGraceZoneCoversTheMenuBarGap() {
         let metrics = floating
         let panel = CGRect(x: 100, y: 800, width: 600, height: 240)
-        let card = NotchLayout.shapeSize(for: .expanded(moduleID: "m"), metrics: metrics, showsBanner: true)
+        let card = NotchLayout.shapeSize(for: .expanded(moduleID: "m"), metrics: metrics, showsBanner: true, showsSwitcher: true)
         let zone = NotchLayout.graceRect(panelFrame: panel, metrics: metrics)
 
         XCTAssertEqual(zone.maxY, panel.maxY + NotchLayout.graceMargin.height, accuracy: 0.001)

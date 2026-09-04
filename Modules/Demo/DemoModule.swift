@@ -20,6 +20,12 @@ final class DemoModule: NotchModule {
     @ObservationIgnored private var context: ModuleContext?
     @ObservationIgnored private var trackIndex = 0
 
+    /// Listed only once the Debug Preview makes it live: the switcher should show real screens,
+    /// not the test harness.
+    var screen: ModuleScreen {
+        ModuleScreen(id: id, title: displayName, symbolName: "wand.and.stars", isAvailable: activity > .idle)
+    }
+
     func start(context: ModuleContext) {
         self.context = context
     }

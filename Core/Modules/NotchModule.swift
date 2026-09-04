@@ -17,6 +17,8 @@ protocol NotchModule: AnyObject {
     /// Turned off from Settings; a disabled module never wins the notch and its events are dropped.
     var isEnabled: Bool { get set }
     var activity: ModuleActivity { get }
+    /// How the module appears in the expanded card's screen switcher.
+    var screen: ModuleScreen { get }
 
     /// Called once when the module is registered and enabled. Start observers/timers here.
     func start(context: ModuleContext)
@@ -34,6 +36,10 @@ protocol NotchModule: AnyObject {
 }
 
 extension NotchModule {
+    var screen: ModuleScreen {
+        ModuleScreen(id: id, title: displayName, symbolName: "square.on.square", isAvailable: isEnabled)
+    }
+
     func compactLeading(namespace: Namespace.ID) -> AnyView { AnyView(EmptyView()) }
     func compactTrailing(namespace: Namespace.ID) -> AnyView { AnyView(EmptyView()) }
     func popupView(for event: NotchEvent, namespace: Namespace.ID) -> AnyView? { nil }

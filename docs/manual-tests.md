@@ -91,6 +91,15 @@ defaults write com.emre.mynotch spotifyClientID <client-id>
 2. Başka bir modülün olayı: `scripts/run.sh --args -debugState expanded -debugBanner YES` → kart 28 pt büyür, banner üstte kendi şeridinde durur, oynatıcı içeriği aşağı kayar; örtüşme olmaz.
 3. Notch kapalı/compact iken gelen olay → popup durumu (kart değil, küçük şerit) ve süresi dolunca eski duruma döner.
 
+### Ekran değiştirici (2026-09-04)
+
+1. **Şerit görünür:** Spotify (ya da Music) açıkken notch'a hover et → kartın altında iki hap: aktif ekranın adı yazılı ve vurgulu, diğeri yalnızca ikon. Spotify hapında **Spotify'ın kendi ikonu** olmalı, Claude'unkinde ✳.
+2. **Değiştirme:** soluk hapa tıkla → kart kapanmadan o modülün ekranına geçer, hap adıyla vurgulanır. `scripts/run.sh --args -debugState expanded -debugModule claude` ile hangi ekranın açılacağı zorlanabilir.
+3. **Çalışan uygulama:** Spotify'ı kapat → bir sonraki yenilemede (en geç 60 sn, expanded'dayken 2 sn) Spotify hapı listeden düşer; tek ekran kalırsa şerit hiç çizilmez ve kart 26 pt kısalır. Spotify'ı aç → hap geri gelir (parça çalması gerekmez).
+4. **Açık ekran kaybolmaz:** Spotify ekranındayken Spotify'ı kapat → hap yerinde kalır (okurken kartın kendi sekmesi kaybolmamalı), başka ekrana geçince listeden düşer.
+5. **Banner ile birlikte:** `scripts/run.sh --args -debugState expanded -debugModule claude -debugBanner YES` → üstte banner şeridi, altta ekran şeridi; hiçbiri içeriğin üstüne binmez.
+6. **Tıklama geçirgenliği bozulmadı:** kartın dışındaki şeffaf alana tıkla → alttaki uygulamaya geçer ve notch kapanır; menü bar öğeleri tıklanabilir kalır.
+
 ### Debug Preview
 
 - Modül panelinde `media` satırı görünür; "Test popup" gerçek notch'ta popup tetikler.

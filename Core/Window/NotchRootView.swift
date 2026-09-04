@@ -14,7 +14,14 @@ struct NotchRootView: View {
 
     var body: some View {
         let state = model.state
-        let size = NotchLayout.shapeSize(for: state, metrics: metrics, showsBanner: model.banner != nil)
+        // Read here, in the body, so the strip follows the modules' own observable state.
+        let screens = expandedScreens(for: state)
+        let size = NotchLayout.shapeSize(
+            for: state,
+            metrics: metrics,
+            showsBanner: model.banner != nil,
+            showsSwitcher: ModuleScreenList.shouldShow(screens)
+        )
         let radii = NotchLayout.cornerRadii(for: state, style: metrics.style)
 
         ZStack(alignment: .top) {
@@ -22,7 +29,7 @@ struct NotchRootView: View {
                 Color.red.opacity(0.25)
             }
             if size != .zero {
-                surface(state: state, size: size, radii: radii)
+                surface(state: state, size: size, radii: radii, screens: screens)
                     .frame(width: size.width, height: size.height)
                     .padding(.top, NotchLayout.topInset(for: metrics))
             }
@@ -30,15 +37,22 @@ struct NotchRootView: View {
         .frame(width: metrics.panelSize.width, height: metrics.panelSize.height, alignment: .top)
         .animation(Anim.morph(to: state, settings: model.animation, reduceMotion: reduceMotion), value: state)
         .animation(Anim.subtle, value: model.banner)
+        .animation(Anim.subtle, value: screens)
     }
 
-    private func surface(state: NotchState, size: CGSize, radii: NotchLayout.CornerRadii) -> some View {
+    /// The screens the switcher offers, or none when the card is not open.
+    private func expandedScreens(for state: NotchState) -> [ModuleScreen] {
+        guard case .expanded(let moduleID) = state else { return [] }
+        return content.screens(moduleID)
+    }
+
+    private func surface(state: NotchState, size: CGSize, radii: NotchLayout.CornerRadii, screens: [ModuleScreen]) -> some View {
         let shape = NotchShape(earRadius: radii.ear, bottomRadius: radii.bottom, topRadius: radii.top)
         return ZStack(alignment: .top) {
             shape
                 .fill(.black)
                 .shadow(color: .black.opacity(state.isResting ? 0 : 0.45), radius: state.isResting ? 0 : 10, y: 4)
-            contentLayer(state: state, size: size, radii: radii)
+            contentLayer(state: state, size: size, radii: radii, screens: screens)
                 .frame(width: size.width, height: size.height, alignment: .top)
                 .clipShape(shape)
             if debugTint {
@@ -50,14 +64,14 @@ struct NotchRootView: View {
     }
 
     @ViewBuilder
-    private func contentLayer(state: NotchState, size: CGSize, radii: NotchLayout.CornerRadii) -> some View {
+    private func contentLayer(state: NotchState, size: CGSize, radii: NotchLayout.CornerRadii, screens: [ModuleScreen]) -> some View {
         switch state {
         case .closed:
             EmptyView()
         case .compact:
             compactLayer(radii: radii)
         case .expanded(let moduleID):
-            expandedLayer(moduleID: moduleID, size: size, radii: radii)
+            expandedLayer(moduleID: moduleID, size: size, radii: radii, screens: screens)
         case .popup(let event):
             content.popup(event, morphNamespace)
                 .padding(.horizontal, radii.ear + 12)
@@ -85,10 +99,11 @@ struct NotchRootView: View {
         .padding(.horizontal, radii.ear + (metrics.style == .notch ? 0 : 12))
     }
 
-    private func expandedLayer(moduleID: String, size: CGSize, radii: NotchLayout.CornerRadii) -> some View {
-        // The banner sits in a strip of its own above the module's view; the surface grew by
-        // `NotchLayout.bannerHeight` to make room, so the two never cover each other.
-        VStack(spacing: 0) {
+    private func expandedLayer(moduleID: String, size: CGSize, radii: NotchLayout.CornerRadii, screens: [ModuleScreen]) -> some View {
+        // The banner sits in a strip of its own above the module's view and the screen switcher in
+        // one below it; the surface grew by their heights, so nothing covers anything.
+        let showsSwitcher = ModuleScreenList.shouldShow(screens)
+        return VStack(spacing: 0) {
             if let banner = model.banner {
                 content.popup(banner, morphNamespace)
                     .padding(.horizontal, 10)
@@ -101,9 +116,16 @@ struct NotchRootView: View {
             content.expanded(moduleID, morphNamespace)
                 .padding(.top, model.banner == nil ? NotchLayout.expandedTopInset(for: metrics) : 6)
                 .padding(.horizontal, radii.ear + NotchLayout.expandedContentInset)
-                .padding(.bottom, NotchLayout.expandedContentInset)
+                .padding(.bottom, showsSwitcher ? 2 : NotchLayout.expandedContentInset)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                 .transition(NotchTransitions.expandedContent)
+            if showsSwitcher {
+                NotchScreenSwitcher(screens: screens, activeID: moduleID) { model.expand(moduleID: $0) }
+                    .frame(height: NotchLayout.switcherHeight - 6)
+                    .padding(.horizontal, radii.ear + NotchLayout.expandedContentInset)
+                    .padding(.bottom, NotchLayout.expandedContentInset - 6)
+                    .transition(.opacity)
+            }
         }
         .frame(width: size.width, height: size.height, alignment: .top)
     }

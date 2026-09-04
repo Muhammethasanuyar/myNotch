@@ -16,6 +16,17 @@ final class ClaudeUsageModule: NotchModule {
     let service: ClaudeUsageService
     @ObservationIgnored private var context: ModuleContext?
 
+    /// Claude Code is a CLI, so there is no app icon to borrow; the screen is offered wherever it
+    /// has been used or has limits to report.
+    var screen: ModuleScreen {
+        ModuleScreen(
+            id: id,
+            title: displayName,
+            symbolName: "asterisk",
+            isAvailable: service.hasLogs || service.snapshot != nil
+        )
+    }
+
     init(service: ClaudeUsageService = ClaudeUsageService()) {
         self.service = service
     }

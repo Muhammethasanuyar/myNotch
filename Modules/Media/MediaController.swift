@@ -13,6 +13,9 @@ final class MediaController {
     private(set) var state: MediaState?
     private(set) var artwork: MediaArtwork?
     private(set) var permission: MediaPermission = .unknown
+    /// Players that were running at the last refresh. Kept as state rather than asked per call:
+    /// a SwiftUI body runs many times during a morph and each ask walks the process list.
+    private(set) var runningPlayerIDs: Set<String> = []
 
     /// Called after every state change with the previous value, so the module can announce a track change.
     var onStateChange: (@MainActor (MediaState?, MediaState?) -> Void)?
@@ -52,6 +55,14 @@ final class MediaController {
         return providers.first { $0.id == id }
     }
 
+    /// The player the notch speaks for: the one that reported state, or else whichever is running.
+    /// A paused Spotify with nothing loaded still owns the media screen.
+    var displayProvider: (any MediaProvider)? {
+        activeProvider ?? providers.first { runningPlayerIDs.contains($0.id) }
+    }
+
+    var hasRunningPlayer: Bool { !runningPlayerIDs.isEmpty }
+
     // MARK: Lifecycle
 
     func start() {
@@ -78,6 +89,7 @@ final class MediaController {
         refreshTask?.cancel()
         refreshTask = nil
         lyrics.clear()
+        runningPlayerIDs = []
         updateState(nil)
     }
 
@@ -121,11 +133,11 @@ final class MediaController {
     }
 
     private func performRefresh(preferring providerID: String?) async {
-        let ordered = orderedProviders(preferring: providerID)
+        let running = orderedProviders(preferring: providerID).filter { $0.isRunning() }
+        runningPlayerIDs = Set(running.map(\.id))
         var denied = false
 
-        for provider in ordered {
-            guard provider.isRunning() else { continue }
+        for provider in running {
             do {
                 if let state = try await provider.fetch(), state.hasContent {
                     permission = .granted

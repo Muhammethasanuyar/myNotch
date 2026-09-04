@@ -42,7 +42,7 @@ nonisolated struct NotchLayoutMetrics: Equatable, Sendable {
 nonisolated enum NotchLayout {
     /// The panel always keeps this footprint; content animates inside it
     /// (window resize animations stutter, content animations do not).
-    static let expandedPanelSize = CGSize(width: 600, height: 240)
+    static let expandedPanelSize = CGSize(width: 600, height: 280)
     /// Compact capsule on screens without a housing.
     static let floatingCompactSize = CGSize(width: 220, height: 36)
     /// Gap between the menu bar and a floating surface.
@@ -59,6 +59,9 @@ nonisolated enum NotchLayout {
     /// Strip reserved above expanded content while another module's banner is showing, so the two
     /// never overlap.
     static let bannerHeight: CGFloat = 28
+    /// Strip along the bottom of the expanded card that names the current screen and switches
+    /// between them.
+    static let switcherHeight: CGFloat = 26
     /// How far beyond the expanded surface the cursor may wander and still count as on it.
     static let graceMargin = CGSize(width: 32, height: 28)
 
@@ -95,12 +98,15 @@ nonisolated enum NotchLayout {
     }
 
     /// Full size of the surface (including the ears) for a state.
-    /// - Parameter showsBanner: another module is announcing something inside the expanded surface,
-    ///   which needs a strip of its own.
-    static func shapeSize(for state: NotchState, metrics: NotchLayoutMetrics, showsBanner: Bool = false) -> CGSize {
+    /// - Parameters:
+    ///   - showsBanner: another module is announcing something inside the expanded surface, which
+    ///     needs a strip of its own.
+    ///   - showsSwitcher: the expanded card offers more than one screen, so it carries the switcher.
+    static func shapeSize(for state: NotchState, metrics: NotchLayoutMetrics, showsBanner: Bool = false, showsSwitcher: Bool = false) -> CGSize {
         let base = baseShapeSize(for: state, metrics: metrics)
-        guard showsBanner, state.isExpanded else { return base }
-        return CGSize(width: base.width, height: base.height + bannerHeight)
+        guard state.isExpanded else { return base }
+        let extra = (showsBanner ? bannerHeight : 0) + (showsSwitcher ? switcherHeight : 0)
+        return CGSize(width: base.width, height: base.height + extra)
     }
 
     private static func baseShapeSize(for state: NotchState, metrics: NotchLayoutMetrics) -> CGSize {
@@ -157,8 +163,11 @@ nonisolated enum NotchLayout {
     /// Screen-space zone around the expanded surface within which the cursor still counts as
     /// hovering. The surface hangs centred from the panel's top edge; the zone reaches up to the
     /// screen edge (the housing sits there) and `graceMargin` beyond the surface on every side.
+    ///
+    /// Measured against the tallest the card can get (banner and switcher included), because the
+    /// zone is computed once per screen change rather than per state.
     static func graceRect(panelFrame: CGRect, metrics: NotchLayoutMetrics) -> CGRect {
-        let size = shapeSize(for: .expanded(moduleID: ""), metrics: metrics, showsBanner: true)
+        let size = shapeSize(for: .expanded(moduleID: ""), metrics: metrics, showsBanner: true, showsSwitcher: true)
         let top = topInset(for: metrics)
         let surface = CGRect(
             x: panelFrame.midX - size.width / 2,

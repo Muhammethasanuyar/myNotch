@@ -9,6 +9,7 @@ private final class StubModule: NotchModule {
     let displayName: String
     let priority: Int
     var isEnabled: Bool
+    var isAvailable = true
     private(set) var activity: ModuleActivity
     private(set) var startCount = 0
     private(set) var stopCount = 0
@@ -38,6 +39,10 @@ private final class StubModule: NotchModule {
 
     func post(_ event: NotchEvent) {
         context?.post(event)
+    }
+
+    var screen: ModuleScreen {
+        ModuleScreen(id: id, title: displayName, symbolName: "circle", appBundleIdentifier: "com.example.\(id)", isAvailable: isAvailable)
     }
 
     func expandedView(namespace: Namespace.ID) -> AnyView {
@@ -159,5 +164,34 @@ final class ModuleManagerTests: XCTestCase {
         // …while the preview provider still resolves the first enabled module for its expanded view.
         let preview = manager.contentProvider(previewFallback: true)
         XCTAssertNotNil(preview.expanded)
+    }
+
+    func testScreensSkipDisabledAndUnavailableModules() {
+        let (manager, _) = makeManager()
+        let claude = StubModule(id: "claude")
+        let media = StubModule(id: "media")
+        let off = StubModule(id: "off", isEnabled: false)
+        media.isAvailable = false
+        manager.register(claude)
+        manager.register(media)
+        manager.register(off)
+
+        XCTAssertEqual(manager.screens(activeID: "claude").map(\.id), ["claude"])
+
+        media.isAvailable = true
+        XCTAssertEqual(manager.screens(activeID: "claude").map(\.id), ["claude", "media"], "a player that just started earns a tab")
+
+        media.isAvailable = false
+        XCTAssertEqual(manager.screens(activeID: "media").map(\.id), ["claude", "media"], "the screen on show keeps its tab")
+    }
+
+    func testTheContentProviderHandsTheEngineTheSameScreens() {
+        let (manager, _) = makeManager()
+        manager.register(StubModule(id: "claude"))
+        manager.register(StubModule(id: "media"))
+
+        let provider = manager.contentProvider()
+        XCTAssertEqual(provider.screens("claude").map(\.id), ["claude", "media"])
+        XCTAssertEqual(provider.screens("claude").first?.appBundleIdentifier, "com.example.claude")
     }
 }

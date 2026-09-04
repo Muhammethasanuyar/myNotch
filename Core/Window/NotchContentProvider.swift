@@ -10,6 +10,8 @@ struct NotchContentProvider {
     var compactTrailing: @MainActor (Namespace.ID) -> AnyView
     var expanded: @MainActor (_ moduleID: String, Namespace.ID) -> AnyView
     var popup: @MainActor (NotchEvent, Namespace.ID) -> AnyView
+    /// The screens the expanded card can switch between; the engine draws the switcher itself.
+    var screens: @MainActor (_ activeModuleID: String) -> [ModuleScreen] = { _ in [] }
 
     static var empty: NotchContentProvider {
         NotchContentProvider(

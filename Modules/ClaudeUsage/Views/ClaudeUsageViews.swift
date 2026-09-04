@@ -214,18 +214,21 @@ struct ClaudeDashboardView: View {
     @ViewBuilder
     private var blockLine: some View {
         if let block = service.cost?.activeBlock {
+            // Short enough to survive the card's width once a burn rate and a projection appear.
             HStack(spacing: 4) {
-                Text("Block \(block.startTime.formatted(date: .omitted, time: .shortened))–\(block.endTime.formatted(date: .omitted, time: .shortened))")
+                Text("\(block.startTime.formatted(date: .omitted, time: .shortened))–\(block.endTime.formatted(date: .omitted, time: .shortened))")
                 if let rate = block.burnRate?.costPerHour, rate > 0 {
                     Text("· \(ClaudeUsageRules.formatCost(rate))/h")
                 }
                 if let projected = block.projection?.totalCost, projected > 0 {
-                    Text("· ≈\(ClaudeUsageRules.formatCost(projected)) by end")
+                    Text("· →\(ClaudeUsageRules.formatCost(projected))")
                 }
             }
             .font(.caption.monospacedDigit())
             .foregroundStyle(.secondary)
             .lineLimit(1)
+            .minimumScaleFactor(0.85)
+            .help("Active 5-hour block · spend per hour · projected spend by the time it ends")
         }
     }
 

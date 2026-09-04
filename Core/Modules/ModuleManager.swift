@@ -57,6 +57,11 @@ final class ModuleManager {
         resolveActiveModule()
     }
 
+    /// The switcher's entries: enabled modules with something to show, plus the one on screen.
+    func screens(activeID: String?) -> [ModuleScreen] {
+        ModuleScreenList.visible(modules.filter(\.isEnabled).map(\.screen), activeID: activeID)
+    }
+
     var snapshots: [ModuleSnapshot] {
         modules.map {
             ModuleSnapshot(id: $0.id, priority: $0.priority, activity: $0.activity, isEnabled: $0.isEnabled)
@@ -88,6 +93,10 @@ final class ModuleManager {
                     return custom
                 }
                 return AnyView(NotchEventRow(event: event))
+            },
+            // Read while the card renders, so the strip follows what is running.
+            screens: { [weak self] activeID in
+                self?.screens(activeID: activeID) ?? []
             }
         )
     }

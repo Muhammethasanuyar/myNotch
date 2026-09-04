@@ -334,8 +334,10 @@ final class CCUsageRunnerTests: XCTestCase {
 
     func testNPXInvocationPinsThePackageAndBuildsAPath() {
         let launcher = CCUsageLauncher.npx(URL(fileURLWithPath: "/Users/x/.nvm/versions/node/v24.13.0/bin/npx"))
-        let invocation = CCUsageRunner.invocation(launcher, command: CCUsageRunner.blocksCommand(), home: "/Users/x", configDirectory: "/tmp/cfg")
-        XCTAssertEqual(invocation.arguments, ["--yes", "ccusage@20", "claude", "blocks", "--json", "--active", "--offline"])
+        let now = Calendar(identifier: .gregorian).date(from: DateComponents(timeZone: .current, year: 2026, month: 9, day: 4, hour: 12))!
+        let invocation = CCUsageRunner.invocation(launcher, command: CCUsageRunner.blocksCommand(now: now), home: "/Users/x", configDirectory: "/tmp/cfg")
+        XCTAssertEqual(invocation.arguments, ["--yes", "ccusage@20", "claude", "blocks", "--json", "--since", "20260904", "--offline"],
+                       "every block of the day, so the chart has bars and the active one is picked client-side")
         XCTAssertEqual(invocation.environment["PATH"], "/Users/x/.nvm/versions/node/v24.13.0/bin:/usr/bin:/bin:/usr/sbin:/sbin")
         XCTAssertEqual(invocation.environment["CLAUDE_CONFIG_DIR"], "/tmp/cfg")
         XCTAssertEqual(invocation.environment["HOME"], "/Users/x")
@@ -413,6 +415,10 @@ final class SessionTailParserTests: XCTestCase {
 // MARK: - Module rules
 
 final class ClaudeUsageRulesTests: XCTestCase {
+    /// A bundle with no Turkish strings, so the rules answer in the source language whatever the
+    /// Mac's own language is.
+    private let english = Bundle(for: ClaudeUsageRulesTests.self)
+
     func testActivity() {
         let thresholds = UsageThresholds()
         XCTAssertEqual(ClaudeUsageRules.activity(isWorking: true, fiveHour: nil, thresholds: thresholds), .live)
@@ -421,11 +427,12 @@ final class ClaudeUsageRulesTests: XCTestCase {
     }
 
     func testFormatting() {
-        XCTAssertEqual(ClaudeUsageRules.formatRemaining(30), "<1m")
-        XCTAssertEqual(ClaudeUsageRules.formatRemaining(45 * 60), "45m")
-        XCTAssertEqual(ClaudeUsageRules.formatRemaining(80 * 60), "1h 20m")
-        XCTAssertEqual(ClaudeUsageRules.formatRemaining(3 * 3600), "3h")
-        XCTAssertEqual(ClaudeUsageRules.formatRemaining(2 * 86_400 + 3 * 3600), "2d 3h")
+        XCTAssertEqual(ClaudeUsageRules.formatRemaining(30, bundle: english), "<1m")
+        XCTAssertEqual(ClaudeUsageRules.formatRemaining(45 * 60, bundle: english), "45m")
+        XCTAssertEqual(ClaudeUsageRules.formatRemaining(80 * 60, bundle: english), "1h 20m")
+        XCTAssertEqual(ClaudeUsageRules.formatRemaining(3 * 3600, bundle: english), "3h")
+        XCTAssertEqual(ClaudeUsageRules.formatRemaining(2 * 86_400 + 3 * 3600, bundle: english), "2d 3h")
+        XCTAssertEqual(ClaudeUsageRules.percent(26, bundle: english), "26%", "a literal percent sign survives the format")
         XCTAssertEqual(ClaudeUsageRules.formatCost(4.2), "$4.20")
         XCTAssertEqual(ClaudeUsageRules.formatCost(127.4), "$127")
         XCTAssertEqual(ClaudeUsageRules.formatTokens(48_705), "48K")
@@ -434,12 +441,12 @@ final class ClaudeUsageRulesTests: XCTestCase {
     }
 
     func testBurnDescription() {
-        XCTAssertNil(ClaudeUsageRules.burnDescription(tokensPerMinute: nil, costPerHour: 10, projectedCost: 20))
-        XCTAssertNil(ClaudeUsageRules.burnDescription(tokensPerMinute: 0, costPerHour: 10, projectedCost: 20))
-        let unpriced = ClaudeUsageRules.burnDescription(tokensPerMinute: 3279.57, costPerHour: 0, projectedCost: 0)
+        XCTAssertNil(ClaudeUsageRules.burnDescription(tokensPerMinute: nil, costPerHour: 10, projectedCost: 20, bundle: english))
+        XCTAssertNil(ClaudeUsageRules.burnDescription(tokensPerMinute: 0, costPerHour: 10, projectedCost: 20, bundle: english))
+        let unpriced = ClaudeUsageRules.burnDescription(tokensPerMinute: 3279.57, costPerHour: 0, projectedCost: 0, bundle: english)
         XCTAssertEqual(unpriced?.value, "3K tok/min")
         XCTAssertNil(unpriced?.detail, "no money to talk about")
-        let priced = ClaudeUsageRules.burnDescription(tokensPerMinute: 12_400, costPerHour: 32.22, projectedCost: 151.4)
+        let priced = ClaudeUsageRules.burnDescription(tokensPerMinute: 12_400, costPerHour: 32.22, projectedCost: 151.4, bundle: english)
         XCTAssertEqual(priced?.value, "12K tok/min")
         XCTAssertEqual(priced?.detail, "$32.22/h · ≈$151 by reset")
     }
@@ -448,28 +455,43 @@ final class ClaudeUsageRulesTests: XCTestCase {
         let now = Date(timeIntervalSince1970: 1_800_000_000)
         let window = UsageWindow(utilization: 0.26, resetsAt: now.addingTimeInterval(4 * 3600 + 26 * 60))
         XCTAssertEqual(
-            ClaudeUsageRules.ringExplanation(kind: .fiveHour, window: window, now: now),
+            ClaudeUsageRules.ringExplanation(kind: .fiveHour, window: window, now: now, bundle: english),
             "5-hour limit — 26% of the allowance used, resets in 4h 26m. Outer arc: 11% of the window has passed."
         )
-        XCTAssertEqual(ClaudeUsageRules.ringExplanation(kind: .sevenDay, window: nil, now: now), "Weekly limit — Anthropic has not reported it yet.")
+        XCTAssertEqual(ClaudeUsageRules.ringExplanation(kind: .sevenDay, window: nil, now: now, bundle: english), "Weekly limit — Anthropic has not reported it yet.")
 
         var day = try! CCUsageParser.daily(from: Data(#"{"daily":[{"date":"2026-09-05","inputTokens":30267,"outputTokens":312091,"cacheCreationTokens":1707713,"cacheReadTokens":62103462,"totalTokens":64153533,"totalCost":0,"modelBreakdowns":[{"modelName":"claude-fable-5-1","inputTokens":30137,"outputTokens":203469,"cost":0}]}]}"#.utf8)).daily[0]
-        XCTAssertEqual(ClaudeUsageRules.tokensExplanation(day: day), "Tokens today: 64.2M — 30K in, 312K out, 63.8M cache.")
-        XCTAssertEqual(ClaudeUsageRules.spendExplanation(day: day), "Spend today, as far as ccusage can price it. No price is known for Fable 5.1 — its tokens count as $0.")
+        XCTAssertEqual(ClaudeUsageRules.tokensExplanation(day: day, bundle: english), "Tokens today: 64.2M — 30K in, 312K out, 63.8M cache.")
+        XCTAssertEqual(ClaudeUsageRules.spendExplanation(day: day, bundle: english), "Spend today, as far as ccusage can price it. No price is known for Fable 5.1 — its tokens count as $0.")
         day = try! CCUsageParser.daily(from: Data(#"{"daily":[{"date":"2026-09-05","totalTokens":10,"totalCost":27.68,"modelBreakdowns":[{"modelName":"claude-opus-5","outputTokens":5,"cost":27.68}]}]}"#.utf8)).daily[0]
-        XCTAssertEqual(ClaudeUsageRules.spendExplanation(day: day), "Spent today: $27.68, priced by ccusage's offline table.")
+        XCTAssertEqual(ClaudeUsageRules.spendExplanation(day: day, bundle: english), "Spent today: $27.68, priced by ccusage's offline table.")
 
         XCTAssertEqual(
-            ClaudeUsageRules.paceExplanation(tokensPerMinute: 3279, costPerHour: 32.22, projectedCost: 151, blockEnd: now.addingTimeInterval(2 * 3600), now: now),
+            ClaudeUsageRules.paceExplanation(tokensPerMinute: 3279, costPerHour: 32.22, projectedCost: 151, blockEnd: now.addingTimeInterval(2 * 3600), now: now, bundle: english),
             "Current 5-hour block: 3K tok/min, $32.22/h · ≈$151 by reset. Block ends in 2h."
         )
         let shares = [ModelShare(name: "Opus 5", share: 0.74), ModelShare(name: "Fable 5.1", share: 0.26)]
-        XCTAssertEqual(ClaudeUsageRules.modelsExplanation(shares: shares, bySpend: true), "Today's work by model, by spend: Opus 5 74%, Fable 5.1 26%.")
-        XCTAssertEqual(ClaudeUsageRules.modelsExplanation(shares: [shares[1]], bySpend: false), "All of today's work went through Fable 5.1.")
+        XCTAssertEqual(ClaudeUsageRules.modelsExplanation(shares: shares, bySpend: true, bundle: english), "Today's work by model, by spend: Opus 5 74%, Fable 5.1 26%.")
+        XCTAssertEqual(ClaudeUsageRules.modelsExplanation(shares: [shares[1]], bySpend: false, bundle: english), "All of today's work went through Fable 5.1.")
+    }
+
+    func testTokenCompositionAndBlockExplanation() throws {
+        let day = try CCUsageParser.daily(from: Data(#"{"daily":[{"date":"2026-09-05","inputTokens":100,"outputTokens":300,"cacheCreationTokens":200,"cacheReadTokens":400,"totalTokens":1000,"totalCost":0}]}"#.utf8)).daily[0]
+        let parts = TokenPart.compose(day)
+        XCTAssertEqual(parts.map(\.kind), [.output, .input, .cache], "the expensive part leads")
+        XCTAssertEqual(parts.map(\.tokens), [300, 100, 600])
+        XCTAssertEqual(parts.map(\.share).reduce(0, +), 1, accuracy: 0.0001)
+        XCTAssertEqual(TokenPart.compose(try CCUsageParser.daily(from: Data(#"{"daily":[{"date":"d"}]}"#.utf8)).daily[0]), [])
+
+        let blocks = try CCUsageParser.blocks(from: Data(#"{"blocks":[{"id":"a","startTime":"2026-09-05T06:00:00.000Z","endTime":"2026-09-05T11:00:00.000Z","totalTokens":4000000},{"id":"b","startTime":"2026-09-05T12:00:00.000Z","endTime":"2026-09-05T17:00:00.000Z","isActive":true,"totalTokens":12900000}]}"#.utf8)).blocks
+        let text = ClaudeUsageRules.blocksExplanation(blocks: blocks, activeID: "b", bundle: english)
+        XCTAssertTrue(text.hasPrefix("Today's 5-hour blocks by tokens: "), text)
+        XCTAssertTrue(text.contains("4.0M") && text.contains("12.9M (active)"), text)
+        XCTAssertEqual(ClaudeUsageRules.blocksExplanation(blocks: [], activeID: nil, bundle: english), "No 5-hour block has started today.")
     }
 
     func testCompactLabelPrefersTheLimit() {
-        XCTAssertEqual(ClaudeUsageRules.compactLabel(fiveHour: UsageWindow(utilization: 0.42, resetsAt: nil), todayCost: 9), "42%")
+        XCTAssertEqual(ClaudeUsageRules.compactLabel(fiveHour: UsageWindow(utilization: 0.42, resetsAt: nil), todayCost: 9, bundle: english), "42%")
         XCTAssertEqual(ClaudeUsageRules.compactLabel(fiveHour: nil, todayCost: 27.68), "$27.68")
         XCTAssertNil(ClaudeUsageRules.compactLabel(fiveHour: nil, todayCost: nil))
     }
@@ -477,11 +499,11 @@ final class ClaudeUsageRulesTests: XCTestCase {
     func testCrossingEventText() {
         let now = Date(timeIntervalSince1970: 0)
         let crossing = ThresholdCrossing(kind: .fiveHour, threshold: 0.8, window: UsageWindow(utilization: 0.82, resetsAt: now.addingTimeInterval(80 * 60)))
-        let event = ClaudeUsageRules.crossingEvent(crossing, moduleID: "claude", now: now)
+        let event = ClaudeUsageRules.crossingEvent(crossing, moduleID: "claude", now: now, bundle: english)
         XCTAssertEqual(event.title, "5-hour limit at 82%")
         XCTAssertEqual(event.detail, "Slow down — resets in 1h 20m")
         XCTAssertEqual(event.moduleID, "claude")
-        let critical = ClaudeUsageRules.crossingEvent(ThresholdCrossing(kind: .sevenDay, threshold: 0.95, window: UsageWindow(utilization: 0.96, resetsAt: nil)), moduleID: "claude", now: now)
+        let critical = ClaudeUsageRules.crossingEvent(ThresholdCrossing(kind: .sevenDay, threshold: 0.95, window: UsageWindow(utilization: 0.96, resetsAt: nil)), moduleID: "claude", now: now, bundle: english)
         XCTAssertEqual(critical.title, "Weekly limit at 96%")
         XCTAssertEqual(critical.detail, "Nearly exhausted")
     }

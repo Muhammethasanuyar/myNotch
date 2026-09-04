@@ -1,0 +1,716 @@
+{
+  "sourceLanguage": "en",
+  "version": "1.0",
+  "strings": {
+    "window.fiveHour": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "5 saatlik"
+          }
+        }
+      }
+    },
+    "window.sevenDay": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Haftalık"
+          }
+        }
+      }
+    },
+    "window.badge.fiveHour": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "5s"
+          }
+        }
+      }
+    },
+    "window.badge.sevenDay": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "7g"
+          }
+        }
+      }
+    },
+    "percent": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%%%lld"
+          }
+        }
+      }
+    },
+    "time.daysHours": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lldg %2$llds"
+          }
+        }
+      }
+    },
+    "time.days": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lldg"
+          }
+        }
+      }
+    },
+    "time.hoursMinutes": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$llds %2$llddk"
+          }
+        }
+      }
+    },
+    "time.hours": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%llds"
+          }
+        }
+      }
+    },
+    "time.minutes": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%llddk"
+          }
+        }
+      }
+    },
+    "time.underMinute": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "<1dk"
+          }
+        }
+      }
+    },
+    "burn.tokensPerMinute": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ tok/dk"
+          }
+        }
+      }
+    },
+    "burn.perHour": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@/sa"
+          }
+        }
+      }
+    },
+    "burn.projected": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " · sıfırlanmaya kadar ≈%@"
+          }
+        }
+      }
+    },
+    "event.crossing.title": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ limit %2$@"
+          }
+        }
+      }
+    },
+    "event.crossing.slowDown": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yavaşla"
+          }
+        }
+      }
+    },
+    "event.crossing.nearlyExhausted": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Neredeyse doldu"
+          }
+        }
+      }
+    },
+    "event.crossing.resetsIn": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " — %@ sonra sıfırlanır"
+          }
+        }
+      }
+    },
+    "event.reset.title": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ pencere sıfırlandı"
+          }
+        }
+      }
+    },
+    "event.reset.detail": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kota yenilendi"
+          }
+        }
+      }
+    },
+    "explain.ring": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ limit — kullanılan pay %2$@%3$@. Dış yay: pencerenin geçen kısmı %4$@."
+          }
+        }
+      }
+    },
+    "explain.ring.resetsIn": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": ", %@ sonra sıfırlanır"
+          }
+        }
+      }
+    },
+    "explain.ring.noElapsed": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ limit — kullanılan pay %2$@%3$@."
+          }
+        }
+      }
+    },
+    "explain.ring.noData": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ limit — Anthropic henüz bildirmedi."
+          }
+        }
+      }
+    },
+    "explain.spend.priced": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bugünkü harcama: %@ (ccusage çevrimdışı fiyat tablosuyla)."
+          }
+        }
+      }
+    },
+    "explain.spend.unpricedBase": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bugünkü harcama, ccusage'ın fiyatlandırabildiği kadarıyla."
+          }
+        }
+      }
+    },
+    "explain.spend.unpriced": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " %@ için fiyat bilinmiyor; o token'lar 0 $ sayılır."
+          }
+        }
+      }
+    },
+    "explain.tokens": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bugünkü token: %1$@ — %2$@ giriş, %3$@ çıkış, %4$@ önbellek."
+          }
+        }
+      }
+    },
+    "explain.pace": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aktif 5 saatlik blok: %1$@%2$@. Blok %3$@ sonra biter."
+          }
+        }
+      }
+    },
+    "explain.pace.detail": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": ", %@"
+          }
+        }
+      }
+    },
+    "explain.pace.none": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aktif 5 saatlik bloğun hızı."
+          }
+        }
+      }
+    },
+    "explain.models.none": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bugün hiçbir model çalışmadı."
+          }
+        }
+      }
+    },
+    "explain.models.single": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bugünün tüm işi %@ üzerinden geçti."
+          }
+        }
+      }
+    },
+    "explain.models.bySpend": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bugünün işi modele göre (harcama payı): %@."
+          }
+        }
+      }
+    },
+    "explain.models.byTokens": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bugünün işi modele göre (çıktı token payı; fiyat yok): %@."
+          }
+        }
+      }
+    },
+    "explain.blocks": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bugünün 5 saatlik blokları (token): %@."
+          }
+        }
+      }
+    },
+    "explain.blocks.active": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ %2$@ (aktif)"
+          }
+        }
+      }
+    },
+    "explain.blocks.none": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bugün henüz 5 saatlik blok yok."
+          }
+        }
+      }
+    },
+    "explain.ccusage.missing": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Harcama ve token sayıları ccusage aracından gelir. Kurmak için: `brew install ccusage` (ya da `npm i -g ccusage`)."
+          }
+        }
+      }
+    },
+    "explain.ccusage.failed": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ccusage rapor üretemedi; hata günlükte (com.emre.mynotch)."
+          }
+        }
+      }
+    },
+    "explain.spend.nothing": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bugün henüz harcama yok."
+          }
+        }
+      }
+    },
+    "explain.tokens.nothing": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bugün henüz token kullanılmadı."
+          }
+        }
+      }
+    },
+    "explain.pace.noBlock": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aktif 5 saatlik blok yok."
+          }
+        }
+      }
+    },
+    "explain.plan": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude planın (%@); Claude Code'un bu Mac'teki oturumundan okunur."
+          }
+        }
+      }
+    },
+    "explain.plan.unknown": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "bilinmiyor"
+          }
+        }
+      }
+    },
+    "explain.working.active": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude Code şu anda bir oturum günlüğüne yazıyor%@."
+          }
+        }
+      }
+    },
+    "explain.working.inProject": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " (%@ projesi)"
+          }
+        }
+      }
+    },
+    "explain.working.quiet": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude Code boşta. Son 10 saniyede bir oturum günlüğü değiştiyse çalışıyor sayılır."
+          }
+        }
+      }
+    },
+    "explain.working.noLogs": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu Mac'te henüz Claude Code oturum günlüğü bulunamadı."
+          }
+        }
+      }
+    },
+    "explain.status.waiting": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anthropic'ten ilk limit okuması bekleniyor."
+          }
+        }
+      }
+    },
+    "explain.status.fresh": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Limitler Anthropic'ten %@ önce okundu; beş dakikada bir yenilenir.%@"
+          }
+        }
+      }
+    },
+    "explain.status.stale": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " Bu okuma on beş dakikadan eski."
+          }
+        }
+      }
+    },
+    "explain.status.signedOut": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu Mac'te Claude Code oturumu bulunamadı. Terminal'de bir kez `claude` çalıştır, limitler görünür."
+          }
+        }
+      }
+    },
+    "explain.status.tokenExpired": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Erişim token'ının süresi dolmuş. `claude` çalıştırınca yenilenir; MyNotch hiçbir şey yazmaz."
+          }
+        }
+      }
+    },
+    "explain.status.reauth": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Token, usage ucunun artık istediği bir yetkiye sahip değil; yalnızca `claude /login` verebilir."
+          }
+        }
+      }
+    },
+    "explain.status.rateLimited": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anthropic usage ucunu hız sınırına taktı. Sonraki deneme: %@."
+          }
+        }
+      }
+    },
+    "explain.status.unreachable": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anthropic'e ulaşılamadı."
+          }
+        }
+      }
+    },
+    "explain.status.unreachableStale": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anthropic'e ulaşılamadı; son okuma gösteriliyor."
+          }
+        }
+      }
+    },
+    "action.signIn": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "`claude` ile giriş yap"
+          }
+        }
+      }
+    },
+    "action.refreshToken": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Token için `claude` çalıştır"
+          }
+        }
+      }
+    },
+    "action.login": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "`claude /login` çalıştır"
+          }
+        }
+      }
+    },
+    "caption.spend": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "harcama"
+          }
+        }
+      }
+    },
+    "caption.tokens": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "token"
+          }
+        }
+      }
+    },
+    "caption.pace": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "hız"
+          }
+        }
+      }
+    },
+    "caption.install": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "kur"
+          }
+        }
+      }
+    },
+    "caption.failed": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "hata"
+          }
+        }
+      }
+    },
+    "legend.input": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "giriş"
+          }
+        }
+      }
+    },
+    "legend.output": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "çıkış"
+          }
+        }
+      }
+    },
+    "legend.cache": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "önbellek"
+          }
+        }
+      }
+    },
+    "chart.blocks": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "bugünün blokları"
+          }
+        }
+      }
+    },
+    "unit.minute": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "dk"
+          }
+        }
+      }
+    }
+  }
+}

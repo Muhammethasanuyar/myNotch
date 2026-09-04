@@ -88,10 +88,10 @@ struct UsageRing: View {
                     .shadow(color: color.opacity(glowing ? 0.65 : 0), radius: glowing ? 7 : 0)
             }
             VStack(spacing: -2) {
-                Text(window.map { "\(Int(($0.utilization * 100).rounded()))%" } ?? "—")
+                Text(window.map { ClaudeUsageRules.percent(Int(($0.utilization * 100).rounded())) } ?? "—")
                     .font(.system(size: diameter * 0.23, weight: .semibold, design: .rounded).monospacedDigit())
                     .contentTransition(.numericText())
-                Text(kind.badge)
+                Text(kind.badge())
                     .font(.system(size: diameter * 0.13, weight: .medium, design: .rounded))
                     .foregroundStyle(.secondary)
             }
@@ -117,6 +117,7 @@ struct UsageRing: View {
 /// What the cursor is resting on, so it can stand out and explain itself.
 private enum DashboardFocus: Hashable {
     case ring(UsageWindowKind)
+    case blocks
     case spend
     case tokens
     case pace
@@ -126,11 +127,11 @@ private enum DashboardFocus: Hashable {
     case working
 }
 
-/// The module's full interface, built to be read as shapes: two rings for the limits, icon chips for
-/// today's numbers, a model split, a status dot. Everything moves — arcs sweep in, digits roll, the
-/// mark pulses — and everything explains itself: rest the cursor on any indicator and it lifts
-/// towards you while a line of plain text appears in the card. Words that stay on screen are kept
-/// for what the user must do.
+/// The module's full interface, built to be read as shapes: two rings for the limits with the
+/// day's 5-hour blocks charted beneath them, icon chips for today's numbers, a bar for where the
+/// tokens went, one for the models, a status dot. Everything moves — arcs sweep in, bars grow,
+/// digits roll, the mark pulses — and everything explains itself: rest the cursor on any indicator
+/// and it lifts towards you while a sentence appears in the card.
 struct ClaudeDashboardView: View {
     let service: ClaudeUsageService
     let namespace: Namespace.ID
@@ -142,8 +143,7 @@ struct ClaudeDashboardView: View {
         // Every half minute, so the thin "time passed" arcs and countdowns keep moving while open.
         TimelineView(.periodic(from: .now, by: 30)) { context in
             HStack(alignment: .top, spacing: 14) {
-                rings(at: context.date)
-                    .reveal(appeared, index: 0)
+                leftColumn(at: context.date)
                 Rectangle()
                     .fill(.white.opacity(0.12))
                     .frame(width: 1)
@@ -156,18 +156,32 @@ struct ClaudeDashboardView: View {
         .onAppear { appeared = true }
     }
 
-    // MARK: Rings
+    // MARK: Rings and blocks
 
-    private func rings(at now: Date) -> some View {
-        HStack(alignment: .top, spacing: 12) {
-            ring(kind: .fiveHour, at: now)
-            ring(kind: .sevenDay, at: now)
+    private func leftColumn(at now: Date) -> some View {
+        VStack(spacing: 8) {
+            HStack(alignment: .top, spacing: 12) {
+                ring(kind: .fiveHour, at: now)
+                ring(kind: .sevenDay, at: now)
+            }
+            .reveal(appeared, index: 0)
+            BlocksChart(
+                blocks: service.cost?.todayBlocks ?? [],
+                activeID: service.cost?.activeBlock?.id,
+                now: now,
+                highlighted: focus == .blocks,
+                isWorking: service.isWorking
+            )
+            .frame(maxWidth: .infinity)
+            .spotlight(.blocks, focus: $focus)
+            .reveal(appeared, index: 2)
         }
+        .frame(width: 144)
     }
 
     private func ring(kind: UsageWindowKind, at now: Date) -> some View {
         let window = service.snapshot?[kind]
-        let remaining = window?.remaining(at: now).map(ClaudeUsageRules.formatRemaining)
+        let remaining = window?.remaining(at: now).map { ClaudeUsageRules.formatRemaining($0) }
         return VStack(spacing: 6) {
             UsageRing(
                 window: window,
@@ -180,7 +194,7 @@ struct ClaudeDashboardView: View {
             HStack(spacing: 3) {
                 Image(systemName: "arrow.counterclockwise")
                     .font(.system(size: 8, weight: .semibold))
-                    .symbolEffect(.bounce, value: remaining)   // `.rotate` needs macOS 15
+                    .symbolEffect(.bounce, value: remaining)
                 Text(remaining ?? "—")
                     .font(.system(size: 9, weight: .medium).monospacedDigit())
                     .contentTransition(.numericText())
@@ -194,16 +208,18 @@ struct ClaudeDashboardView: View {
     // MARK: Details
 
     private func details(at now: Date) -> some View {
-        VStack(alignment: .leading, spacing: 7) {
+        VStack(alignment: .leading, spacing: 6) {
             header
                 .reveal(appeared, index: 1)
             statChips
                 .reveal(appeared, index: 2)
-            modelsRow
+            compositionRow
                 .reveal(appeared, index: 3)
+            modelsRow
+                .reveal(appeared, index: 4)
             Spacer(minLength: 0)
             footer
-                .reveal(appeared, index: 4)
+                .reveal(appeared, index: 5)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .overlay(alignment: .bottomLeading) {
@@ -270,24 +286,24 @@ struct ClaudeDashboardView: View {
             switch service.costState {
             case .ready:
                 if let today = service.cost?.today {
-                    statChip(.spend, "dollarsign.circle", value: costValue(for: today), caption: "spend", bounce: today.totalCost)
-                    statChip(.tokens, "number", value: ClaudeUsageRules.formatTokens(today.totalTokens), caption: "tokens", bounce: Double(today.totalTokens))
+                    statChip(.spend, "dollarsign.circle", value: costValue(for: today),
+                             caption: String(localized: "caption.spend", defaultValue: "spend"), bounce: today.totalCost)
+                    statChip(.tokens, "number", value: ClaudeUsageRules.formatTokens(today.totalTokens),
+                             caption: String(localized: "caption.tokens", defaultValue: "tokens"), bounce: Double(today.totalTokens))
                 } else {
-                    statChip(.spend, "dollarsign.circle", value: "0", caption: "spend", bounce: 0)
+                    statChip(.spend, "dollarsign.circle", value: "0", caption: String(localized: "caption.spend", defaultValue: "spend"), bounce: 0)
                 }
                 if let block = service.cost?.activeBlock, let rate = block.burnRate,
-                   let burn = ClaudeUsageRules.burnDescription(
-                       tokensPerMinute: rate.tokensPerMinuteForIndicator ?? rate.tokensPerMinute,
-                       costPerHour: rate.costPerHour,
-                       projectedCost: block.projection?.totalCost
-                   ) {
-                    statChip(.pace, "flame.fill", value: burn.value.replacingOccurrences(of: " tok/min", with: "/min"), caption: "pace",
-                             bounce: rate.tokensPerMinute ?? 0, flicker: service.isWorking)
+                   let perMinute = rate.tokensPerMinuteForIndicator ?? rate.tokensPerMinute, perMinute > 0 {
+                    statChip(.pace, "flame.fill",
+                             value: ClaudeUsageRules.formatTokens(Int(perMinute.rounded())) + "/" + String(localized: "unit.minute", defaultValue: "min"),
+                             caption: String(localized: "caption.pace", defaultValue: "pace"),
+                             bounce: perMinute, flicker: service.isWorking)
                 }
             case .notInstalled:
-                statChip(.spend, "arrow.down.circle", value: "ccusage", caption: "install", bounce: 0)
+                statChip(.spend, "arrow.down.circle", value: "ccusage", caption: String(localized: "caption.install", defaultValue: "install"), bounce: 0)
             case .failed:
-                statChip(.spend, "exclamationmark.circle", value: "ccusage", caption: "failed", bounce: 0)
+                statChip(.spend, "exclamationmark.circle", value: "ccusage", caption: String(localized: "caption.failed", defaultValue: "failed"), bounce: 0)
             case .unknown:
                 EmptyView()
             }
@@ -323,6 +339,18 @@ struct ClaudeDashboardView: View {
         if today.totalCost > 0 { return ClaudeUsageRules.formatCost(today.totalCost).replacingOccurrences(of: "$", with: "") }
         let unpriced = today.modelBreakdowns.contains { $0.cost == 0 && ($0.outputTokens > 0 || $0.inputTokens > 0) }
         return unpriced ? "—" : "0"
+    }
+
+    /// Where today's tokens went: answers, prompts, cache.
+    @ViewBuilder
+    private var compositionRow: some View {
+        if let today = service.cost?.today {
+            let parts = TokenPart.compose(today)
+            if !parts.isEmpty {
+                TokenCompositionBar(parts: parts, highlighted: focus == .tokens)
+                    .spotlight(.tokens, focus: $focus)
+            }
+        }
     }
 
     /// Which models did today's work: a dot and a name for one model, a segmented bar for several.
@@ -391,9 +419,9 @@ struct ClaudeDashboardView: View {
     private var actionText: String? {
         switch service.auth {
         case .ok, .rateLimited, .unreachable: return nil
-        case .signedOut: return "Sign in with `claude`"
-        case .tokenExpired: return "Run `claude` to refresh the token"
-        case .reauthRequired: return "Run `claude /login`"
+        case .signedOut: return String(localized: "action.signIn", defaultValue: "Sign in with `claude`")
+        case .tokenExpired: return String(localized: "action.refreshToken", defaultValue: "Run `claude` to refresh the token")
+        case .reauthRequired: return String(localized: "action.login", defaultValue: "Run `claude /login`")
         }
     }
 
@@ -403,16 +431,25 @@ struct ClaudeDashboardView: View {
         switch focus {
         case .ring(let kind):
             return ClaudeUsageRules.ringExplanation(kind: kind, window: service.snapshot?[kind], now: now)
+        case .blocks:
+            return ClaudeUsageRules.blocksExplanation(blocks: service.cost?.todayBlocks ?? [], activeID: service.cost?.activeBlock?.id)
         case .spend:
             switch service.costState {
-            case .notInstalled: return "Spend and tokens come from the ccusage tool. Install it with `brew install ccusage` (or `npm i -g ccusage`)."
-            case .failed: return "ccusage could not produce a report; the log (subsystem com.emre.mynotch) has the error."
-            default: return service.cost?.today.map(ClaudeUsageRules.spendExplanation) ?? "Nothing has been spent today."
+            case .notInstalled:
+                return String(localized: "explain.ccusage.missing", defaultValue: "Spend and tokens come from the ccusage tool. Install it with `brew install ccusage` (or `npm i -g ccusage`).")
+            case .failed:
+                return String(localized: "explain.ccusage.failed", defaultValue: "ccusage could not produce a report; the log (subsystem com.emre.mynotch) has the error.")
+            default:
+                return service.cost?.today.map { ClaudeUsageRules.spendExplanation(day: $0) }
+                    ?? String(localized: "explain.spend.nothing", defaultValue: "Nothing has been spent today.")
             }
         case .tokens:
-            return service.cost?.today.map(ClaudeUsageRules.tokensExplanation) ?? "No tokens used today."
+            return service.cost?.today.map { ClaudeUsageRules.tokensExplanation(day: $0) }
+                ?? String(localized: "explain.tokens.nothing", defaultValue: "No tokens used today.")
         case .pace:
-            guard let block = service.cost?.activeBlock else { return "No 5-hour block is active." }
+            guard let block = service.cost?.activeBlock else {
+                return String(localized: "explain.pace.noBlock", defaultValue: "No 5-hour block is active.")
+            }
             return ClaudeUsageRules.paceExplanation(
                 tokensPerMinute: block.burnRate?.tokensPerMinuteForIndicator ?? block.burnRate?.tokensPerMinute,
                 costPerHour: block.burnRate?.costPerHour,
@@ -426,29 +463,42 @@ struct ClaudeDashboardView: View {
         case .status:
             return statusExplanation(at: now)
         case .plan:
-            return "Your Claude plan (\(service.subscriptionType?.capitalized ?? "unknown")), as recorded in Claude Code's sign-in on this Mac."
+            let plan = service.subscriptionType?.capitalized ?? String(localized: "explain.plan.unknown", defaultValue: "unknown")
+            return String(localized: "explain.plan", defaultValue: "Your Claude plan (\(plan)), as recorded in Claude Code's sign-in on this Mac.")
         case .working:
             if service.isWorking {
-                let project = service.session?.customTitle ?? service.session?.projectName
-                return "Claude Code is writing to a session log right now" + (project.map { " in \($0)" } ?? "") + "."
+                let project = (service.session?.customTitle ?? service.session?.projectName).map {
+                    String(localized: "explain.working.inProject", defaultValue: " in \($0)")
+                } ?? ""
+                return String(localized: "explain.working.active", defaultValue: "Claude Code is writing to a session log right now\(project).")
             }
             return service.hasLogs
-                ? "Claude Code is quiet. It counts as working while a session log changed within the last ten seconds."
-                : "No Claude Code session logs were found on this Mac yet."
+                ? String(localized: "explain.working.quiet", defaultValue: "Claude Code is quiet. It counts as working while a session log changed within the last ten seconds.")
+                : String(localized: "explain.working.noLogs", defaultValue: "No Claude Code session logs were found on this Mac yet.")
         }
     }
 
     private func statusExplanation(at now: Date) -> String {
         switch service.auth {
         case .ok:
-            guard let fetched = service.snapshot?.fetchedAt else { return "Waiting for Anthropic's first reading of your limits." }
+            guard let fetched = service.snapshot?.fetchedAt else {
+                return String(localized: "explain.status.waiting", defaultValue: "Waiting for Anthropic's first reading of your limits.")
+            }
             let age = ClaudeUsageRules.formatRemaining(now.timeIntervalSince(fetched))
-            return "Limits read from Anthropic \(age) ago; they refresh every five minutes." + (service.isStale ? " This reading is older than fifteen minutes." : "")
-        case .signedOut: return "No Claude Code sign-in was found on this Mac. Run `claude` in Terminal once and the limits appear."
-        case .tokenExpired: return "The access token has expired. Running `claude` refreshes it; nothing is written by MyNotch."
-        case .reauthRequired: return "The token lacks a scope the usage endpoint now needs; only `claude /login` can grant it."
-        case .rateLimited(let until): return "Anthropic rate-limited the usage endpoint. The next attempt is at \(until.formatted(date: .omitted, time: .shortened))."
-        case .unreachable: return service.snapshot == nil ? "Anthropic could not be reached." : "Anthropic could not be reached; the last reading is shown."
+            let stale = service.isStale ? String(localized: "explain.status.stale", defaultValue: " This reading is older than fifteen minutes.") : ""
+            return String(localized: "explain.status.fresh", defaultValue: "Limits read from Anthropic \(age) ago; they refresh every five minutes.\(stale)")
+        case .signedOut:
+            return String(localized: "explain.status.signedOut", defaultValue: "No Claude Code sign-in was found on this Mac. Run `claude` in Terminal once and the limits appear.")
+        case .tokenExpired:
+            return String(localized: "explain.status.tokenExpired", defaultValue: "The access token has expired. Running `claude` refreshes it; nothing is written by MyNotch.")
+        case .reauthRequired:
+            return String(localized: "explain.status.reauth", defaultValue: "The token lacks a scope the usage endpoint now needs; only `claude /login` can grant it.")
+        case .rateLimited(let until):
+            return String(localized: "explain.status.rateLimited", defaultValue: "Anthropic rate-limited the usage endpoint. The next attempt is at \(until.formatted(date: .omitted, time: .shortened)).")
+        case .unreachable:
+            return service.snapshot == nil
+                ? String(localized: "explain.status.unreachable", defaultValue: "Anthropic could not be reached.")
+                : String(localized: "explain.status.unreachableStale", defaultValue: "Anthropic could not be reached; the last reading is shown.")
         }
     }
 }
@@ -500,6 +550,146 @@ private extension View {
     }
 }
 
+// MARK: - Charts
+
+/// Today's 5-hour blocks laid on a 24-hour strip: each block sits where it happened, its height is
+/// its share of the busiest block, the active one glows in the accent and breathes while Claude
+/// works, and a thin marker tracks the time of day. Bars grow from the baseline when the card opens.
+private struct BlocksChart: View {
+    let blocks: [CCUsageBlock]
+    let activeID: String?
+    let now: Date
+    var highlighted = false
+    var isWorking = false
+
+    @State private var appeared = false
+
+    private static let barsHeight: CGFloat = 20
+    private static let hoursInDay: Double = 24
+
+    var body: some View {
+        let dayStart = Calendar.current.startOfDay(for: now)
+        let maxTokens = max(1, blocks.map(\.totalTokens).max() ?? 1)
+        let nowHour = Self.hour(of: now, dayStart: dayStart)
+        VStack(spacing: 3) {
+            GeometryReader { proxy in
+                ZStack(alignment: .bottomLeading) {
+                    Capsule()
+                        .fill(Color.white.opacity(0.08))
+                        .frame(height: 2)
+                    ForEach(Array(blocks.enumerated()), id: \.element.id) { index, block in
+                        bar(block, index: index, width: proxy.size.width, dayStart: dayStart, maxTokens: maxTokens)
+                    }
+                    Rectangle()
+                        .fill(Color.white.opacity(0.75))
+                        .frame(width: 1, height: Self.barsHeight + 3)
+                        .offset(x: proxy.size.width * CGFloat(nowHour / Self.hoursInDay))
+                        .animation(.easeInOut(duration: 0.6), value: nowHour)
+                }
+            }
+            .frame(height: Self.barsHeight + 3)
+            axis
+        }
+        .animation(Anim.subtle, value: highlighted)
+        .onAppear { appeared = true }
+    }
+
+    /// One block, placed at its hour of the day, as tall as its share of the busiest block.
+    private func bar(_ block: CCUsageBlock, index: Int, width: CGFloat, dayStart: Date, maxTokens: Int) -> some View {
+        let start = Self.hour(of: block.startTime, dayStart: dayStart)
+        let end = max(start, Self.hour(of: block.endTime, dayStart: dayStart))
+        let active = block.id == activeID
+        let fraction = appeared ? Double(block.totalTokens) / Double(maxTokens) : 0
+        let barWidth = max(4, width * CGFloat((end - start) / Self.hoursInDay) - 2)
+        let barHeight = max(3, Self.barsHeight * CGFloat(fraction))
+        let fill: Color = active ? ClaudeStyle.accent : Color.white.opacity(highlighted ? 0.55 : 0.3)
+        return RoundedRectangle(cornerRadius: 2.5, style: .continuous)
+            .fill(fill)
+            .frame(width: barWidth, height: barHeight)
+            .shadow(color: ClaudeStyle.accent.opacity(active && isWorking ? 0.6 : 0), radius: 4)
+            .offset(x: width * CGFloat(start / Self.hoursInDay))
+            .animation(.spring(response: 0.7, dampingFraction: 0.8).delay(Double(index) * 0.05), value: appeared)
+    }
+
+    private var axis: some View {
+        HStack(spacing: 0) {
+            Text("00")
+            Spacer(minLength: 0)
+            Text("06")
+            Spacer(minLength: 0)
+            Text("12")
+            Spacer(minLength: 0)
+            Text("18")
+            Spacer(minLength: 0)
+            Text("24")
+        }
+        .font(.system(size: 7).monospacedDigit())
+        .foregroundStyle(Color.white.opacity(highlighted ? 0.7 : 0.35))
+    }
+
+    /// Hours since the start of the day, clamped to the strip.
+    private static func hour(of date: Date, dayStart: Date) -> Double {
+        min(hoursInDay, max(0, date.timeIntervalSince(dayStart) / 3600))
+    }
+}
+
+/// Where the tokens went, as one thin bar: answers, prompts, cache. Cache usually dwarfs the rest,
+/// which is the point — it is the cheap part.
+private struct TokenCompositionBar: View {
+    let parts: [TokenPart]
+    var highlighted = false
+
+    @State private var appeared = false
+
+    private static func color(_ kind: TokenPart.Kind) -> Color {
+        switch kind {
+        case .output: return ClaudeStyle.accent
+        case .input: return .white.opacity(0.6)
+        case .cache: return .white.opacity(0.28)
+        }
+    }
+
+    private static func label(_ kind: TokenPart.Kind) -> String {
+        switch kind {
+        case .output: return String(localized: "legend.output", defaultValue: "out")
+        case .input: return String(localized: "legend.input", defaultValue: "in")
+        case .cache: return String(localized: "legend.cache", defaultValue: "cache")
+        }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            GeometryReader { proxy in
+                HStack(spacing: 2) {
+                    ForEach(Array(parts.enumerated()), id: \.offset) { _, part in
+                        Capsule()
+                            .fill(Self.color(part.kind))
+                            .frame(width: max(3, (proxy.size.width - 2 * CGFloat(parts.count - 1)) * (appeared ? part.share : 1 / Double(parts.count))))
+                    }
+                }
+            }
+            .frame(height: highlighted ? 7 : 5)
+            HStack(spacing: 8) {
+                ForEach(Array(parts.enumerated()), id: \.offset) { _, part in
+                    HStack(spacing: 3) {
+                        Circle()
+                            .fill(Self.color(part.kind))
+                            .frame(width: 5, height: 5)
+                        Text("\(Self.label(part.kind)) \(ClaudeUsageRules.formatTokens(part.tokens))")
+                            .font(.system(size: 9).monospacedDigit())
+                            .foregroundStyle(highlighted ? .white : .secondary)
+                            .contentTransition(.numericText())
+                    }
+                }
+            }
+            .lineLimit(1)
+        }
+        .animation(.spring(response: 0.8, dampingFraction: 0.85), value: appeared)
+        .animation(Anim.subtle, value: highlighted)
+        .onAppear { appeared = true }
+    }
+}
+
 /// Colours for the model split, in share order.
 private enum ModelShareStyle {
     static func color(_ index: Int) -> Color {
@@ -538,7 +728,7 @@ private struct ModelShareBar: View {
                         Circle()
                             .fill(ModelShareStyle.color(index))
                             .frame(width: 5, height: 5)
-                        Text("\(share.name) \(Int((share.share * 100).rounded()))%")
+                        Text("\(share.name) \(ClaudeUsageRules.percent(Int((share.share * 100).rounded())))")
                             .font(.system(size: 9).monospacedDigit())
                             .foregroundStyle(highlighted ? .white : .secondary)
                     }

@@ -163,6 +163,8 @@ nonisolated struct CCUsageDailyReport: Decodable, Equatable, Sendable {
 /// What the module keeps from the two ccusage calls.
 nonisolated struct CCUsageReport: Equatable, Sendable {
     var today: CCUsageDay?
+    /// Today's 5-hour blocks in order, gaps left out; the chart draws one bar per block.
+    var todayBlocks: [CCUsageBlock] = []
     var activeBlock: CCUsageBlock?
     let generatedAt: Date
 }
@@ -245,5 +247,31 @@ nonisolated struct ModelShare: Equatable, Sendable {
         return weights
             .map { ModelShare(name: $0.key, share: $0.value / total) }
             .sorted { $0.share > $1.share || ($0.share == $1.share && $0.name < $1.name) }
+    }
+}
+
+/// Where today's tokens went: prompts in, answers out, or the cache that makes long sessions cheap.
+nonisolated struct TokenPart: Equatable, Sendable {
+    enum Kind: Equatable, Sendable, CaseIterable {
+        case output
+        case input
+        case cache
+    }
+
+    let kind: Kind
+    let tokens: Int
+    /// 0…1, all parts summing to one.
+    let share: Double
+
+    /// Output first because it is the expensive one; parts with nothing in them are left out.
+    static func compose(_ day: CCUsageDay) -> [TokenPart] {
+        let counts: [(Kind, Int)] = [
+            (.output, day.outputTokens),
+            (.input, day.inputTokens),
+            (.cache, day.cacheReadTokens + day.cacheCreationTokens)
+        ]
+        let total = counts.reduce(0) { $0 + $1.1 }
+        guard total > 0 else { return [] }
+        return counts.filter { $0.1 > 0 }.map { TokenPart(kind: $0.0, tokens: $0.1, share: Double($0.1) / Double(total)) }
     }
 }

@@ -103,8 +103,10 @@ nonisolated enum CCUsageRunner {
         }
     }
 
-    static func blocksCommand() -> [String] {
-        ["claude", "blocks", "--json", "--active", "--offline"]
+    /// Every block since the start of today — the active one is picked out client-side, and the
+    /// rest draw the day's chart.
+    static func blocksCommand(now: Date) -> [String] {
+        ["claude", "blocks", "--json", "--since", CCUsageParser.sinceArgument(for: now), "--offline"]
     }
 
     static func dailyCommand(now: Date) -> [String] {
@@ -116,8 +118,10 @@ nonisolated enum CCUsageRunner {
         var report = CCUsageReport(generatedAt: now)
         var firstError: Error?
         do {
-            let data = try await run(invocation(launcher, command: blocksCommand(), home: home, configDirectory: configDirectory))
-            report.activeBlock = try CCUsageParser.blocks(from: data).activeBlock
+            let data = try await run(invocation(launcher, command: blocksCommand(now: now), home: home, configDirectory: configDirectory))
+            let blocks = try CCUsageParser.blocks(from: data)
+            report.todayBlocks = blocks.blocks.filter { !$0.isGap }.sorted { $0.startTime < $1.startTime }
+            report.activeBlock = blocks.activeBlock
         } catch {
             firstError = error
         }
@@ -128,8 +132,8 @@ nonisolated enum CCUsageRunner {
                 $0.date.replacingOccurrences(of: "-", with: "") == today
             }
         } catch {
-            if report.activeBlock == nil, let firstError { throw firstError }
-            if report.activeBlock == nil { throw error }
+            if report.todayBlocks.isEmpty, let firstError { throw firstError }
+            if report.todayBlocks.isEmpty, report.activeBlock == nil { throw error }
         }
         return report
     }

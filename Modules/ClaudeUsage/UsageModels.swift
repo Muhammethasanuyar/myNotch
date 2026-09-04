@@ -32,18 +32,19 @@ nonisolated enum UsageWindowKind: String, Sendable, CaseIterable {
     case fiveHour
     case sevenDay
 
-    var title: String {
+    /// "5-hour" / "Weekly", in the user's language.
+    func title(bundle: Bundle = .main) -> String {
         switch self {
-        case .fiveHour: return "5-hour"
-        case .sevenDay: return "Weekly"
+        case .fiveHour: return String(localized: "window.fiveHour", defaultValue: "5-hour", bundle: bundle)
+        case .sevenDay: return String(localized: "window.sevenDay", defaultValue: "Weekly", bundle: bundle)
         }
     }
 
     /// Fits inside a ring.
-    var badge: String {
+    func badge(bundle: Bundle = .main) -> String {
         switch self {
-        case .fiveHour: return "5h"
-        case .sevenDay: return "7d"
+        case .fiveHour: return String(localized: "window.badge.fiveHour", defaultValue: "5h", bundle: bundle)
+        case .sevenDay: return String(localized: "window.badge.sevenDay", defaultValue: "7d", bundle: bundle)
         }
     }
 

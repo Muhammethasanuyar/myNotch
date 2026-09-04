@@ -68,8 +68,13 @@ struct UsageRing: View {
                     )
                     .rotationEffect(.degrees(-90))
                     .animation(.easeOut(duration: 0.6), value: window.utilization)
-                Text("\(Int((window.utilization * 100).rounded()))%")
-                    .font(.system(size: diameter * 0.26, weight: .semibold, design: .rounded).monospacedDigit())
+                VStack(spacing: -1) {
+                    Text("\(Int((window.utilization * 100).rounded()))%")
+                        .font(.system(size: diameter * 0.26, weight: .semibold, design: .rounded).monospacedDigit())
+                    Text("used")
+                        .font(.system(size: diameter * 0.13))
+                        .foregroundStyle(.secondary)
+                }
             } else {
                 Text("—")
                     .font(.system(size: diameter * 0.3, weight: .medium))
@@ -81,13 +86,18 @@ struct UsageRing: View {
     }
 }
 
-/// The module's full interface: the two official limits, today's cost and the active block.
+/// The module's full interface: the two official limits as rings, and beside them what today
+/// cost, which models did the work and how fast the current block is burning. Every number
+/// carries its label and a tooltip: a status screen should not need decoding.
 struct ClaudeDashboardView: View {
     let service: ClaudeUsageService
     let namespace: Namespace.ID
 
+    /// Width of the label column in the details ("Today", "Models", "Burn").
+    private static let labelWidth: CGFloat = 38
+
     var body: some View {
-        HStack(alignment: .top, spacing: 16) {
+        HStack(alignment: .top, spacing: 14) {
             rings
             Rectangle()
                 .fill(.white.opacity(0.12))
@@ -102,7 +112,7 @@ struct ClaudeDashboardView: View {
     // MARK: Rings
 
     private var rings: some View {
-        HStack(alignment: .top, spacing: 12) {
+        HStack(alignment: .top, spacing: 10) {
             ring(kind: .fiveHour)
             ring(kind: .sevenDay)
         }
@@ -110,41 +120,42 @@ struct ClaudeDashboardView: View {
 
     private func ring(kind: UsageWindowKind) -> some View {
         let window = service.snapshot?[kind]
-        return VStack(spacing: 5) {
+        let remaining = window?.remaining(at: Date()).map(ClaudeUsageRules.formatRemaining)
+        return VStack(spacing: 4) {
             UsageRing(window: window, thresholds: service.thresholds, dimmed: service.isStale)
-            Text(kind.title)
-                .font(.caption2.weight(.semibold))
+            Text("\(kind.title) limit")
+                .font(.system(size: 10, weight: .semibold))
+                .lineLimit(1)
+            Text(resetLabel(window: window, remaining: remaining))
+                .font(.system(size: 9).monospacedDigit())
                 .foregroundStyle(.secondary)
-            HStack(spacing: 2) {
-                if window?.resetsAt != nil {
-                    Image(systemName: "arrow.counterclockwise")
-                        .font(.system(size: 8, weight: .semibold))
-                }
-                Text(resetLabel(for: window))
-                    .font(.system(size: 9).monospacedDigit())
-                    .lineLimit(1)
-            }
-            .foregroundStyle(.secondary)
-            .help("Time until this window resets")
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
         }
-        .frame(width: 72)
+        .frame(width: 74)
+        .help(ringHelp(kind: kind, window: window, remaining: remaining))
     }
 
-    private func resetLabel(for window: UsageWindow?) -> String {
-        guard let remaining = window?.remaining(at: Date()) else { return " " }
-        return ClaudeUsageRules.formatRemaining(remaining)
+    private func resetLabel(window: UsageWindow?, remaining: String?) -> String {
+        if let remaining { return "resets in\n\(remaining)" }
+        return window == nil ? "no data\nyet" : " "
+    }
+
+    private func ringHelp(kind: UsageWindowKind, window: UsageWindow?, remaining: String?) -> String {
+        guard let window else { return "Anthropic has not reported this limit yet" }
+        let used = Int((window.utilization * 100).rounded())
+        let reset = remaining.map { "; it resets in \($0)" } ?? ""
+        return "\(used)% of your \(kind.title.lowercased()) allowance is used\(reset)"
     }
 
     // MARK: Details
 
     private var details: some View {
-        VStack(alignment: .leading, spacing: 5) {
+        VStack(alignment: .leading, spacing: 6) {
             header
             todayLine
-            if let today = service.cost?.today, !today.modelBreakdowns.isEmpty {
-                ModelSplitBar(breakdowns: today.modelBreakdowns)
-            }
-            blockLine
+            modelsLine
+            burnLine
             Spacer(minLength: 0)
             footer
         }
@@ -158,28 +169,45 @@ struct ClaudeDashboardView: View {
                 .foregroundStyle(service.isWorking ? ClaudeStyle.accent : .white.opacity(0.6))
                 .symbolEffect(.pulse, options: .repeating, isActive: service.isWorking)
                 .matchedGeometryEffect(id: ClaudeUsageModule.markID, in: namespace)
+            // The title never wraps; whatever is short on room is the status beside it.
             Text("Claude Code")
                 .font(.headline)
-            if let plan = service.subscriptionType, !plan.isEmpty {
-                Text(plan.capitalized)
-                    .font(.system(size: 9, weight: .semibold))
-                    .padding(.horizontal, 5)
-                    .padding(.vertical, 1)
-                    .background(.white.opacity(0.14), in: Capsule())
-            }
-            Spacer(minLength: 0)
+                .lineLimit(1)
+                .fixedSize()
+                .layoutPriority(1)
+            Spacer(minLength: 4)
             Text(statusText)
                 .font(.caption2)
                 .foregroundStyle(service.isWorking ? ClaudeStyle.accent : .secondary)
                 .lineLimit(1)
+                .truncationMode(.middle)
+                .help(service.isWorking ? "Claude Code is writing to a session log right now" : "The project Claude Code last worked in")
         }
     }
 
     private var statusText: String {
         let project = service.session?.customTitle ?? service.session?.projectName
         if service.isWorking { return project.map { "Working · \($0)" } ?? "Working…" }
-        if let project { return project }
+        if let project { return "Idle · \(project)" }
         return service.hasLogs ? "Idle" : "No sessions yet"
+    }
+
+    /// "Today  9.5M tokens · $62.89": a label, the number, and a detail — or why there is none.
+    private func statLine(_ label: String, value: String, detail: String? = nil) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 5) {
+            Text(label)
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundStyle(.secondary)
+                .frame(width: Self.labelWidth, alignment: .leading)
+            Text(value)
+                .font(.subheadline.weight(.semibold).monospacedDigit())
+            if let detail {
+                Text("· \(detail)")
+                    .font(.caption.monospacedDigit())
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .lineLimit(1)
     }
 
     @ViewBuilder
@@ -187,48 +215,76 @@ struct ClaudeDashboardView: View {
         switch service.costState {
         case .ready:
             if let today = service.cost?.today {
-                Text("\(ClaudeUsageRules.formatCost(today.totalCost)) today · \(ClaudeUsageRules.formatTokens(today.totalTokens)) tokens")
-                    .font(.subheadline.monospacedDigit())
+                statLine("Today", value: "\(ClaudeUsageRules.formatTokens(today.totalTokens)) tokens", detail: costDetail(for: today))
+                    .help(costHelp(for: today))
             } else if service.cost != nil {
-                Text("Nothing spent today")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                statLine("Today", value: "nothing yet")
             } else {
-                Text("Reading cost…")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                statLine("Today", value: "reading…")
             }
         case .notInstalled:
-            Text("Cost needs ccusage · brew install ccusage")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            statLine("Today", value: "needs ccusage", detail: "brew install ccusage")
+                .help("Token counts and cost come from the ccusage tool; install it and the numbers appear")
         case .failed:
-            Text("ccusage failed · see log")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            statLine("Today", value: "ccusage failed", detail: "see log")
         case .unknown:
             EmptyView()
         }
     }
 
+    /// ccusage prices from an offline table; a model it does not know comes out as $0, which is
+    /// not the same as free, so the line says which one.
+    private func costDetail(for today: CCUsageDay) -> String {
+        if today.totalCost > 0 { return ClaudeUsageRules.formatCost(today.totalCost) }
+        // Short, because the line is narrow; the tooltip names the model.
+        let unpriced = today.modelBreakdowns.contains { $0.cost == 0 && ($0.outputTokens > 0 || $0.inputTokens > 0) }
+        return unpriced ? "no price" : "$0.00"
+    }
+
+    private func costHelp(for today: CCUsageDay) -> String {
+        let unpriced = today.modelBreakdowns.filter { $0.cost == 0 }.map { CCUsageParser.prettyModelName($0.modelName) }
+        var help = "Tokens and spend today, from ccusage (offline price table)."
+        if !unpriced.isEmpty {
+            help += " No price is known for \(unpriced.joined(separator: ", ")), so those tokens count as $0."
+        }
+        return help
+    }
+
     @ViewBuilder
-    private var blockLine: some View {
-        if let block = service.cost?.activeBlock {
-            // Short enough to survive the card's width once a burn rate and a projection appear.
-            HStack(spacing: 4) {
-                Text("\(block.startTime.formatted(date: .omitted, time: .shortened))–\(block.endTime.formatted(date: .omitted, time: .shortened))")
-                if let rate = block.burnRate?.costPerHour, rate > 0 {
-                    Text("· \(ClaudeUsageRules.formatCost(rate))/h")
+    private var modelsLine: some View {
+        if let today = service.cost?.today {
+            let shares = ModelShare.compute(today.modelBreakdowns)
+            if shares.count > 1 {
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(alignment: .firstTextBaseline, spacing: 5) {
+                        Text("Models")
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundStyle(.secondary)
+                            .frame(width: Self.labelWidth, alignment: .leading)
+                        ModelShareLegend(shares: shares)
+                    }
+                    ModelShareBar(shares: shares)
+                        .padding(.leading, Self.labelWidth + 5)
                 }
-                if let projected = block.projection?.totalCost, projected > 0 {
-                    Text("· →\(ClaudeUsageRules.formatCost(projected))")
-                }
+                .help(today.totalCost > 0
+                      ? "How today's spend splits across models"
+                      : "How today's output tokens split across models (no prices to split)")
+            } else if let only = shares.first {
+                statLine("Model", value: only.name, detail: "all of today's work")
             }
-            .font(.caption.monospacedDigit())
-            .foregroundStyle(.secondary)
-            .lineLimit(1)
-            .minimumScaleFactor(0.85)
-            .help("Active 5-hour block · spend per hour · projected spend by the time it ends")
+        }
+    }
+
+    @ViewBuilder
+    private var burnLine: some View {
+        if let block = service.cost?.activeBlock, let rate = block.burnRate,
+           let burn = ClaudeUsageRules.burnDescription(
+               tokensPerMinute: rate.tokensPerMinuteForIndicator ?? rate.tokensPerMinute,
+               costPerHour: rate.costPerHour,
+               projectedCost: block.projection?.totalCost
+           ) {
+            statLine("Burn", value: burn.value, detail: burn.detail)
+                .help("Pace of the current 5-hour block: input and output tokens per minute, spend per hour, and the spend expected by the time the block resets")
         }
     }
 
@@ -238,6 +294,16 @@ struct ClaudeDashboardView: View {
                 .font(.system(size: 9))
             Text(footerText)
                 .lineLimit(1)
+                .help(service.auth == .ok ? "The official 5-hour and weekly limits, read from Anthropic every five minutes" : footerText)
+            Spacer(minLength: 4)
+            if let plan = service.subscriptionType, !plan.isEmpty {
+                Text(plan.capitalized)
+                    .font(.system(size: 9, weight: .semibold))
+                    .padding(.horizontal, 5)
+                    .padding(.vertical, 1)
+                    .background(.white.opacity(0.14), in: Capsule())
+                    .help("Your Claude plan, as recorded in Claude Code's sign-in")
+            }
         }
         .font(.system(size: 10))
         .foregroundStyle(service.auth == .ok ? .secondary : ClaudeStyle.warning)
@@ -255,7 +321,7 @@ struct ClaudeDashboardView: View {
     private var footerText: String {
         switch service.auth {
         case .ok:
-            guard let fetched = service.snapshot?.fetchedAt else { return "Waiting for the first reading" }
+            guard let fetched = service.snapshot?.fetchedAt else { return "Waiting for Anthropic's first reading" }
             return "Limits updated \(ClaudeUsageRules.formatRemaining(Date().timeIntervalSince(fetched))) ago"
         case .signedOut:
             return "Sign in with `claude` in Terminal to see limits"
@@ -271,39 +337,53 @@ struct ClaudeDashboardView: View {
     }
 }
 
-/// Share of today's cost per model family, as one thin bar with a legend.
-struct ModelSplitBar: View {
-    let breakdowns: [CCUsageDay.ModelBreakdown]
-
-    private var segments: [(name: String, share: Double)] {
-        let byFamily = Dictionary(grouping: breakdowns, by: { CCUsageParser.modelFamily($0.modelName) })
-        let costs = byFamily.mapValues { $0.reduce(0) { $0 + $1.cost } }
-        let useTokens = costs.values.reduce(0, +) <= 0
-        let weights = useTokens
-            ? byFamily.mapValues { Double($0.reduce(0) { $0 + $1.outputTokens }) }
-            : costs
-        let total = weights.values.reduce(0, +)
-        guard total > 0 else { return [] }
-        return weights.sorted { $0.value > $1.value }.map { ($0.key, $0.value / total) }
+/// Colours for the model split, in share order.
+private enum ModelShareStyle {
+    static func color(_ index: Int) -> Color {
+        switch index {
+        case 0: return ClaudeStyle.accent
+        case 1: return .white.opacity(0.55)
+        default: return .white.opacity(0.3)
+        }
     }
+}
+
+/// "● Opus 5 74%  ● Fable 5.1 26%"
+private struct ModelShareLegend: View {
+    let shares: [ModelShare]
 
     var body: some View {
-        let parts = segments
-        VStack(alignment: .leading, spacing: 3) {
-            GeometryReader { proxy in
-                HStack(spacing: 2) {
-                    ForEach(Array(parts.enumerated()), id: \.offset) { index, part in
-                        Capsule()
-                            .fill(ClaudeStyle.accent.opacity(1 - Double(index) * 0.35))
-                            .frame(width: max(3, proxy.size.width * part.share - 2))
-                    }
+        HStack(spacing: 8) {
+            ForEach(Array(shares.prefix(3).enumerated()), id: \.offset) { index, share in
+                HStack(spacing: 3) {
+                    Circle()
+                        .fill(ModelShareStyle.color(index))
+                        .frame(width: 6, height: 6)
+                    Text("\(share.name) \(Int((share.share * 100).rounded()))%")
+                        .font(.system(size: 9).monospacedDigit())
+                        .foregroundStyle(.secondary)
                 }
             }
-            .frame(height: 4)
-            Text(parts.map { "\($0.name) \(Int(($0.share * 100).rounded()))%" }.joined(separator: " · "))
-                .font(.system(size: 9))
-                .foregroundStyle(.secondary)
-                .lineLimit(1)
         }
+        .lineLimit(1)
+    }
+}
+
+/// One thin bar split into segments, one colour per model. Drawn only for two or more models — a
+/// single segment would just look like a meter stuck at full.
+private struct ModelShareBar: View {
+    let shares: [ModelShare]
+
+    var body: some View {
+        GeometryReader { proxy in
+            HStack(spacing: 2) {
+                ForEach(Array(shares.enumerated()), id: \.offset) { index, share in
+                    Capsule()
+                        .fill(ModelShareStyle.color(index))
+                        .frame(width: max(3, (proxy.size.width - 2 * CGFloat(shares.count - 1)) * share.share))
+                }
+            }
+        }
+        .frame(height: 4)
     }
 }

@@ -203,12 +203,47 @@ nonisolated enum CCUsageParser {
         return String(format: "%04d%02d%02d", parts.year ?? 0, parts.month ?? 0, parts.day ?? 0)
     }
 
+    static let modelFamilies = ["opus", "sonnet", "haiku", "fable", "mythos"]
+
     /// Short model family for the breakdown bar: `claude-opus-4-7-20260301` → `Opus`.
     static func modelFamily(_ model: String) -> String {
         let lower = model.lowercased()
-        for family in ["opus", "sonnet", "haiku", "fable", "mythos"] where lower.contains(family) {
+        for family in modelFamilies where lower.contains(family) {
             return family.prefix(1).uppercased() + family.dropFirst()
         }
         return model
+    }
+
+    /// Family and version, the way people say it: `claude-fable-5-1` → `Fable 5.1`,
+    /// `claude-haiku-4-5-20251001` → `Haiku 4.5`, `claude-3-5-sonnet-20241022` → `Sonnet 3.5`.
+    static func prettyModelName(_ model: String) -> String {
+        var parts = model.lowercased().split(separator: "-").map(String.init)
+        if parts.first == "claude" { parts.removeFirst() }
+        if let last = parts.last, last.count == 8, last.allSatisfy(\.isNumber) { parts.removeLast() }   // release date
+        guard let family = parts.first(where: { modelFamilies.contains($0) }) else { return model }
+        let version = parts.filter { $0.allSatisfy(\.isNumber) }.joined(separator: ".")
+        let name = family.prefix(1).uppercased() + family.dropFirst()
+        return version.isEmpty ? name : "\(name) \(version)"
+    }
+}
+
+/// How today's work splits across models: by spend when the tool could price it, by output
+/// tokens when it could not — a bar of unpriced models would otherwise be all zeros.
+nonisolated struct ModelShare: Equatable, Sendable {
+    let name: String
+    /// 0…1, all shares summing to one.
+    let share: Double
+
+    static func compute(_ breakdowns: [CCUsageDay.ModelBreakdown]) -> [ModelShare] {
+        let byName = Dictionary(grouping: breakdowns, by: { CCUsageParser.prettyModelName($0.modelName) })
+        let costs = byName.mapValues { $0.reduce(0) { $0 + $1.cost } }
+        let weights = costs.values.reduce(0, +) > 0
+            ? costs
+            : byName.mapValues { Double($0.reduce(0) { $0 + $1.outputTokens }) }
+        let total = weights.values.reduce(0, +)
+        guard total > 0 else { return [] }
+        return weights
+            .map { ModelShare(name: $0.key, share: $0.value / total) }
+            .sorted { $0.share > $1.share || ($0.share == $1.share && $0.name < $1.name) }
     }
 }

@@ -279,6 +279,32 @@ final class CCUsageParserTests: XCTestCase {
         XCTAssertEqual(CCUsageParser.modelFamily("claude-haiku-4-5-20251001"), "Haiku")
         XCTAssertEqual(CCUsageParser.modelFamily("mystery"), "mystery")
     }
+
+    func testPrettyModelNames() {
+        XCTAssertEqual(CCUsageParser.prettyModelName("claude-opus-5"), "Opus 5")
+        XCTAssertEqual(CCUsageParser.prettyModelName("claude-fable-5-1"), "Fable 5.1")
+        XCTAssertEqual(CCUsageParser.prettyModelName("claude-haiku-4-5-20251001"), "Haiku 4.5", "the release date is not part of the name")
+        XCTAssertEqual(CCUsageParser.prettyModelName("claude-3-5-sonnet-20241022"), "Sonnet 3.5", "older names put the version first")
+        XCTAssertEqual(CCUsageParser.prettyModelName("mystery-model"), "mystery-model")
+    }
+
+    func testModelSharesSplitBySpendAndFallBackToTokens() {
+        let priced = [
+            CCUsageDay.ModelBreakdown(modelName: "claude-opus-5", outputTokens: 100, cost: 30),
+            CCUsageDay.ModelBreakdown(modelName: "claude-fable-5-1", outputTokens: 900, cost: 10)
+        ]
+        let bySpend = ModelShare.compute(priced)
+        XCTAssertEqual(bySpend.map(\.name), ["Opus 5", "Fable 5.1"], "spend decides when the tool could price the work")
+        XCTAssertEqual(bySpend[0].share, 0.75, accuracy: 0.0001)
+
+        let unpriced = priced.map { CCUsageDay.ModelBreakdown(modelName: $0.modelName, outputTokens: $0.outputTokens, cost: 0) }
+        let byTokens = ModelShare.compute(unpriced)
+        XCTAssertEqual(byTokens.map(\.name), ["Fable 5.1", "Opus 5"], "without prices, output tokens decide")
+        XCTAssertEqual(byTokens[0].share, 0.9, accuracy: 0.0001)
+
+        XCTAssertEqual(ModelShare.compute([]), [])
+        XCTAssertEqual(ModelShare.compute([CCUsageDay.ModelBreakdown(modelName: "claude-fable-5-1")]), [], "nothing done means no shares")
+    }
 }
 
 final class CCUsageRunnerTests: XCTestCase {
@@ -405,6 +431,17 @@ final class ClaudeUsageRulesTests: XCTestCase {
         XCTAssertEqual(ClaudeUsageRules.formatTokens(48_705), "48K")
         XCTAssertEqual(ClaudeUsageRules.formatTokens(64_153_533), "64.2M")
         XCTAssertEqual(ClaudeUsageRules.formatTokens(999), "999")
+    }
+
+    func testBurnDescription() {
+        XCTAssertNil(ClaudeUsageRules.burnDescription(tokensPerMinute: nil, costPerHour: 10, projectedCost: 20))
+        XCTAssertNil(ClaudeUsageRules.burnDescription(tokensPerMinute: 0, costPerHour: 10, projectedCost: 20))
+        let unpriced = ClaudeUsageRules.burnDescription(tokensPerMinute: 3279.57, costPerHour: 0, projectedCost: 0)
+        XCTAssertEqual(unpriced?.value, "3K tok/min")
+        XCTAssertNil(unpriced?.detail, "no money to talk about")
+        let priced = ClaudeUsageRules.burnDescription(tokensPerMinute: 12_400, costPerHour: 32.22, projectedCost: 151.4)
+        XCTAssertEqual(priced?.value, "12K tok/min")
+        XCTAssertEqual(priced?.detail, "$32.22/h · ≈$151 by reset")
     }
 
     func testCompactLabelPrefersTheLimit() {

@@ -139,6 +139,17 @@ nonisolated enum ClaudeUsageRules {
         }
     }
 
+    /// The burn line: how fast the current block is going, and where that leads.
+    /// - Returns: the headline ("3.3K tok/min") and, when the tool could price it, the money part.
+    static func burnDescription(tokensPerMinute: Double?, costPerHour: Double?, projectedCost: Double?) -> (value: String, detail: String?)? {
+        guard let tokensPerMinute, tokensPerMinute > 0 else { return nil }
+        let value = "\(formatTokens(Int(tokensPerMinute.rounded()))) tok/min"
+        guard let costPerHour, costPerHour > 0 else { return (value, nil) }
+        var detail = "\(formatCost(costPerHour))/h"
+        if let projectedCost, projectedCost > 0 { detail += " · ≈\(formatCost(projectedCost)) by reset" }
+        return (value, detail)
+    }
+
     /// Ring colour by fill: calm, then warning, then critical.
     static func level(for utilization: Double, thresholds: UsageThresholds) -> Int {
         if utilization >= thresholds.critical { return 2 }

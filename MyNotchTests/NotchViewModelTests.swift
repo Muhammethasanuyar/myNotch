@@ -87,9 +87,25 @@ final class NotchViewModelTests: XCTestCase {
         XCTAssertTrue(model.state.isExpanded, "a brief excursion must not close the card")
     }
 
-    func testACursorRestingInTheGraceZoneEarnsAnotherPeriod() async throws {
+    func testACursorRestingInTheGraceZoneGetsOneGracePeriodOnly() async throws {
         let model = makeModel()
-        model.closeDelay = 0.05
+        model.closeDelay = 0.15
+        model.graceRect = CGRect(x: 0, y: 0, width: 100, height: 100)
+        model.cursorLocation = { CGPoint(x: 50, y: 50) }
+        model.hoverChanged(true)
+        try await Task.sleep(for: .milliseconds(100))
+        XCTAssertTrue(model.state.isExpanded)
+
+        model.hoverChanged(false)
+        try await Task.sleep(for: .milliseconds(60))
+        XCTAssertTrue(model.state.isExpanded, "hovering just outside the card is not leaving yet")
+        try await Task.sleep(for: .milliseconds(200))
+        XCTAssertEqual(model.state, .closed, "but the grace period is not renewed")
+    }
+
+    func testLeavingTheGraceZoneClosesAtOnce() async throws {
+        let model = makeModel()
+        model.closeDelay = 1.0
         model.graceRect = CGRect(x: 0, y: 0, width: 100, height: 100)
         var cursor = CGPoint(x: 50, y: 50)
         model.cursorLocation = { cursor }
@@ -98,12 +114,25 @@ final class NotchViewModelTests: XCTestCase {
         XCTAssertTrue(model.state.isExpanded)
 
         model.hoverChanged(false)
-        try await Task.sleep(for: .milliseconds(150))
-        XCTAssertTrue(model.state.isExpanded, "hovering just outside the card is not leaving")
-
+        try await Task.sleep(for: .milliseconds(60))
+        XCTAssertTrue(model.state.isExpanded)
         cursor = CGPoint(x: 500, y: 500)
-        try await Task.sleep(for: .milliseconds(150))
-        XCTAssertEqual(model.state, .closed, "once the cursor is really gone the next period closes it")
+        try await Task.sleep(for: .milliseconds(120))
+        XCTAssertEqual(model.state, .closed, "leaving the zone must not wait for the deadline")
+    }
+
+    func testLeavingStraightPastTheGraceZoneClosesImmediately() async throws {
+        let model = makeModel()
+        model.closeDelay = 1.0
+        model.graceRect = CGRect(x: 0, y: 0, width: 100, height: 100)
+        model.cursorLocation = { CGPoint(x: 500, y: 500) }
+        model.hoverChanged(true)
+        try await Task.sleep(for: .milliseconds(100))
+        XCTAssertTrue(model.state.isExpanded)
+
+        model.hoverChanged(false)
+        try await Task.sleep(for: .milliseconds(50))
+        XCTAssertEqual(model.state, .closed)
     }
 
     func testTheGraceZoneOnlyMattersWhileExpanded() async throws {

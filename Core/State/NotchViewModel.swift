@@ -14,9 +14,11 @@ final class NotchViewModel {
 
     /// Time the cursor must rest on the surface before it expands.
     var hoverDelay: TimeInterval = 0.15
-    /// Grace period after the cursor leaves the expanded surface before it closes; coming back in
-    /// time keeps it open, and a cursor resting inside `graceRect` earns another period.
-    var closeDelay: TimeInterval = 1.5
+    /// Longest the expanded surface lingers once the cursor has left it for the surrounding grace
+    /// zone; coming back in time keeps it open. Leaving the zone closes it at once.
+    var closeDelay: TimeInterval = 0.8
+    /// How often the cursor is checked while it lingers in the grace zone.
+    static let graceCheckInterval: Duration = .milliseconds(40)
     /// Screen zone around the expanded surface where the cursor still counts as on it. Set by the
     /// window layer; `nil` means only the drawn shape counts.
     var graceRect: CGRect?
@@ -51,10 +53,12 @@ final class NotchViewModel {
         } else {
             hoverTask = Task { [weak self] in
                 guard let self else { return }
-                repeat {
-                    try? await Task.sleep(for: .seconds(closeDelay))
+                // Inside the grace zone the surface lingers until the deadline; beyond it, it closes now.
+                let deadline = ContinuousClock.now + .seconds(closeDelay)
+                while isCursorInGraceZone, ContinuousClock.now < deadline {
+                    try? await Task.sleep(for: Self.graceCheckInterval)
                     guard !Task.isCancelled, !isHovering else { return }
-                } while isCursorInGraceZone
+                }
                 if let target = NotchTransition.stateOnHoverExit(from: state, hasLiveContent: hasLiveContent) {
                     banner = nil
                     state = target
@@ -63,9 +67,11 @@ final class NotchViewModel {
         }
     }
 
-    /// Whether the cursor is lingering just outside the expanded surface, which does not count as leaving.
+    /// Whether the cursor is still near the expanded surface. Without a zone (Debug Preview, tests)
+    /// there is no way to tell, so the grace period runs in full.
     private var isCursorInGraceZone: Bool {
-        guard state.isExpanded, let graceRect else { return false }
+        guard state.isExpanded else { return false }
+        guard let graceRect else { return true }
         return graceRect.contains(cursorLocation())
     }
 

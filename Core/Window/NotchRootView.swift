@@ -120,7 +120,7 @@ struct NotchRootView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                 .transition(NotchTransitions.expandedContent)
             if showsSwitcher {
-                NotchScreenSwitcher(screens: screens, activeID: moduleID) { model.expand(moduleID: $0) }
+                NotchScreenSwitcher(screens: screens, activeID: content.activeScreenID(moduleID), onSelect: content.selectScreen)
                     .frame(height: NotchLayout.switcherHeight - 6)
                     .padding(.horizontal, radii.ear + NotchLayout.expandedContentInset)
                     .padding(.bottom, NotchLayout.expandedContentInset - 6)

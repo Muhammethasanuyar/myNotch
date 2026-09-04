@@ -7,12 +7,12 @@ import SwiftUI
 struct NotchScreenSwitcher: View {
     let screens: [ModuleScreen]
     let activeID: String
-    let onSelect: (String) -> Void
+    let onSelect: (ModuleScreen) -> Void
 
     var body: some View {
         HStack(spacing: 5) {
             ForEach(screens) { screen in
-                NotchScreenPill(screen: screen, isActive: screen.id == activeID) { onSelect(screen.id) }
+                NotchScreenPill(screen: screen, isActive: screen.id == activeID) { onSelect(screen) }
             }
             Spacer(minLength: 0)
         }

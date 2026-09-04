@@ -7,8 +7,11 @@ import Foundation
 /// "what is live on this Mac right now": Spotify's own icon while Spotify runs, and nothing while
 /// it does not.
 nonisolated struct ModuleScreen: Identifiable, Equatable, Sendable {
-    /// The module's id, so choosing a screen is just `NotchState.expanded(moduleID:)`.
+    /// Unique across every module. A module with one screen uses its own id; one with several
+    /// (the media module has a screen per running player) derives an id per screen.
     let id: String
+    /// The module that owns the screen and knows what to do when it is picked.
+    let moduleID: String
     /// Name of the screen. It may follow what the module is doing — "Spotify" rather than "Media".
     let title: String
     /// SF Symbol used when there is no app icon to borrow.
@@ -18,8 +21,9 @@ nonisolated struct ModuleScreen: Identifiable, Equatable, Sendable {
     /// Whether the module has something to show right now. An unavailable screen is left out.
     let isAvailable: Bool
 
-    init(id: String, title: String, symbolName: String, appBundleIdentifier: String? = nil, isAvailable: Bool = true) {
+    init(id: String, moduleID: String, title: String, symbolName: String, appBundleIdentifier: String? = nil, isAvailable: Bool = true) {
         self.id = id
+        self.moduleID = moduleID
         self.title = title
         self.symbolName = symbolName
         self.appBundleIdentifier = appBundleIdentifier
@@ -32,6 +36,8 @@ nonisolated enum ModuleScreenList {
     /// ones with something to show, plus whichever is on screen — a card must not lose its own tab
     /// because its app went quiet while the user was reading it.
     static func visible(_ screens: [ModuleScreen], activeID: String?) -> [ModuleScreen] {
+        // `activeID` is a screen id, not a module id: a module with several screens shows one.
+
         screens.filter { $0.isAvailable || $0.id == activeID }
     }
 

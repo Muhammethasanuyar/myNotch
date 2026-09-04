@@ -16,6 +16,8 @@ final class MediaController {
     /// Players that were running at the last refresh. Kept as state rather than asked per call:
     /// a SwiftUI body runs many times during a morph and each ask walks the process list.
     private(set) var runningPlayerIDs: Set<String> = []
+    /// The player the user picked in the screen switcher, while it is still running.
+    private(set) var focusedProviderID: String?
 
     /// Called after every state change with the previous value, so the module can announce a track change.
     var onStateChange: (@MainActor (MediaState?, MediaState?) -> Void)?
@@ -32,6 +34,7 @@ final class MediaController {
     /// How many expanded players are on screen (the notch and the Debug Preview can both show one).
     @ObservationIgnored private var detailViewers = 0
     @ObservationIgnored private var refreshTask: Task<Void, Never>?
+    @ObservationIgnored private var workspaceObservers: [NSObjectProtocol] = []
 
     init(providers: [any MediaProvider]) {
         self.providers = providers
@@ -63,6 +66,11 @@ final class MediaController {
 
     var hasRunningPlayer: Bool { !runningPlayerIDs.isEmpty }
 
+    /// Running players in registration order, so the switcher's pills never swap places.
+    var runningProviders: [any MediaProvider] {
+        providers.filter { runningPlayerIDs.contains($0.id) }
+    }
+
     // MARK: Lifecycle
 
     func start() {
@@ -77,8 +85,23 @@ final class MediaController {
                 }
             })
         }
+        observePlayerApps()
         startPolling()
         refresh()
+    }
+
+    /// A player that just launched or quit belongs in (or out of) the switcher at once; waiting for
+    /// the next poll would take up to a minute while nothing is playing.
+    private func observePlayerApps() {
+        let center = NSWorkspace.shared.notificationCenter
+        let bundleIDs = Set(providers.map(\.bundleIdentifier))
+        for name in [NSWorkspace.didLaunchApplicationNotification, NSWorkspace.didTerminateApplicationNotification] {
+            workspaceObservers.append(center.addObserver(forName: name, object: nil, queue: .main) { [weak self] note in
+                let bundleID = (note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication)?.bundleIdentifier
+                guard let bundleID, bundleIDs.contains(bundleID) else { return }
+                MainActor.assumeIsolated { self?.refresh() }
+            })
+        }
     }
 
     func stop() {
@@ -89,7 +112,10 @@ final class MediaController {
         refreshTask?.cancel()
         refreshTask = nil
         lyrics.clear()
+        workspaceObservers.forEach { NSWorkspace.shared.notificationCenter.removeObserver($0) }
+        workspaceObservers.removeAll()
         runningPlayerIDs = []
+        focusedProviderID = nil
         updateState(nil)
     }
 
@@ -132,12 +158,28 @@ final class MediaController {
         }
     }
 
+    /// The user picked a player in the screen switcher: read it now, and let it keep the card even
+    /// with nothing loaded — otherwise the next refresh would hand the card straight back to
+    /// whichever player happens to have a track in it.
+    func focus(providerID: String) {
+        guard providers.contains(where: { $0.id == providerID }) else { return }
+        focusedProviderID = providerID
+        activeProviderID = providerID
+        refresh(preferring: providerID)
+    }
+
     private func performRefresh(preferring providerID: String?) async {
         let running = orderedProviders(preferring: providerID).filter { $0.isRunning() }
         runningPlayerIDs = Set(running.map(\.id))
+        if let focused = focusedProviderID, !runningPlayerIDs.contains(focused) {
+            focusedProviderID = nil   // the player the user picked is gone
+        }
+        let candidates = focusedProviderID.flatMap { focused in
+            running.first { $0.id == focused }.map { [$0] }
+        } ?? running
         var denied = false
 
-        for provider in running {
+        for provider in candidates {
             do {
                 if let state = try await provider.fetch(), state.hasContent {
                     permission = .granted
@@ -162,7 +204,8 @@ final class MediaController {
             return
         }
         if permission == .unknown { permission = .granted }
-        activeProviderID = nil
+        // A focused player still owns the card, so its screen stays selected and named.
+        activeProviderID = focusedProviderID
         updateState(nil)
     }
 

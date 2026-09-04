@@ -16,17 +16,37 @@ final class MediaModule: NotchModule {
     let controller: MediaController
     @ObservationIgnored private var context: ModuleContext?
 
-    /// Named after the player itself ("Spotify"), with that app's icon, and offered as soon as the
-    /// app is up — before anything plays.
-    var screen: ModuleScreen {
-        let provider = controller.displayProvider
-        return ModuleScreen(
-            id: id,
-            title: provider?.displayName ?? displayName,
-            symbolName: provider?.symbolName ?? "music.note",
-            appBundleIdentifier: provider?.bundleIdentifier,
-            isAvailable: controller.hasRunningPlayer
-        )
+    /// One screen per running player, each named after its app and drawn with that app's icon:
+    /// opening Music adds a screen straight away, before anything plays.
+    var screens: [ModuleScreen] {
+        controller.runningProviders.map { provider in
+            ModuleScreen(
+                id: screenID(for: provider.id),
+                moduleID: id,
+                title: provider.displayName,
+                symbolName: provider.symbolName,
+                appBundleIdentifier: provider.bundleIdentifier
+            )
+        }
+    }
+
+    var activeScreenID: String {
+        screenID(for: controller.displayProvider?.id ?? "")
+    }
+
+    func selectScreen(_ screenID: String) {
+        guard let providerID = providerID(fromScreenID: screenID) else { return }
+        controller.focus(providerID: providerID)
+    }
+
+    /// `media` + the player, so two running players cannot share one pill.
+    private func screenID(for providerID: String) -> String { "\(id).\(providerID)" }
+
+    private func providerID(fromScreenID screenID: String) -> String? {
+        let prefix = "\(id)."
+        guard screenID.hasPrefix(prefix) else { return nil }
+        let providerID = String(screenID.dropFirst(prefix.count))
+        return providerID.isEmpty ? nil : providerID
     }
 
     init(controller: MediaController = MediaController()) {

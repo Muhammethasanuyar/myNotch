@@ -93,12 +93,15 @@ defaults write com.emre.mynotch spotifyClientID <client-id>
 
 ### Ekran değiştirici (2026-09-04)
 
-1. **Şerit görünür:** Spotify (ya da Music) açıkken notch'a hover et → kartın altında iki hap: aktif ekranın adı yazılı ve vurgulu, diğeri yalnızca ikon. Spotify hapında **Spotify'ın kendi ikonu** olmalı, Claude'unkinde ✳.
-2. **Değiştirme:** soluk hapa tıkla → kart kapanmadan o modülün ekranına geçer, hap adıyla vurgulanır. `scripts/run.sh --args -debugState expanded -debugModule claude` ile hangi ekranın açılacağı zorlanabilir.
-3. **Çalışan uygulama:** Spotify'ı kapat → bir sonraki yenilemede (en geç 60 sn, expanded'dayken 2 sn) Spotify hapı listeden düşer; tek ekran kalırsa şerit hiç çizilmez ve kart 26 pt kısalır. Spotify'ı aç → hap geri gelir (parça çalması gerekmez).
-4. **Açık ekran kaybolmaz:** Spotify ekranındayken Spotify'ı kapat → hap yerinde kalır (okurken kartın kendi sekmesi kaybolmamalı), başka ekrana geçince listeden düşer.
-5. **Banner ile birlikte:** `scripts/run.sh --args -debugState expanded -debugModule claude -debugBanner YES` → üstte banner şeridi, altta ekran şeridi; hiçbiri içeriğin üstüne binmez.
-6. **Tıklama geçirgenliği bozulmadı:** kartın dışındaki şeffaf alana tıkla → alttaki uygulamaya geçer ve notch kapanır; menü bar öğeleri tıklanabilir kalır.
+1. **Şerit görünür:** Spotify (ya da Music) açıkken notch'a hover et → kartın altında haplar: aktif ekranın adı yazılı ve vurgulu, diğerleri yalnızca ikon. Spotify hapında **Spotify'ın kendi ikonu** olmalı, Claude'unkinde ✳.
+2. **Her çalışan oynatıcı ayrı hap:** Spotify ve Apple Music'i birlikte aç → şeritte **iki ayrı müzik hapı** olmalı (yeşil Spotify + kırmızı Music ikonu), üstüne gelince adları görünür. Sadece biri açıksa tek hap.
+3. **Yeni açılan uygulama anında görünür:** notch açıkken Apple Music'i başlat → hapı ~1 sn içinde belirir; çalmaya başlamasını beklemek gerekmez (`NSWorkspace` açılma bildirimi).
+4. **Değiştirme:** soluk hapa tıkla → kart kapanmadan o ekrana geçer, hap adıyla vurgulanır. `scripts/run.sh --args -debugState expanded -debugModule claude` ile hangi ekranın açılacağı zorlanabilir.
+5. **Boş oynatıcıyı seçmek:** Spotify çalarken Music hapına tıkla (Music'te bir şey yüklü değilken) → kart "Nothing playing in Music" gösterir ve **Spotify'a geri dönmez**; Spotify hapına tıklayınca parça geri gelir.
+6. **Çalışan uygulama:** Spotify'ı kapat → hapı düşer (kapanma bildirimi anında yakalanır); tek ekran kalırsa şerit hiç çizilmez ve kart 26 pt kısalır.
+7. **Açık ekran kaybolmaz:** Music ekranındayken Music'i kapat → hap yerinde kalır (okurken kartın kendi sekmesi kaybolmamalı), başka ekrana geçince listeden düşer ve sabitleme çözülür.
+8. **Banner ile birlikte:** `scripts/run.sh --args -debugState expanded -debugModule claude -debugBanner YES` → üstte banner şeridi, altta ekran şeridi; hiçbiri içeriğin üstüne binmez.
+9. **Tıklama geçirgenliği bozulmadı:** kartın dışındaki şeffaf alana tıkla → alttaki uygulamaya geçer ve notch kapanır; menü bar öğeleri tıklanabilir kalır.
 
 ### Debug Preview
 

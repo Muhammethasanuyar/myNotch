@@ -17,13 +17,18 @@ protocol NotchModule: AnyObject {
     /// Turned off from Settings; a disabled module never wins the notch and its events are dropped.
     var isEnabled: Bool { get set }
     var activity: ModuleActivity { get }
-    /// How the module appears in the expanded card's screen switcher.
-    var screen: ModuleScreen { get }
+    /// How the module appears in the expanded card's screen switcher. Most modules offer one
+    /// screen; the media module offers one per running player.
+    var screens: [ModuleScreen] { get }
+    /// Which of its screens the module is showing.
+    var activeScreenID: String { get }
 
     /// Called once when the module is registered and enabled. Start observers/timers here.
     func start(context: ModuleContext)
     /// Called when the module is disabled or the app shuts down. Stop everything.
     func stop()
+    /// The user picked one of the module's screens in the switcher.
+    func selectScreen(_ screenID: String)
 
     /// Left of the housing in the compact state.
     func compactLeading(namespace: Namespace.ID) -> AnyView
@@ -36,9 +41,13 @@ protocol NotchModule: AnyObject {
 }
 
 extension NotchModule {
-    var screen: ModuleScreen {
-        ModuleScreen(id: id, title: displayName, symbolName: "square.on.square", isAvailable: isEnabled)
+    var screens: [ModuleScreen] {
+        [ModuleScreen(id: id, moduleID: id, title: displayName, symbolName: "square.on.square", isAvailable: isEnabled)]
     }
+
+    var activeScreenID: String { id }
+
+    func selectScreen(_ screenID: String) {}
 
     func compactLeading(namespace: Namespace.ID) -> AnyView { AnyView(EmptyView()) }
     func compactTrailing(namespace: Namespace.ID) -> AnyView { AnyView(EmptyView()) }

@@ -60,7 +60,7 @@ struct MediaExpandedView: View {
             } else if let state = controller.state {
                 player(for: state)
             } else {
-                MediaIdleView()
+                MediaIdleView(playerName: controller.displayProvider?.displayName)
             }
         }
         // While the player is on screen the controller re-anchors the playhead every couple of
@@ -342,15 +342,20 @@ struct MediaPermissionView: View {
 
 /// Nothing is playing, but the user expanded the notch anyway.
 struct MediaIdleView: View {
+    /// The player the card is showing, when the user picked one that has nothing loaded.
+    var playerName: String?
+
     var body: some View {
         VStack(spacing: 6) {
             Image(systemName: "music.note")
                 .font(.title2)
-            Text("Nothing playing")
+            Text(playerName.map { "Nothing playing in \($0)" } ?? "Nothing playing")
                 .font(.headline)
-            Text("Start Spotify or Music")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            if playerName == nil {
+                Text("Start Spotify or Music")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .foregroundStyle(.white)

@@ -12,6 +12,10 @@ struct NotchContentProvider {
     var popup: @MainActor (NotchEvent, Namespace.ID) -> AnyView
     /// The screens the expanded card can switch between; the engine draws the switcher itself.
     var screens: @MainActor (_ activeModuleID: String) -> [ModuleScreen] = { _ in [] }
+    /// Which screen of the expanded module is showing — a module can own more than one.
+    var activeScreenID: @MainActor (_ activeModuleID: String) -> String = { $0 }
+    /// The user picked a screen; the manager focuses it and puts its module on the card.
+    var selectScreen: @MainActor (ModuleScreen) -> Void = { _ in }
 
     static var empty: NotchContentProvider {
         NotchContentProvider(

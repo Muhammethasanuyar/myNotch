@@ -57,9 +57,22 @@ final class ModuleManager {
         resolveActiveModule()
     }
 
-    /// The switcher's entries: enabled modules with something to show, plus the one on screen.
-    func screens(activeID: String?) -> [ModuleScreen] {
-        ModuleScreenList.visible(modules.filter(\.isEnabled).map(\.screen), activeID: activeID)
+    /// The switcher's entries: every screen of every enabled module that has something to show,
+    /// plus the one on the card.
+    func screens(activeScreenID: String?) -> [ModuleScreen] {
+        ModuleScreenList.visible(modules.filter(\.isEnabled).flatMap(\.screens), activeID: activeScreenID)
+    }
+
+    /// The screen the expanded card is showing: the module itself says which of its screens that is.
+    func activeScreenID(forModule moduleID: String) -> String {
+        module(id: moduleID)?.activeScreenID ?? moduleID
+    }
+
+    /// The user picked a screen: focus it inside its module and put that module on the card.
+    func selectScreen(_ screen: ModuleScreen) {
+        guard let module = module(id: screen.moduleID), module.isEnabled else { return }
+        module.selectScreen(screen.id)
+        model.expand(moduleID: module.id)
     }
 
     var snapshots: [ModuleSnapshot] {
@@ -95,8 +108,15 @@ final class ModuleManager {
                 return AnyView(NotchEventRow(event: event))
             },
             // Read while the card renders, so the strip follows what is running.
-            screens: { [weak self] activeID in
-                self?.screens(activeID: activeID) ?? []
+            screens: { [weak self] activeModuleID in
+                guard let self else { return [] }
+                return screens(activeScreenID: activeScreenID(forModule: activeModuleID))
+            },
+            activeScreenID: { [weak self] activeModuleID in
+                self?.activeScreenID(forModule: activeModuleID) ?? activeModuleID
+            },
+            selectScreen: { [weak self] screen in
+                self?.selectScreen(screen)
             }
         )
     }

@@ -2,8 +2,8 @@ import XCTest
 @testable import MyNotch
 
 final class ModuleScreenTests: XCTestCase {
-    private func screen(_ id: String, available: Bool = true) -> ModuleScreen {
-        ModuleScreen(id: id, title: id.capitalized, symbolName: "circle", isAvailable: available)
+    private func screen(_ id: String, moduleID: String? = nil, available: Bool = true) -> ModuleScreen {
+        ModuleScreen(id: id, moduleID: moduleID ?? id, title: id.capitalized, symbolName: "circle", isAvailable: available)
     }
 
     func testOnlyAvailableScreensAreOffered() {
@@ -24,6 +24,17 @@ final class ModuleScreenTests: XCTestCase {
         let screens = [screen("claude"), screen("media"), screen("demo")]
         XCTAssertEqual(ModuleScreenList.visible(screens, activeID: "demo").map(\.id), ["claude", "media", "demo"],
                        "icons must not jump around as availability changes")
+    }
+
+    func testOneModuleCanOfferSeveralScreens() {
+        let screens = [
+            screen("claude"),
+            screen("media.spotify", moduleID: "media"),
+            screen("media.music", moduleID: "media")
+        ]
+        let visible = ModuleScreenList.visible(screens, activeID: "media.music")
+        XCTAssertEqual(visible.map(\.id), ["claude", "media.spotify", "media.music"])
+        XCTAssertEqual(visible.filter { $0.moduleID == "media" }.count, 2, "a player each, not one pill for both")
     }
 
     func testASingleScreenNeedsNoSwitcher() {

@@ -22,8 +22,8 @@ final class DemoModule: NotchModule {
 
     /// Listed only once the Debug Preview makes it live: the switcher should show real screens,
     /// not the test harness.
-    var screen: ModuleScreen {
-        ModuleScreen(id: id, title: displayName, symbolName: "wand.and.stars", isAvailable: activity > .idle)
+    var screens: [ModuleScreen] {
+        [ModuleScreen(id: id, moduleID: id, title: displayName, symbolName: "wand.and.stars", isAvailable: activity > .idle)]
     }
 
     func start(context: ModuleContext) {

@@ -19,6 +19,8 @@ protocol MediaProvider: Sendable {
     /// How the favourite button should behave for this player right now.
     var favoriteSupport: MediaFavoriteSupport { get }
 
+    /// Whether the app is up. A requirement, not just an extension, so tests can answer it.
+    func isRunning() -> Bool
     /// Current playback, or `nil` when the app is stopped or has nothing loaded.
     func fetch() async throws -> MediaState?
     func send(_ command: MediaCommand) async throws

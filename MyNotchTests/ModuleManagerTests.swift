@@ -41,8 +41,14 @@ private final class StubModule: NotchModule {
         context?.post(event)
     }
 
-    var screen: ModuleScreen {
-        ModuleScreen(id: id, title: displayName, symbolName: "circle", appBundleIdentifier: "com.example.\(id)", isAvailable: isAvailable)
+    private(set) var selectedScreenID: String?
+
+    var screens: [ModuleScreen] {
+        [ModuleScreen(id: id, moduleID: id, title: displayName, symbolName: "circle", appBundleIdentifier: "com.example.\(id)", isAvailable: isAvailable)]
+    }
+
+    func selectScreen(_ screenID: String) {
+        selectedScreenID = screenID
     }
 
     func expandedView(namespace: Namespace.ID) -> AnyView {
@@ -176,13 +182,37 @@ final class ModuleManagerTests: XCTestCase {
         manager.register(media)
         manager.register(off)
 
-        XCTAssertEqual(manager.screens(activeID: "claude").map(\.id), ["claude"])
+        XCTAssertEqual(manager.screens(activeScreenID: "claude").map(\.id), ["claude"])
 
         media.isAvailable = true
-        XCTAssertEqual(manager.screens(activeID: "claude").map(\.id), ["claude", "media"], "a player that just started earns a tab")
+        XCTAssertEqual(manager.screens(activeScreenID: "claude").map(\.id), ["claude", "media"], "a player that just started earns a tab")
 
         media.isAvailable = false
-        XCTAssertEqual(manager.screens(activeID: "media").map(\.id), ["claude", "media"], "the screen on show keeps its tab")
+        XCTAssertEqual(manager.screens(activeScreenID: "media").map(\.id), ["claude", "media"], "the screen on show keeps its tab")
+    }
+
+    func testPickingAScreenFocusesItsModuleAndPutsItOnTheCard() {
+        let (manager, model) = makeManager()
+        let media = StubModule(id: "media")
+        manager.register(media)
+        manager.register(StubModule(id: "claude"))
+        model.expand(moduleID: "claude")
+
+        manager.selectScreen(ModuleScreen(id: "media.music", moduleID: "media", title: "Music", symbolName: "music.note"))
+
+        XCTAssertEqual(media.selectedScreenID, "media.music", "the module decides what its own screen means")
+        XCTAssertEqual(model.state, .expanded(moduleID: "media"))
+    }
+
+    func testPicksForDisabledModulesAreIgnored() {
+        let (manager, model) = makeManager()
+        let media = StubModule(id: "media", isEnabled: false)
+        manager.register(media)
+
+        manager.selectScreen(ModuleScreen(id: "media", moduleID: "media", title: "Media", symbolName: "circle"))
+
+        XCTAssertNil(media.selectedScreenID)
+        XCTAssertEqual(model.state, .closed)
     }
 
     func testTheContentProviderHandsTheEngineTheSameScreens() {

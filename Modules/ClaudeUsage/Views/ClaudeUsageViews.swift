@@ -56,7 +56,7 @@ struct UsageRing: View {
     let thresholds: UsageThresholds
     let now: Date
     var isWorking = false
-    var diameter: CGFloat = 62
+    var diameter: CGFloat = 58
     var dimmed = false
 
     @State private var appeared = false
@@ -159,7 +159,7 @@ struct ClaudeDashboardView: View {
     // MARK: Rings and blocks
 
     private func leftColumn(at now: Date) -> some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 6) {
             HStack(alignment: .top, spacing: 12) {
                 ring(kind: .fiveHour, at: now)
                 ring(kind: .sevenDay, at: now)
@@ -182,7 +182,7 @@ struct ClaudeDashboardView: View {
     private func ring(kind: UsageWindowKind, at now: Date) -> some View {
         let window = service.snapshot?[kind]
         let remaining = window?.remaining(at: now).map { ClaudeUsageRules.formatRemaining($0) }
-        return VStack(spacing: 6) {
+        return VStack(spacing: 4) {
             UsageRing(
                 window: window,
                 kind: kind,
@@ -552,9 +552,11 @@ private extension View {
 
 // MARK: - Charts
 
-/// Today's 5-hour blocks laid on a 24-hour strip: each block sits where it happened, its height is
-/// its share of the busiest block, the active one glows in the accent and breathes while Claude
-/// works, and a thin marker tracks the time of day. Bars grow from the baseline when the card opens.
+/// Today's 5-hour blocks laid on a 24-hour strip: each block sits where it happened, with its token
+/// count written inside, the active one in the accent, and a thin marker tracking the time of day.
+/// Constant height on purpose — a bar chart made a block that had just begun look like nothing had
+/// happened, while the number says exactly what did. Segments grow out of their start hour when
+/// the card opens.
 private struct BlocksChart: View {
     let blocks: [CCUsageBlock]
     let activeID: String?
@@ -564,51 +566,65 @@ private struct BlocksChart: View {
 
     @State private var appeared = false
 
-    private static let barsHeight: CGFloat = 20
+    private static let stripHeight: CGFloat = 12
     private static let hoursInDay: Double = 24
 
     var body: some View {
         let dayStart = Calendar.current.startOfDay(for: now)
-        let maxTokens = max(1, blocks.map(\.totalTokens).max() ?? 1)
         let nowHour = Self.hour(of: now, dayStart: dayStart)
-        VStack(spacing: 3) {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(String(localized: "chart.blocks", defaultValue: "today's 5-hour blocks"))
+                .font(.system(size: 8, weight: .medium))
+                .foregroundStyle(Color.white.opacity(highlighted ? 0.8 : 0.4))
+                .lineLimit(1)
             GeometryReader { proxy in
-                ZStack(alignment: .bottomLeading) {
+                ZStack(alignment: .leading) {
                     Capsule()
-                        .fill(Color.white.opacity(0.08))
-                        .frame(height: 2)
+                        .fill(Color.white.opacity(0.07))
+                        .frame(height: Self.stripHeight)
                     ForEach(Array(blocks.enumerated()), id: \.element.id) { index, block in
-                        bar(block, index: index, width: proxy.size.width, dayStart: dayStart, maxTokens: maxTokens)
+                        segment(block, index: index, width: proxy.size.width, dayStart: dayStart)
                     }
                     Rectangle()
-                        .fill(Color.white.opacity(0.75))
-                        .frame(width: 1, height: Self.barsHeight + 3)
+                        .fill(Color.white.opacity(0.85))
+                        .frame(width: 1, height: Self.stripHeight + 4)
                         .offset(x: proxy.size.width * CGFloat(nowHour / Self.hoursInDay))
                         .animation(.easeInOut(duration: 0.6), value: nowHour)
                 }
             }
-            .frame(height: Self.barsHeight + 3)
+            .frame(height: Self.stripHeight + 4)
             axis
         }
         .animation(Anim.subtle, value: highlighted)
         .onAppear { appeared = true }
     }
 
-    /// One block, placed at its hour of the day, as tall as its share of the busiest block.
-    private func bar(_ block: CCUsageBlock, index: Int, width: CGFloat, dayStart: Date, maxTokens: Int) -> some View {
+    /// One block at its hours of the day, its token count inside when there is room for it.
+    private func segment(_ block: CCUsageBlock, index: Int, width: CGFloat, dayStart: Date) -> some View {
         let start = Self.hour(of: block.startTime, dayStart: dayStart)
         let end = max(start, Self.hour(of: block.endTime, dayStart: dayStart))
         let active = block.id == activeID
-        let fraction = appeared ? Double(block.totalTokens) / Double(maxTokens) : 0
-        let barWidth = max(4, width * CGFloat((end - start) / Self.hoursInDay) - 2)
-        let barHeight = max(3, Self.barsHeight * CGFloat(fraction))
-        let fill: Color = active ? ClaudeStyle.accent : Color.white.opacity(highlighted ? 0.55 : 0.3)
-        return RoundedRectangle(cornerRadius: 2.5, style: .continuous)
+        let segmentWidth = max(4, width * CGFloat((end - start) / Self.hoursInDay) - 2)
+        let fill: Color = active ? ClaudeStyle.accent : Color.white.opacity(highlighted ? 0.45 : 0.28)
+        let label: Color = active ? Color.black.opacity(0.75) : Color.white.opacity(0.9)
+        return RoundedRectangle(cornerRadius: 3, style: .continuous)
             .fill(fill)
-            .frame(width: barWidth, height: barHeight)
+            .frame(width: segmentWidth, height: Self.stripHeight)
+            .overlay {
+                if segmentWidth >= 22 {
+                    Text(ClaudeUsageRules.formatTokens(block.totalTokens))
+                        .font(.system(size: 7.5, weight: .semibold, design: .rounded).monospacedDigit())
+                        .foregroundStyle(label)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                        .contentTransition(.numericText())
+                }
+            }
             .shadow(color: ClaudeStyle.accent.opacity(active && isWorking ? 0.6 : 0), radius: 4)
+            .scaleEffect(x: appeared ? 1 : 0.02, anchor: .leading)
+            .opacity(appeared ? 1 : 0)
             .offset(x: width * CGFloat(start / Self.hoursInDay))
-            .animation(.spring(response: 0.7, dampingFraction: 0.8).delay(Double(index) * 0.05), value: appeared)
+            .animation(.spring(response: 0.6, dampingFraction: 0.85).delay(Double(index) * 0.06), value: appeared)
     }
 
     private var axis: some View {

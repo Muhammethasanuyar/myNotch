@@ -643,7 +643,8 @@ private struct BlocksRow: View {
         let primary: Color = active ? Color.black.opacity(0.85) : Color.white.opacity(0.92)
         let secondary: Color = active ? Color.black.opacity(0.6) : Color.white.opacity(0.5)
         return VStack(spacing: 1) {
-            Text(block.startTime.formatted(.dateTime.hour(.twoDigits(amPM: .omitted)).minute()))
+            // `.minute()` alone is not zero-padded in every locale ("22:0" in tr_TR).
+            Text(block.startTime.formatted(.dateTime.hour(.twoDigits(amPM: .omitted)).minute(.twoDigits)))
                 .font(.system(size: 8, weight: .medium).monospacedDigit())
                 .foregroundStyle(secondary)
             Text(ClaudeUsageRules.formatTokens(block.totalTokens))

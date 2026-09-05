@@ -12,13 +12,22 @@ final class ModuleManager {
     /// The module that currently owns compact content, or `nil` when everyone is idle.
     private(set) var activeModuleID: String?
 
+    /// The module the user last opened on purpose. Hovering reopens it instead of whichever module
+    /// owns the compact strip, and it is kept across launches.
+    private(set) var preferredModuleID: String?
+
     let bus: EventBus
     private let model: NotchViewModel
+    private let defaults: UserDefaults
     @ObservationIgnored private var subscription: EventBus.Subscription?
 
-    init(model: NotchViewModel, bus: EventBus = EventBus()) {
+    static let preferredModuleKey = "preferredModuleID"
+
+    init(model: NotchViewModel, bus: EventBus = EventBus(), defaults: UserDefaults = .standard) {
         self.model = model
         self.bus = bus
+        self.defaults = defaults
+        preferredModuleID = defaults.string(forKey: Self.preferredModuleKey)
         subscription = bus.subscribe { [weak self] message in
             self?.handle(message)
         }
@@ -68,10 +77,14 @@ final class ModuleManager {
         module(id: moduleID)?.activeScreenID ?? moduleID
     }
 
-    /// The user picked a screen: focus it inside its module and put that module on the card.
+    /// The user picked a screen: focus it inside its module, put that module on the card, and
+    /// remember the choice so the next hover lands there too.
     func selectScreen(_ screen: ModuleScreen) {
         guard let module = module(id: screen.moduleID), module.isEnabled else { return }
         module.selectScreen(screen.id)
+        preferredModuleID = module.id
+        defaults.set(module.id, forKey: Self.preferredModuleKey)
+        model.defaultModuleID = module.id
         model.expand(moduleID: module.id)
     }
 
@@ -144,9 +157,15 @@ final class ModuleManager {
     private func resolveActiveModule() {
         let winner = ModuleResolver.resolve(snapshots)
         activeModuleID = winner?.id
-        // Hovering the notch expands into whoever owns it; with nobody live, the first enabled
-        // module is still a sensible destination.
-        model.defaultModuleID = winner?.id ?? modules.first(where: \.isEnabled)?.id ?? "none"
+        // Hovering opens the screen the user last chose while it can still be shown; failing that,
+        // whoever owns the notch, and with nobody live the first enabled module.
+        let enabled = modules.filter(\.isEnabled)
+        model.defaultModuleID = ModuleResolver.expandedDestination(
+            preferred: preferredModuleID,
+            winnerID: winner?.id,
+            screens: enabled.flatMap(\.screens),
+            enabledIDs: enabled.map(\.id)
+        ) ?? "none"
         model.setLiveContent(winner != nil)
     }
 }

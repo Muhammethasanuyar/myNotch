@@ -35,4 +35,14 @@ nonisolated enum ModuleResolver {
     static func acceptsPopup(from moduleID: String, snapshots: [ModuleSnapshot]) -> Bool {
         snapshots.contains { $0.id == moduleID && $0.isEnabled }
     }
+
+    /// Which module the card opens on when the user hovers: the one they last chose, as long as it
+    /// still has a screen to show; otherwise whoever owns the notch; otherwise the first enabled.
+    /// The compact strip still follows the owner — only the expanded destination is sticky.
+    static func expandedDestination(preferred: String?, winnerID: String?, screens: [ModuleScreen], enabledIDs: [String]) -> String? {
+        if let preferred, screens.contains(where: { $0.moduleID == preferred && $0.isAvailable }) {
+            return preferred
+        }
+        return winnerID ?? enabledIDs.first
+    }
 }

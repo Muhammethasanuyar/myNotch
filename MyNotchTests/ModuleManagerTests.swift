@@ -58,10 +58,17 @@ private final class StubModule: NotchModule {
 
 @MainActor
 final class ModuleManagerTests: XCTestCase {
-    private func makeManager() -> (ModuleManager, NotchViewModel) {
+    private func makeManager(defaults: UserDefaults? = nil) -> (ModuleManager, NotchViewModel) {
         let model = NotchViewModel()
         model.hapticsEnabled = false
-        return (ModuleManager(model: model), model)
+        return (ModuleManager(model: model, defaults: defaults ?? isolatedDefaults()), model)
+    }
+
+    /// The test host is the app itself, so the real defaults may hold a preference from daily use.
+    private func isolatedDefaults() -> UserDefaults {
+        let suite = "ModuleManagerTests-\(UUID().uuidString)"
+        addTeardownBlock { UserDefaults(suiteName: suite)?.removePersistentDomain(forName: suite) }
+        return UserDefaults(suiteName: suite)!
     }
 
     func testRegisteringStartsEnabledModules() {
@@ -223,5 +230,55 @@ final class ModuleManagerTests: XCTestCase {
         let provider = manager.contentProvider()
         XCTAssertEqual(provider.screens("claude").map(\.id), ["claude", "media"])
         XCTAssertEqual(provider.screens("claude").first?.appBundleIdentifier, "com.example.claude")
+    }
+
+    func testHoverReopensTheScreenTheUserChoseEvenWhileAnotherModuleOwnsTheStrip() {
+        let (manager, model) = makeManager()
+        let claude = StubModule(id: "claude", priority: 5)
+        let media = StubModule(id: "media", priority: 10)
+        manager.register(claude)
+        manager.register(media)
+        media.setActivity(.live)
+        XCTAssertEqual(model.defaultModuleID, "media", "nothing chosen yet: the owner of the strip")
+
+        manager.selectScreen(ModuleScreen(id: "claude", moduleID: "claude", title: "Claude", symbolName: "asterisk"))
+        XCTAssertEqual(model.defaultModuleID, "claude")
+
+        media.setActivity(.idle)
+        media.setActivity(.live)
+        XCTAssertEqual(manager.activeModuleID, "media", "the compact strip still follows the music")
+        XCTAssertEqual(model.defaultModuleID, "claude", "but hovering keeps opening what the user chose")
+    }
+
+    func testTheChoiceGivesWayWhenItsScreenIsGone() {
+        let (manager, model) = makeManager()
+        let claude = StubModule(id: "claude")
+        let media = StubModule(id: "media", priority: 10)
+        manager.register(claude)
+        manager.register(media)
+        manager.selectScreen(ModuleScreen(id: "media", moduleID: "media", title: "Spotify", symbolName: "music.note"))
+        XCTAssertEqual(model.defaultModuleID, "media")
+
+        media.isAvailable = false
+        media.setActivity(.idle)
+        XCTAssertEqual(model.defaultModuleID, "claude", "a player that quit cannot be the destination")
+
+        media.isAvailable = true
+        media.setActivity(.idle)
+        XCTAssertEqual(model.defaultModuleID, "media", "and it comes back with the player")
+    }
+
+    func testTheChoiceSurvivesARelaunch() {
+        let defaults = isolatedDefaults()
+        let (first, _) = makeManager(defaults: defaults)
+        first.register(StubModule(id: "claude"))
+        first.register(StubModule(id: "media"))
+        first.selectScreen(ModuleScreen(id: "media", moduleID: "media", title: "Spotify", symbolName: "music.note"))
+
+        let (second, model) = makeManager(defaults: defaults)
+        second.register(StubModule(id: "claude"))
+        second.register(StubModule(id: "media"))
+        XCTAssertEqual(second.preferredModuleID, "media")
+        XCTAssertEqual(model.defaultModuleID, "media")
     }
 }

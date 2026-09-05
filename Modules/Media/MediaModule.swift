@@ -58,11 +58,15 @@ final class MediaModule: NotchModule {
         controller.onStateChange = { [weak self] previous, current in
             self?.handleStateChange(previous: previous, current: current)
         }
+        // Not an activity change, but the manager must re-resolve where a hover opens: the
+        // player the user prefers may just have appeared, or gone.
+        controller.onRunningPlayersChange = { [weak self] in self?.context?.activityChanged() }
         controller.start()
     }
 
     func stop() {
         controller.onStateChange = nil
+        controller.onRunningPlayersChange = nil
         controller.stop()
         activity = .idle
         context?.activityChanged()

@@ -21,6 +21,8 @@ final class MediaController {
 
     /// Called after every state change with the previous value, so the module can announce a track change.
     var onStateChange: (@MainActor (MediaState?, MediaState?) -> Void)?
+    /// Called when the set of running players changes — a screen appeared or went away.
+    var onRunningPlayersChange: (@MainActor () -> Void)?
 
     /// Timed lyrics for the current track; the expanded player scrolls them.
     let lyrics = LyricsService()
@@ -170,7 +172,11 @@ final class MediaController {
 
     private func performRefresh(preferring providerID: String?) async {
         let running = orderedProviders(preferring: providerID).filter { $0.isRunning() }
-        runningPlayerIDs = Set(running.map(\.id))
+        let runningIDs = Set(running.map(\.id))
+        if runningIDs != runningPlayerIDs {
+            runningPlayerIDs = runningIDs
+            onRunningPlayersChange?()
+        }
         if let focused = focusedProviderID, !runningPlayerIDs.contains(focused) {
             focusedProviderID = nil   // the player the user picked is gone
         }

@@ -63,4 +63,17 @@ final class ModuleResolverTests: XCTestCase {
         XCTAssertFalse(ModuleResolver.acceptsPopup(from: "claude", snapshots: snapshots))
         XCTAssertFalse(ModuleResolver.acceptsPopup(from: "unknown", snapshots: snapshots))
     }
+
+    func testExpandedDestinationPrefersTheUsersChoiceWhileItHasAScreen() {
+        let screens = [
+            ModuleScreen(id: "claude", moduleID: "claude", title: "Claude", symbolName: "a"),
+            ModuleScreen(id: "media.spotify", moduleID: "media", title: "Spotify", symbolName: "m", isAvailable: false)
+        ]
+        XCTAssertEqual(ModuleResolver.expandedDestination(preferred: "claude", winnerID: "media", screens: screens, enabledIDs: ["claude", "media"]), "claude")
+        XCTAssertEqual(ModuleResolver.expandedDestination(preferred: "media", winnerID: "claude", screens: screens, enabledIDs: ["claude", "media"]), "claude",
+                       "the preferred module has no screen to show, so the owner of the notch")
+        XCTAssertEqual(ModuleResolver.expandedDestination(preferred: nil, winnerID: nil, screens: screens, enabledIDs: ["claude", "media"]), "claude",
+                       "nobody live and nothing chosen: the first enabled module")
+        XCTAssertNil(ModuleResolver.expandedDestination(preferred: nil, winnerID: nil, screens: [], enabledIDs: []))
+    }
 }

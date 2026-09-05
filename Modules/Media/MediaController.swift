@@ -314,6 +314,19 @@ final class MediaController {
         activeProvider?.capabilities ?? MediaCapabilities(canShuffle: false, canRepeat: false, canFavorite: false, hasRepeatModes: false)
     }
 
+    /// The scrubber: move the playhead at once so the bar and the lyrics follow the hand, tell the
+    /// player, then pin the anchor to the player's own tick a moment later.
+    func seek(to position: TimeInterval) {
+        guard let current = state else { return }
+        let target = min(max(0, position), current.duration ?? position)
+        updateState(current.anchored(position: target, at: Date()))
+        send(.seek(target))
+        Task { [weak self] in
+            try? await Task.sleep(for: .seconds(1))
+            await self?.refineAnchor()
+        }
+    }
+
     // MARK: Optimistic updates
     //
     // Every command is a ~110 ms round-trip followed by a confirming read, so the button would

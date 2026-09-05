@@ -35,7 +35,7 @@ Ad-hoc imza her build'de değiştiği için iznin tekrar sorulması normaldir.
 
 1. **Parça değişimi ≤1 sn:** Spotify'da çal, "sonraki parça"ya bas. Beklenen: notch popup ile açılır (kapak + başlık/sanatçı), ~2,5 sn sonra compact'a döner; compact'taki kapak yeni parçanın kapağı olur.
 2. **Transport:** notch'a hover et → expanded. Play/pause, önceki, sonraki butonları Spotify'ı kontrol eder; ikon oynatma durumuna göre değişir (iyimser güncelleme, ~0,35 sn sonra gerçek durumla teyit edilir).
-3. **Seek:** ilerleme çubuğunu sürükle, bırakınca Spotify o konuma atlar; süre etiketleri (geçen/toplam) doğru — Spotify süreyi milisaniye verir, saniyeye çevriliyor.
+3. **Seek (2026-09-05 yenilendi):** ilerleme çubuğunun üstüne gel → çubuk kalınlaşır ve tutamak belirir; çubuğun herhangi bir yerine **tıkla** → o konuma atlar; tutamağı **sürükle** → süre etiketi canlı güncellenir, bırakınca oynatıcı oraya gider. Çubuğun 6 pt üstü ve altı da tıklamayı yakalar. Bırakır bırakmaz çubuk ve sözler yeni konuma geçer (iyimser), 350 ms sonra oynatıcıyla teyit edilir ve 1 sn sonra hassas çapa alınır. Duraklatılmışken de çalışır.
 4. **Duraklatma:** pause'da equalizer çubukları düz çizgiye iner, playhead ilerlemez.
 5. **Boşta:** Spotify'ı kapat. Beklenen: modül `idle`'a düşer, notch closed olur (Debug Preview'da "Active module: none").
 6. **Tam ekran:** bir uygulamayı tam ekrana al, notch'a hover et; expanded açılır ve transport butonları **ilk tıklamada** çalışır (`NotchHostingView.acceptsFirstMouse`).

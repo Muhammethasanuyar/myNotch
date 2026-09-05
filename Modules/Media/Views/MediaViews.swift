@@ -107,7 +107,7 @@ struct MediaExpandedView: View {
                 Spacer(minLength: 0)
 
                 MediaScrubber(state: state, accent: controller.artwork?.accent ?? .white) { position in
-                    controller.send(.seek(position))
+                    controller.seek(to: position)
                 }
             }
         }
@@ -242,41 +242,65 @@ struct MediaControlButton: View {
     }
 }
 
-/// Progress line that can be dragged to seek. Repaints twice a second while playing; it only
-/// exists while the notch is expanded, so nothing ticks when the surface is closed.
+/// Progress line that seeks: click anywhere on it to jump, or drag the knob. The track is thin
+/// at rest and thickens with a knob when the cursor arrives, but the whole 16-point band under
+/// the cursor takes the gesture, so it is easy to catch. Repaints twice a second while playing;
+/// it only exists while the notch is expanded, so nothing ticks when the surface is closed.
 struct MediaScrubber: View {
     let state: MediaState
     let accent: Color
     let onSeek: (TimeInterval) -> Void
 
     @State private var dragProgress: Double?
+    @State private var isHovering = false
+
+    /// Height of the band that reacts to the cursor; the visible track sits in its middle.
+    static let hitHeight: CGFloat = 16
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: state.isPlaying ? 0.5 : 3600)) { context in
             let progress = dragProgress ?? state.progress(at: context.date)
+            let engaged = isHovering || dragProgress != nil
             VStack(spacing: 3) {
                 GeometryReader { geometry in
+                    let width = geometry.size.width
+                    let x = max(0, width * progress)
                     ZStack(alignment: .leading) {
-                        Capsule().fill(.white.opacity(0.2))
-                        Capsule().fill(accent)
-                            .frame(width: max(0, geometry.size.width * progress))
+                        Capsule()
+                            .fill(.white.opacity(0.2))
+                            .frame(height: engaged ? 6 : 4)
+                        Capsule()
+                            .fill(accent)
+                            .frame(width: x, height: engaged ? 6 : 4)
+                        Circle()
+                            .fill(.white)
+                            .frame(width: 10, height: 10)
+                            .shadow(color: .black.opacity(0.5), radius: 2)
+                            .scaleEffect(dragProgress != nil ? 1.25 : 1)
+                            .opacity(engaged ? 1 : 0)
+                            .offset(x: x - 5)
                     }
+                    .frame(width: width, height: Self.hitHeight)
                     .contentShape(Rectangle())
+                    .onHover { isHovering = $0 }
                     .gesture(
                         DragGesture(minimumDistance: 0)
                             .onChanged { value in
-                                dragProgress = min(1, max(0, value.location.x / max(1, geometry.size.width)))
+                                dragProgress = Self.ratio(value.location.x, width: width)
                             }
                             .onEnded { value in
-                                let ratio = min(1, max(0, value.location.x / max(1, geometry.size.width)))
+                                let ratio = Self.ratio(value.location.x, width: width)
                                 dragProgress = nil
                                 if let duration = state.duration {
                                     onSeek(ratio * duration)
                                 }
                             }
                     )
+                    .animation(.easeOut(duration: 0.15), value: engaged)
                 }
-                .frame(height: 4)
+                // The band is taller than the track it holds; the layout only pays for the track.
+                .frame(height: Self.hitHeight)
+                .padding(.vertical, (4 - Self.hitHeight) / 2)
 
                 HStack {
                     Text(Self.time(state.duration.map { $0 * progress } ?? 0))
@@ -284,9 +308,13 @@ struct MediaScrubber: View {
                     Text(Self.time(state.duration ?? 0))
                 }
                 .font(.system(size: 9, design: .monospaced))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(engaged ? .primary : .secondary)
             }
         }
+    }
+
+    nonisolated static func ratio(_ x: CGFloat, width: CGFloat) -> Double {
+        min(1, max(0, x / max(1, width)))
     }
 
     nonisolated static func time(_ seconds: TimeInterval) -> String {

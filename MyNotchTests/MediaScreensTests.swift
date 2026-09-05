@@ -13,6 +13,7 @@ private final class StubPlayer: MediaProvider {
 
     var running = true
     var loaded: MediaState?
+    private(set) var sent: [MediaCommand] = []
 
     init(id: String, displayName: String) {
         self.id = id
@@ -23,7 +24,7 @@ private final class StubPlayer: MediaProvider {
 
     func isRunning() -> Bool { running }
     func fetch() async throws -> MediaState? { loaded }
-    func send(_ command: MediaCommand) async throws {}
+    func send(_ command: MediaCommand) async throws { sent.append(command) }
 }
 
 @MainActor
@@ -143,5 +144,23 @@ final class MediaScreensTests: XCTestCase {
         try await settle()
 
         XCTAssertEqual(module.activeScreenID, "media.spotify")
+    }
+
+    func testSeekingMovesThePlayheadAtOnceAndTellsThePlayer() async throws {
+        let module = makeModule()
+        spotify.loaded = playing(spotify, "Track")
+        module.controller.refresh()
+        try await settle()
+        XCTAssertEqual(module.controller.state?.elapsed, 10)
+
+        module.controller.seek(to: 150)
+        XCTAssertEqual(module.controller.state?.elapsed, 150, "the bar must not snap back while the player catches up")
+        try await settle()
+        XCTAssertEqual(spotify.sent, [.seek(150)])
+
+        module.controller.seek(to: 999)
+        XCTAssertEqual(module.controller.state?.elapsed, 200, "clamped to the track")
+        module.controller.seek(to: -5)
+        XCTAssertEqual(module.controller.state?.elapsed, 0)
     }
 }

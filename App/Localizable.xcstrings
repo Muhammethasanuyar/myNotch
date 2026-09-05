@@ -277,7 +277,7 @@
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Bugünkü token: %1$@ — %2$@ giriş, %3$@ çıkış, %4$@ önbellek."
+            "value": "Bugünkü token: %1$@ — %2$@ giriş (önbellekten gelmeyen kısım), %3$@ çıkış, %4$@ önbellek (%5$@ okuma + %6$@ yazma). Claude Code istemin büyük kısmını önbellekten okur; giriş bu yüzden küçük görünür."
           }
         }
       }

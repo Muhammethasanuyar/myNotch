@@ -213,10 +213,12 @@ nonisolated enum ClaudeUsageRules {
         return text
     }
 
+    /// Claude Code serves nearly the whole prompt from the cache, so "in" is only the uncached
+    /// remainder and looks tiny next to the cache — the sentence says so, or the bar reads as wrong.
     static func tokensExplanation(day: CCUsageDay, bundle: Bundle = .main) -> String {
         String(
             localized: "explain.tokens",
-            defaultValue: "Tokens today: \(formatTokens(day.totalTokens)) — \(formatTokens(day.inputTokens)) in, \(formatTokens(day.outputTokens)) out, \(formatTokens(day.cacheReadTokens + day.cacheCreationTokens)) cache.",
+            defaultValue: "Tokens today: \(formatTokens(day.totalTokens)) — \(formatTokens(day.inputTokens)) in (the part not served from cache), \(formatTokens(day.outputTokens)) out, \(formatTokens(day.cacheReadTokens + day.cacheCreationTokens)) cache (\(formatTokens(day.cacheReadTokens)) read + \(formatTokens(day.cacheCreationTokens)) written). Claude Code reads most of each prompt from the cache, which is why \"in\" looks small.",
             bundle: bundle
         )
     }

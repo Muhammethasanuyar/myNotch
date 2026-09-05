@@ -461,7 +461,10 @@ final class ClaudeUsageRulesTests: XCTestCase {
         XCTAssertEqual(ClaudeUsageRules.ringExplanation(kind: .sevenDay, window: nil, now: now, bundle: english), "Weekly limit — Anthropic has not reported it yet.")
 
         var day = try! CCUsageParser.daily(from: Data(#"{"daily":[{"date":"2026-09-05","inputTokens":30267,"outputTokens":312091,"cacheCreationTokens":1707713,"cacheReadTokens":62103462,"totalTokens":64153533,"totalCost":0,"modelBreakdowns":[{"modelName":"claude-fable-5-1","inputTokens":30137,"outputTokens":203469,"cost":0}]}]}"#.utf8)).daily[0]
-        XCTAssertEqual(ClaudeUsageRules.tokensExplanation(day: day, bundle: english), "Tokens today: 64.2M — 30K in, 312K out, 63.8M cache.")
+        XCTAssertEqual(
+            ClaudeUsageRules.tokensExplanation(day: day, bundle: english),
+            "Tokens today: 64.2M — 30K in (the part not served from cache), 312K out, 63.8M cache (62.1M read + 1.7M written). Claude Code reads most of each prompt from the cache, which is why \"in\" looks small."
+        )
         XCTAssertEqual(ClaudeUsageRules.spendExplanation(day: day, bundle: english), "Spend today, as far as ccusage can price it. No price is known for Fable 5.1 — its tokens count as $0.")
         day = try! CCUsageParser.daily(from: Data(#"{"daily":[{"date":"2026-09-05","totalTokens":10,"totalCost":27.68,"modelBreakdowns":[{"modelName":"claude-opus-5","outputTokens":5,"cost":27.68}]}]}"#.utf8)).daily[0]
         XCTAssertEqual(ClaudeUsageRules.spendExplanation(day: day, bundle: english), "Spent today: $27.68, priced by ccusage's offline table.")

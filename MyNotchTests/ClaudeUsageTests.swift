@@ -98,6 +98,34 @@ final class UsageFetcherTests: XCTestCase {
         XCTAssertEqual(snapshot.weeklyByModel.keys.sorted(), ["opus", "sonnet"])
     }
 
+    /// The `limits[]` array as the endpoint returned it on 2026-09-05 (percentages only).
+    func testScopedLimitsComeFromTheLimitsArray() throws {
+        let body = """
+        {"five_hour":{"utilization":20,"resets_at":"2026-09-05T16:20:00.371894+00:00"},
+         "seven_day":{"utilization":8,"resets_at":"2026-09-06T09:00:00.371913+00:00"},
+         "seven_day_opus":null,"seven_day_sonnet":null,
+         "limits":[
+           {"group":"session","is_active":true,"kind":"session","percent":20,"resets_at":"2026-09-05T16:20:00.371894+00:00","scope":null,"severity":"normal"},
+           {"group":"weekly","is_active":false,"kind":"weekly_all","percent":8,"resets_at":"2026-09-06T09:00:00.371913+00:00","scope":null,"severity":"normal"},
+           {"group":"weekly","is_active":false,"kind":"weekly_scoped","percent":15,"resets_at":"2026-09-06T09:00:00.372120+00:00","scope":{"model":{"display_name":"Fable","id":null},"surface":null},"severity":"normal"}
+         ]}
+        """
+        guard case .usage(let snapshot) = UsageFetcher.outcome(status: 200, body: Data(body.utf8), now: now) else {
+            return XCTFail("expected usage")
+        }
+        XCTAssertEqual(snapshot.fiveHour?.utilization ?? 0, 0.20, accuracy: 0.0001)
+        XCTAssertNotNil(snapshot.fiveHour?.resetsAt, "six fractional digits still parse")
+        XCTAssertEqual(snapshot.weeklyByModel, [:], "null per-model windows are not windows")
+        let fable = try XCTUnwrap(snapshot.scopedLimits.first)
+        XCTAssertEqual(snapshot.scopedLimits.count, 1, "entries with a null scope repeat the account windows")
+        XCTAssertEqual(fable.name, "Fable")
+        XCTAssertEqual(fable.kind, "weekly_scoped")
+        XCTAssertEqual(fable.windowKind, .sevenDay)
+        XCTAssertEqual(fable.window.utilization, 0.15, accuracy: 0.0001)
+        XCTAssertEqual(fable.id, "scoped:sevenDay:Fable")
+        XCTAssertEqual(snapshot.subjects.map(\.subject.id), ["fiveHour", "sevenDay", "scoped:sevenDay:Fable"])
+    }
+
     func testUtilizationIsAPercentageEvenWhenTiny() {
         XCTAssertEqual(UsageFetcher.parseWindow(["utilization": 0.5])?.utilization ?? -1, 0.005, accuracy: 0.00001, "0.5 means half a percent, not fifty")
         XCTAssertEqual(UsageFetcher.parseWindow(["used_percent": 150])?.utilization, 1, "clamped")
@@ -145,6 +173,16 @@ final class UsageMergeTests: XCTestCase {
         XCTAssertEqual(merged?.fiveHour?.utilization, 0.5)
         XCTAssertEqual(merged?.sevenDay?.utilization, 0.2, "a window the server left out keeps its last value")
         XCTAssertEqual(merged?.fetchedAt, fetched.fetchedAt)
+    }
+
+    func testScopedLimitsCarryForwardLikeTheWindows() {
+        let fable = ScopedLimit(name: "Fable", kind: "weekly_scoped", windowKind: .sevenDay, window: UsageWindow(utilization: 0.15, resetsAt: now.addingTimeInterval(3600)))
+        let gone = ScopedLimit(name: "Old", kind: "weekly_scoped", windowKind: .sevenDay, window: UsageWindow(utilization: 0.5, resetsAt: now.addingTimeInterval(-1)))
+        let previous = UsageSnapshot(fiveHour: UsageWindow(utilization: 0.2, resetsAt: nil), sevenDay: nil, scopedLimits: [fable, gone], fetchedAt: now)
+        let merged = UsageMerge.merge(previous: previous, fetched: nil, now: now)
+        XCTAssertEqual(merged?.scopedLimits, [fable], "a scoped limit whose window reset is dropped like any other")
+        let fresh = UsageSnapshot(fiveHour: nil, sevenDay: nil, scopedLimits: [], fetchedAt: now)
+        XCTAssertEqual(UsageMerge.merge(previous: previous, fetched: fresh, now: now)?.scopedLimits, [], "a successful poll without the limit removes it")
     }
 
     func testNothingLeftMeansNoSnapshot() {
@@ -499,16 +537,35 @@ final class ClaudeUsageRulesTests: XCTestCase {
         XCTAssertNil(ClaudeUsageRules.compactLabel(fiveHour: nil, todayCost: nil))
     }
 
+    func testScopedLimitsGetThresholdAlertsToo() {
+        let reset = Date(timeIntervalSince1970: 5_000)
+        func snapshot(_ fable: Double) -> UsageSnapshot {
+            UsageSnapshot(fiveHour: UsageWindow(utilization: 0.1, resetsAt: reset), sevenDay: nil,
+                          scopedLimits: [ScopedLimit(name: "Fable", kind: "weekly_scoped", windowKind: .sevenDay, window: UsageWindow(utilization: fable, resetsAt: reset))],
+                          fetchedAt: Date())
+        }
+        let warmed = ThresholdMemory.evaluate(snapshot: snapshot(0.5), thresholds: UsageThresholds(), memory: ThresholdMemory()).memory
+        let crossed = ThresholdMemory.evaluate(snapshot: snapshot(0.85), thresholds: UsageThresholds(), memory: warmed)
+        XCTAssertEqual(crossed.crossings.map(\.subject), [.scoped(name: "Fable", windowKind: .sevenDay)])
+        XCTAssertTrue(ThresholdMemory.evaluate(snapshot: snapshot(0.9), thresholds: UsageThresholds(), memory: crossed.memory).crossings.isEmpty, "announced once per window")
+    }
+
     func testCrossingEventText() {
         let now = Date(timeIntervalSince1970: 0)
-        let crossing = ThresholdCrossing(kind: .fiveHour, threshold: 0.8, window: UsageWindow(utilization: 0.82, resetsAt: now.addingTimeInterval(80 * 60)))
+        let crossing = ThresholdCrossing(subject: .window(.fiveHour), threshold: 0.8, window: UsageWindow(utilization: 0.82, resetsAt: now.addingTimeInterval(80 * 60)))
         let event = ClaudeUsageRules.crossingEvent(crossing, moduleID: "claude", now: now, bundle: english)
         XCTAssertEqual(event.title, "5-hour limit at 82%")
         XCTAssertEqual(event.detail, "Slow down — resets in 1h 20m")
         XCTAssertEqual(event.moduleID, "claude")
-        let critical = ClaudeUsageRules.crossingEvent(ThresholdCrossing(kind: .sevenDay, threshold: 0.95, window: UsageWindow(utilization: 0.96, resetsAt: nil)), moduleID: "claude", now: now, bundle: english)
+        let critical = ClaudeUsageRules.crossingEvent(ThresholdCrossing(subject: .window(.sevenDay), threshold: 0.95, window: UsageWindow(utilization: 0.96, resetsAt: nil)), moduleID: "claude", now: now, bundle: english)
         XCTAssertEqual(critical.title, "Weekly limit at 96%")
         XCTAssertEqual(critical.detail, "Nearly exhausted")
+
+        let fable = ClaudeUsageRules.crossingEvent(
+            ThresholdCrossing(subject: .scoped(name: "Fable", windowKind: .sevenDay), threshold: 0.8, window: UsageWindow(utilization: 0.81, resetsAt: nil)),
+            moduleID: "claude", now: now, bundle: english
+        )
+        XCTAssertEqual(fable.title, "Fable (weekly) limit at 81%", "a model-scoped limit gets its own alert")
     }
 }
 

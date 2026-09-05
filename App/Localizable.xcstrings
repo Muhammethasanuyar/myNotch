@@ -711,6 +711,16 @@
           }
         }
       }
+    },
+    "scoped.title": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ (%2$@)"
+          }
+        }
+      }
     }
   }
 }

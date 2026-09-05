@@ -52,18 +52,21 @@ struct ClaudeCompactTrailing: View {
 /// the card opens and glide when the numbers change; the 5-hour arc breathes while Claude works.
 struct UsageRing: View {
     let window: UsageWindow?
-    let kind: UsageWindowKind
+    /// Short text under the percentage: "5h", "7d", or a model's name for a scoped limit.
+    let badge: String
+    /// How long the window is, for the thin "time passed" arc.
+    let windowKind: UsageWindowKind
     let thresholds: UsageThresholds
     let now: Date
     var isWorking = false
-    var diameter: CGFloat = 58
+    var diameter: CGFloat = 54
     var dimmed = false
 
     @State private var appeared = false
     @State private var glowing = false
 
     private var usage: Double { appeared ? (window?.utilization ?? 0) : 0 }
-    private var elapsed: Double { appeared ? (window?.elapsedFraction(kind: kind, at: now) ?? 0) : 0 }
+    private var elapsed: Double { appeared ? (window?.elapsedFraction(kind: windowKind, at: now) ?? 0) : 0 }
     private var color: Color {
         ClaudeStyle.ringColor(level: ClaudeUsageRules.level(for: window?.utilization ?? 0, thresholds: thresholds))
     }
@@ -91,9 +94,12 @@ struct UsageRing: View {
                 Text(window.map { ClaudeUsageRules.percent(Int(($0.utilization * 100).rounded())) } ?? "—")
                     .font(.system(size: diameter * 0.23, weight: .semibold, design: .rounded).monospacedDigit())
                     .contentTransition(.numericText())
-                Text(kind.badge())
+                Text(badge)
                     .font(.system(size: diameter * 0.13, weight: .medium, design: .rounded))
                     .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
+                    .frame(maxWidth: diameter - 18)
             }
         }
         .frame(width: diameter, height: diameter)
@@ -116,7 +122,8 @@ struct UsageRing: View {
 
 /// What the cursor is resting on, so it can stand out and explain itself.
 private enum DashboardFocus: Hashable {
-    case ring(UsageWindowKind)
+    /// A limit ring, by `UsageSubject.id`.
+    case ring(String)
     case blocks
     case spend
     case tokens
@@ -158,11 +165,26 @@ struct ClaudeDashboardView: View {
 
     // MARK: Rings and blocks
 
+    /// The account's two windows first, then every limit scoped to a model (Fable's weekly, say).
+    private var ringSubjects: [(subject: UsageSubject, window: UsageWindow?)] {
+        var list: [(UsageSubject, UsageWindow?)] = [
+            (.window(.fiveHour), service.snapshot?.fiveHour),
+            (.window(.sevenDay), service.snapshot?.sevenDay)
+        ]
+        for limit in service.snapshot?.scopedLimits ?? [] {
+            list.append((.scoped(name: limit.name, windowKind: limit.windowKind), limit.window))
+        }
+        return list
+    }
+
     private func leftColumn(at now: Date) -> some View {
-        VStack(spacing: 6) {
-            HStack(alignment: .top, spacing: 12) {
-                ring(kind: .fiveHour, at: now)
-                ring(kind: .sevenDay, at: now)
+        let subjects = ringSubjects
+        let width = max(144, CGFloat(subjects.count) * 54 + CGFloat(subjects.count - 1) * 10)
+        return VStack(spacing: 6) {
+            HStack(alignment: .top, spacing: 10) {
+                ForEach(subjects, id: \.subject.id) { entry in
+                    ring(entry.subject, window: entry.window, at: now)
+                }
             }
             .reveal(appeared, index: 0)
             BlocksChart(
@@ -176,21 +198,27 @@ struct ClaudeDashboardView: View {
             .spotlight(.blocks, focus: $focus)
             .reveal(appeared, index: 2)
         }
-        .frame(width: 144)
+        .frame(width: width)
     }
 
-    private func ring(kind: UsageWindowKind, at now: Date) -> some View {
-        let window = service.snapshot?[kind]
+    private func ring(_ subject: UsageSubject, window: UsageWindow?, at now: Date) -> some View {
         let remaining = window?.remaining(at: now).map { ClaudeUsageRules.formatRemaining($0) }
+        let badge: String
+        switch subject {
+        case .window(let kind): badge = kind.badge()
+        case .scoped(let name, _): badge = name
+        }
         return VStack(spacing: 4) {
             UsageRing(
                 window: window,
-                kind: kind,
+                badge: badge,
+                windowKind: subject.windowKind,
                 thresholds: service.thresholds,
                 now: now,
-                isWorking: kind == .fiveHour && service.isWorking,
+                isWorking: subject == .window(.fiveHour) && service.isWorking,
                 dimmed: service.isStale
             )
+            // Natural width, centred under the ring: "20s 57dk" may lean into the gutter rather than wrap.
             HStack(spacing: 3) {
                 Image(systemName: "arrow.counterclockwise")
                     .font(.system(size: 8, weight: .semibold))
@@ -199,10 +227,12 @@ struct ClaudeDashboardView: View {
                     .font(.system(size: 9, weight: .medium).monospacedDigit())
                     .contentTransition(.numericText())
             }
+            .lineLimit(1)
+            .fixedSize()
             .foregroundStyle(.secondary)
         }
-        .frame(width: 66)
-        .spotlight(.ring(kind), focus: $focus)
+        .frame(width: 54)
+        .spotlight(.ring(subject.id), focus: $focus)
     }
 
     // MARK: Details
@@ -429,8 +459,14 @@ struct ClaudeDashboardView: View {
 
     private func explanation(for focus: DashboardFocus, at now: Date) -> String {
         switch focus {
-        case .ring(let kind):
-            return ClaudeUsageRules.ringExplanation(kind: kind, window: service.snapshot?[kind], now: now)
+        case .ring(let id):
+            guard let entry = ringSubjects.first(where: { $0.subject.id == id }) else { return "" }
+            return ClaudeUsageRules.ringExplanation(
+                title: ClaudeUsageRules.subjectTitle(entry.subject),
+                windowKind: entry.subject.windowKind,
+                window: entry.window,
+                now: now
+            )
         case .blocks:
             return ClaudeUsageRules.blocksExplanation(blocks: service.cost?.todayBlocks ?? [], activeID: service.cost?.activeBlock?.id)
         case .spend:
@@ -582,14 +618,16 @@ private struct BlocksChart: View {
                     Capsule()
                         .fill(Color.white.opacity(0.07))
                         .frame(height: Self.stripHeight)
-                    ForEach(Array(blocks.enumerated()), id: \.element.id) { index, block in
-                        segment(block, index: index, width: proxy.size.width, dayStart: dayStart)
-                    }
+                    // The marker sits under the segments so a block's number stays legible; being
+                    // taller than the strip, it still shows above and below.
                     Rectangle()
                         .fill(Color.white.opacity(0.85))
                         .frame(width: 1, height: Self.stripHeight + 4)
                         .offset(x: proxy.size.width * CGFloat(nowHour / Self.hoursInDay))
                         .animation(.easeInOut(duration: 0.6), value: nowHour)
+                    ForEach(Array(blocks.enumerated()), id: \.element.id) { index, block in
+                        segment(block, index: index, width: proxy.size.width, dayStart: dayStart)
+                    }
                 }
             }
             .frame(height: Self.stripHeight + 4)

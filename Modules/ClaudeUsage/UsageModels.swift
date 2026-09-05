@@ -58,12 +58,47 @@ nonisolated enum UsageWindowKind: String, Sendable, CaseIterable {
 }
 
 
+/// A limit that applies to one model or surface only — the `limits[]` entries whose `scope` names
+/// a model, such as a weekly allowance just for Fable. Measured 2026-09-05: `kind` is
+/// `weekly_scoped`, `scope.model.display_name` the name, `percent` 0–100.
+nonisolated struct ScopedLimit: Equatable, Sendable, Identifiable {
+    let name: String
+    /// The endpoint's own kind string ("weekly_scoped"); `windowKind` is derived from it.
+    let kind: String
+    let windowKind: UsageWindowKind
+    let window: UsageWindow
+
+    var id: String { "scoped:\(windowKind.rawValue):\(name)" }
+}
+
+/// Something a threshold can be crossed on: one of the two account windows, or a scoped limit.
+nonisolated enum UsageSubject: Hashable, Sendable {
+    case window(UsageWindowKind)
+    case scoped(name: String, windowKind: UsageWindowKind)
+
+    var id: String {
+        switch self {
+        case .window(let kind): return kind.rawValue
+        case .scoped(let name, let windowKind): return "scoped:\(windowKind.rawValue):\(name)"
+        }
+    }
+
+    var windowKind: UsageWindowKind {
+        switch self {
+        case .window(let kind): return kind
+        case .scoped(_, let windowKind): return windowKind
+        }
+    }
+}
+
 /// What one successful call to the usage endpoint told us, or what survived from earlier calls.
 nonisolated struct UsageSnapshot: Equatable, Sendable {
     var fiveHour: UsageWindow?
     var sevenDay: UsageWindow?
     /// Weekly windows split by model family ("opus", "sonnet") on plans that report them.
     var weeklyByModel: [String: UsageWindow] = [:]
+    /// Limits that apply to a single model or surface, in the order the endpoint lists them.
+    var scopedLimits: [ScopedLimit] = []
     /// When the newest reading in this snapshot was fetched.
     var fetchedAt: Date
 
@@ -72,6 +107,15 @@ nonisolated struct UsageSnapshot: Equatable, Sendable {
         case .fiveHour: return fiveHour
         case .sevenDay: return sevenDay
         }
+    }
+
+    /// Every window a threshold applies to, account windows first.
+    var subjects: [(subject: UsageSubject, window: UsageWindow)] {
+        var list: [(UsageSubject, UsageWindow)] = []
+        if let fiveHour { list.append((.window(.fiveHour), fiveHour)) }
+        if let sevenDay { list.append((.window(.sevenDay), sevenDay)) }
+        for limit in scopedLimits { list.append((.scoped(name: limit.name, windowKind: limit.windowKind), limit.window)) }
+        return list
     }
 }
 
@@ -113,14 +157,17 @@ nonisolated enum UsageMerge {
         let fiveHour = carryForward(previous: previous?.fiveHour, fetched: fetched?.fiveHour, now: now)
         let sevenDay = carryForward(previous: previous?.sevenDay, fetched: fetched?.sevenDay, now: now)
         var weekly = fetched?.weeklyByModel ?? [:]
+        var scoped = fetched?.scopedLimits ?? []
         if fetched == nil {
             weekly = (previous?.weeklyByModel ?? [:]).filter { !$0.value.hasReset(at: now) }
+            scoped = (previous?.scopedLimits ?? []).filter { !$0.window.hasReset(at: now) }
         }
-        guard fiveHour != nil || sevenDay != nil || !weekly.isEmpty else { return nil }
+        guard fiveHour != nil || sevenDay != nil || !weekly.isEmpty || !scoped.isEmpty else { return nil }
         return UsageSnapshot(
             fiveHour: fiveHour,
             sevenDay: sevenDay,
             weeklyByModel: weekly,
+            scopedLimits: scoped,
             fetchedAt: fetched?.fetchedAt ?? previous?.fetchedAt ?? now
         )
     }
@@ -147,7 +194,7 @@ nonisolated struct UsageThresholds: Equatable, Sendable {
 
 /// A threshold a window just went over.
 nonisolated struct ThresholdCrossing: Equatable, Sendable {
-    let kind: UsageWindowKind
+    let subject: UsageSubject
     let threshold: Double
     let window: UsageWindow
 }
@@ -157,7 +204,7 @@ nonisolated struct ThresholdCrossing: Equatable, Sendable {
 /// produce a retroactive alert.
 nonisolated struct ThresholdMemory: Equatable, Sendable {
     struct Key: Hashable, Sendable {
-        let kind: UsageWindowKind
+        let subjectID: String
         let threshold: Double
         let resetsAt: Date
     }
@@ -170,18 +217,19 @@ nonisolated struct ThresholdMemory: Equatable, Sendable {
         var next = memory
         var crossings: [ThresholdCrossing] = []
 
-        for kind in UsageWindowKind.allCases {
-            guard let window = snapshot[kind], let resetsAt = window.resetsAt else { continue }
-            // Keys from an earlier window of this kind are history now.
-            next.announced = next.announced.filter { $0.kind != kind || $0.resetsAt == resetsAt }
+        for (subject, window) in snapshot.subjects {
+            guard let resetsAt = window.resetsAt else { continue }
+            let id = subject.id
+            // Keys from an earlier window of this subject are history now.
+            next.announced = next.announced.filter { $0.subjectID != id || $0.resetsAt == resetsAt }
 
             let crossed = thresholds.ordered.filter { window.utilization >= $0 }
-            let fresh = crossed.filter { !next.announced.contains(Key(kind: kind, threshold: $0, resetsAt: resetsAt)) }
+            let fresh = crossed.filter { !next.announced.contains(Key(subjectID: id, threshold: $0, resetsAt: resetsAt)) }
             for threshold in crossed {
-                next.announced.insert(Key(kind: kind, threshold: threshold, resetsAt: resetsAt))
+                next.announced.insert(Key(subjectID: id, threshold: threshold, resetsAt: resetsAt))
             }
             if memory.isWarmedUp, let highest = fresh.max() {
-                crossings.append(ThresholdCrossing(kind: kind, threshold: highest, window: window))
+                crossings.append(ThresholdCrossing(subject: subject, threshold: highest, window: window))
             }
         }
         next.isWarmedUp = true

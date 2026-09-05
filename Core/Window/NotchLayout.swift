@@ -48,7 +48,7 @@ nonisolated enum NotchLayout {
     /// Gap between the menu bar and a floating surface.
     static let floatingTopGap: CGFloat = 8
     /// Expanded content area (without the housing on top and without the ears).
-    static let expandedContentSize = CGSize(width: 420, height: 150)
+    static let expandedContentSize = CGSize(width: 480, height: 150)
     /// Inset between the shape's edge and expanded content.
     static let expandedContentInset: CGFloat = 15
     /// Gap between the bottom of the housing and expanded content. Strokes and shadows bleed a few

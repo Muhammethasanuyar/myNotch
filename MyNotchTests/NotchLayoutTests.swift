@@ -37,7 +37,7 @@ final class NotchLayoutTests: XCTestCase {
 
     func testExpandedIncludesHousingAndEars() {
         let size = NotchLayout.shapeSize(for: .expanded(moduleID: "debug"), metrics: notched)
-        XCTAssertEqual(size, CGSize(width: 420 + 30, height: 37 + NotchLayout.expandedTopGap + 150))
+        XCTAssertEqual(size, CGSize(width: NotchLayout.expandedContentSize.width + 30, height: 37 + NotchLayout.expandedTopGap + 150))
         XCTAssertEqual(NotchLayout.expandedTopInset(for: notched), 37 + NotchLayout.expandedTopGap, "content starts a little below the housing, not flush with it")
     }
 

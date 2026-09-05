@@ -1,4 +1,5 @@
 import Foundation
+import os
 
 // Adapted from https://github.com/ericjypark/codex-island (MIT) and
 // https://github.com/stevemcqueenz/claude-notch-tracker (MIT): endpoint, headers, status mapping and
@@ -54,11 +55,35 @@ nonisolated enum UsageFetcher {
         guard let object = try? JSONSerialization.jsonObject(with: body) as? [String: Any] else {
             return .failed("unreadable body")
         }
+        logShape(object)
         if let error = object["error"] as? [String: Any], error["type"] as? String == "rate_limit_error" {
             return .rateLimited
         }
         guard let snapshot = parseSnapshot(object, now: now) else { return .failed("no usage windows in response") }
         return .usage(snapshot)
+    }
+
+    private static let log = Logger(subsystem: "com.emre.mynotch", category: "usage-shape")
+
+    /// Records the *shape* of the response — key names, model scopes, percentages — never the
+    /// token or anything identifying. The endpoint is undocumented; this is how new windows
+    /// (per-model limits) get noticed.
+    static func logShape(_ object: [String: Any]) {
+        let keys = object.keys.sorted().joined(separator: ",")
+        var limits = "-"
+        if let array = object["limits"] as? [[String: Any]],
+           let data = try? JSONSerialization.data(withJSONObject: array, options: [.sortedKeys]),
+           let text = String(data: data, encoding: .utf8) {
+            limits = text
+        }
+        let windows = object.filter { $0.key.hasPrefix("seven_day") || $0.key.hasPrefix("five_hour") }
+            .map { key, value -> String in
+                let window = value as? [String: Any]
+                return "\(key)=\(((window?["utilization"] ?? window?["used_percent"]) as? NSNumber)?.stringValue ?? "?")@\(window?["resets_at"] ?? "?")"
+            }
+            .sorted()
+            .joined(separator: " ")
+        log.debug("usage keys: \(keys, privacy: .public) windows: \(windows, privacy: .public) limits: \(limits, privacy: .public)")
     }
 
     /// `five_hour` and `seven_day` at the top level; some plans split the week into
@@ -72,8 +97,29 @@ nonisolated enum UsageFetcher {
         }
         let sevenDay = parseWindow(object["seven_day"]) ?? weekly.values.max { $0.utilization < $1.utilization }
         let fiveHour = parseWindow(object["five_hour"])
-        guard fiveHour != nil || sevenDay != nil else { return nil }
-        return UsageSnapshot(fiveHour: fiveHour, sevenDay: sevenDay, weeklyByModel: weekly, fetchedAt: now)
+        let scoped = parseScopedLimits(object)
+        guard fiveHour != nil || sevenDay != nil || !scoped.isEmpty else { return nil }
+        return UsageSnapshot(fiveHour: fiveHour, sevenDay: sevenDay, weeklyByModel: weekly, scopedLimits: scoped, fetchedAt: now)
+    }
+
+    /// The `limits[]` entries that name a model or surface. Entries with a null scope repeat the
+    /// account windows (`session`, `weekly_all`) and are skipped; `percent` is 0–100 like the rest.
+    static func parseScopedLimits(_ object: [String: Any]) -> [ScopedLimit] {
+        guard let entries = object["limits"] as? [[String: Any]] else { return [] }
+        return entries.compactMap { entry in
+            guard let scope = entry["scope"] as? [String: Any] else { return nil }
+            let model = (scope["model"] as? [String: Any])?["display_name"] as? String
+            let surface = scope["surface"] as? String
+            guard let name = model ?? surface, !name.isEmpty,
+                  let raw = (entry["percent"] ?? entry["utilization"]) as? NSNumber else { return nil }
+            let kind = (entry["kind"] as? String) ?? (entry["group"] as? String) ?? "scoped"
+            return ScopedLimit(
+                name: name,
+                kind: kind,
+                windowKind: kind.localizedCaseInsensitiveContains("week") ? .sevenDay : .fiveHour,
+                window: UsageWindow(utilization: min(1, max(0, raw.doubleValue / 100)), resetsAt: parseDate(entry["resets_at"] ?? entry["resetsAt"]))
+            )
+        }
     }
 
     /// `utilization` (or `used_percent`) is a 0–100 percentage — never a fraction, even at 0.5 %.

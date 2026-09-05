@@ -88,6 +88,16 @@ nonisolated enum ClaudeUsageRules {
         return .idle
     }
 
+    /// "5-hour", "Weekly", or "Fable (weekly)".
+    static func subjectTitle(_ subject: UsageSubject, bundle: Bundle = .main) -> String {
+        switch subject {
+        case .window(let kind):
+            return kind.title(bundle: bundle)
+        case .scoped(let name, let windowKind):
+            return String(localized: "scoped.title", defaultValue: "\(name) (\(windowKind.title(bundle: bundle).lowercased()))", bundle: bundle)
+        }
+    }
+
     static func crossingEvent(_ crossing: ThresholdCrossing, moduleID: String, now: Date, bundle: Bundle = .main) -> NotchEvent {
         let percent = percent(Int((crossing.window.utilization * 100).rounded()), bundle: bundle)
         var detail = crossing.threshold >= 0.95
@@ -98,7 +108,7 @@ nonisolated enum ClaudeUsageRules {
         }
         return NotchEvent(
             moduleID: moduleID,
-            title: String(localized: "event.crossing.title", defaultValue: "\(crossing.kind.title(bundle: bundle)) limit at \(percent)", bundle: bundle),
+            title: String(localized: "event.crossing.title", defaultValue: "\(subjectTitle(crossing.subject, bundle: bundle)) limit at \(percent)", bundle: bundle),
             detail: detail,
             symbolName: crossing.threshold >= 0.95 ? "exclamationmark.triangle.fill" : "gauge.with.needle",
             duration: 4
@@ -186,7 +196,10 @@ nonisolated enum ClaudeUsageRules {
     // MARK: Explanations shown while the cursor rests on an indicator
 
     static func ringExplanation(kind: UsageWindowKind, window: UsageWindow?, now: Date, bundle: Bundle = .main) -> String {
-        let title = kind.title(bundle: bundle)
+        ringExplanation(title: kind.title(bundle: bundle), windowKind: kind, window: window, now: now, bundle: bundle)
+    }
+
+    static func ringExplanation(title: String, windowKind kind: UsageWindowKind, window: UsageWindow?, now: Date, bundle: Bundle = .main) -> String {
         guard let window else {
             return String(localized: "explain.ring.noData", defaultValue: "\(title) limit — Anthropic has not reported it yet.", bundle: bundle)
         }

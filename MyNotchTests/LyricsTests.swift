@@ -280,4 +280,65 @@ final class LyricsServiceTests: XCTestCase {
         XCTAssertEqual(LyricsService.simplifiedTitle("Bir Sevmek Bin Defa Ölmek Demekmiş - Feridun Hürel Albüm"), "Bir Sevmek Bin Defa Ölmek Demekmiş")
         XCTAssertNil(LyricsService.simplifiedTitle("Plain Title"), "nothing to strip")
     }
+
+    // MARK: Playhead anchoring
+
+    private func playing(_ track: String, elapsed: TimeInterval, at date: Date, isPlaying: Bool = true) -> MediaState {
+        MediaState(providerID: "spotify", providerName: "Spotify", trackID: track, title: track, artist: "A", album: "B",
+                   isPlaying: isPlaying, duration: 200, elapsed: elapsed, elapsedAt: date, artwork: nil)
+    }
+
+    func testARoutineReadWithinTheStepKeepsTheAnchor() {
+        let anchor = Date(timeIntervalSince1970: 1_000)
+        let current = playing("t", elapsed: 60, at: anchor)
+        // Two seconds later the player reports 61.3 s where the anchor says 62 s: coarse steps, not a seek.
+        let sampled = playing("t", elapsed: 61.3, at: anchor.addingTimeInterval(2))
+        let merged = PlayheadRules.merge(current: current, sampled: sampled)
+        XCTAssertEqual(merged.elapsed, 60)
+        XCTAssertEqual(merged.elapsedAt, anchor, "the finer anchor stands")
+        XCTAssertFalse(PlayheadRules.adoptedNewAnchor(current: current, merged: merged, sampled: sampled))
+    }
+
+    func testASeekReplacesTheAnchor() {
+        let anchor = Date(timeIntervalSince1970: 1_000)
+        let current = playing("t", elapsed: 60, at: anchor)
+        let sampled = playing("t", elapsed: 90, at: anchor.addingTimeInterval(2))
+        let merged = PlayheadRules.merge(current: current, sampled: sampled)
+        XCTAssertEqual(merged.elapsed, 90)
+        XCTAssertTrue(PlayheadRules.adoptedNewAnchor(current: current, merged: merged, sampled: sampled), "and is worth a precise read")
+    }
+
+    func testTrackAndPlaybackChangesAlwaysAdoptTheRead() {
+        let anchor = Date(timeIntervalSince1970: 1_000)
+        let current = playing("t", elapsed: 60, at: anchor)
+        XCTAssertEqual(PlayheadRules.merge(current: current, sampled: playing("other", elapsed: 3, at: anchor.addingTimeInterval(2))).trackID, "other")
+        let paused = playing("t", elapsed: 61.5, at: anchor.addingTimeInterval(2), isPlaying: false)
+        XCTAssertEqual(PlayheadRules.merge(current: current, sampled: paused).elapsed, 61.5, "a pause freezes where the player says")
+        XCTAssertEqual(PlayheadRules.merge(current: nil, sampled: current), current)
+    }
+
+    func testPreciseScriptOutputBecomesASampleJustBeforeReceipt() {
+        let received = Date(timeIntervalSince1970: 5_000)
+        let sample = PlayheadSample(position: 61.234, sampledAt: received.addingTimeInterval(-MediaScript.receiptLatency))
+        XCTAssertEqual(MediaScript.precisePosition("61234", receivedAt: received), sample)
+        XCTAssertNil(MediaScript.precisePosition("-1", receivedAt: received), "the sentinel means the player did not tick")
+        XCTAssertNil(MediaScript.precisePosition("", receivedAt: received))
+        XCTAssertTrue(MediaScript.precisePositionScript(app: "Spotify").contains("tell application \"Spotify\""))
+        XCTAssertTrue(MediaScript.precisePositionScript(app: "Music").contains("repeat while p = p0"))
+    }
+
+    func testAnchoringCopiesOnlyThePlayhead() {
+        let state = playing("t", elapsed: 10, at: Date(timeIntervalSince1970: 1))
+        let anchored = state.anchored(position: 12.5, at: Date(timeIntervalSince1970: 3))
+        XCTAssertEqual(anchored.elapsed, 12.5)
+        XCTAssertEqual(anchored.elapsedAt, Date(timeIntervalSince1970: 3))
+        XCTAssertEqual(anchored.trackID, state.trackID)
+    }
+
+    func testOutputLatencyIsAPlausibleNumberOrNothing() {
+        if let latency = AudioOutputLatency.current() {
+            XCTAssertGreaterThanOrEqual(latency, 0)
+            XCTAssertLessThanOrEqual(latency, 2)
+        }
+    }
 }

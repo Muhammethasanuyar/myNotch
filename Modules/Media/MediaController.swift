@@ -36,6 +36,7 @@ final class MediaController {
     /// How many expanded players are on screen (the notch and the Debug Preview can both show one).
     @ObservationIgnored private var detailViewers = 0
     @ObservationIgnored private var refreshTask: Task<Void, Never>?
+    @ObservationIgnored private var refineTask: Task<Void, Never>?
     @ObservationIgnored private var workspaceObservers: [NSObjectProtocol] = []
 
     init(providers: [any MediaProvider]) {
@@ -44,8 +45,12 @@ final class MediaController {
 
     convenience init() {
         let runner = AppleScriptRunner()
+        let positionRunner = AppleScriptRunner()
         let library = SpotifyLibraryClient()
-        self.init(providers: [SpotifyProvider(runner: runner, library: library), AppleMusicProvider(runner: runner)])
+        self.init(providers: [
+            SpotifyProvider(runner: runner, library: library, positionRunner: positionRunner),
+            AppleMusicProvider(runner: runner, positionRunner: positionRunner)
+        ])
         // Once Spotify is connected, re-read the track so the heart reflects the library.
         library.onChange = { [weak self] in self?.refresh() }
     }
@@ -113,6 +118,8 @@ final class MediaController {
         pollTask = nil
         refreshTask?.cancel()
         refreshTask = nil
+        refineTask?.cancel()
+        refineTask = nil
         lyrics.clear()
         workspaceObservers.forEach { NSWorkspace.shared.notificationCenter.removeObserver($0) }
         workspaceObservers.removeAll()
@@ -147,6 +154,29 @@ final class MediaController {
         // Apply the new cadence immediately, and re-read right away when the player opens.
         startPolling()
         if visible { refresh() }
+        startRefining()
+    }
+
+    /// While the lyrics are on screen and something plays, the anchor is refreshed with a precise
+    /// read every `PlayheadRules.refineInterval`; otherwise nothing runs.
+    private func startRefining() {
+        refineTask?.cancel()
+        refineTask = nil
+        guard detailViewers > 0, state?.isPlaying == true else { return }
+        refineTask = Task { [weak self] in
+            while !Task.isCancelled {
+                await self?.refineAnchor()
+                try? await Task.sleep(for: PlayheadRules.refineInterval)
+            }
+        }
+    }
+
+    /// Replaces the anchor with the player's position caught at the instant it ticked.
+    private func refineAnchor() async {
+        guard detailViewers > 0, let before = state, before.isPlaying, let provider = activeProvider else { return }
+        guard let sample = try? await provider.precisePosition(), !Task.isCancelled else { return }
+        guard let latest = state, latest.trackID == before.trackID, latest.isPlaying else { return }
+        updateState(latest.anchored(position: sample.position, at: sample.sampledAt))
     }
 
     // MARK: Reading
@@ -187,11 +217,16 @@ final class MediaController {
 
         for provider in candidates {
             do {
-                if let state = try await provider.fetch(), state.hasContent {
+                if let sampled = try await provider.fetch(), sampled.hasContent {
                     permission = .granted
                     activeProviderID = provider.id
-                    updateState(state)
-                    await loadArtwork(for: state, provider: provider)
+                    // A routine read lands at a random phase of the player's coarse position
+                    // updates; it only moves the anchor when it says something new.
+                    let merged = PlayheadRules.merge(current: state, sampled: sampled)
+                    let refine = PlayheadRules.adoptedNewAnchor(current: state, merged: merged, sampled: sampled)
+                    updateState(merged)
+                    if refine, detailViewers > 0 { await refineAnchor() }
+                    await loadArtwork(for: merged, provider: provider)
                     return
                 }
             } catch AppleScriptError.permissionDenied {
@@ -237,6 +272,7 @@ final class MediaController {
         // before the first sample had landed, and then never sped up.
         if previous?.isPlaying != newState?.isPlaying {
             startPolling()
+            startRefining()
         }
         // Lyrics are per track, so only a new item triggers a lookup — play/pause and scrubbing
         // must never hit the network.

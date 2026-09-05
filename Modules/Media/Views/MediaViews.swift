@@ -422,15 +422,16 @@ struct MediaLyricsView: View {
     var body: some View {
         switch service.status {
         case .loaded(let lyrics) where !lyrics.isEmpty:
-            // Community timings do not always sit on the recording being played, so the user's
-            // per-song correction is folded into the lead: a positive shift shows lines later.
-            let lead = LyricsService.lead - service.shift(for: state)
+            // The lead is what the eye needs, minus the user's per-song correction (positive shows
+            // lines later), minus the time the output device holds the sound back.
+            let lead = LyricsService.lead - service.shift(for: state) - service.outputLatency
             // Driven by the exact line-change instants, so a line never appears a tick late.
             TimelineView(.explicit(schedule(for: lyrics, lead: lead))) { context in
                 scroller(lyrics: lyrics, at: state.liveElapsed(at: context.date) + lead)
             }
             .overlay(alignment: .topTrailing) { nudgeControls }
             .onHover { isHovering = $0 }
+            .onAppear { service.refreshOutputLatency() }
         case .loading:
             Text("Lyrics…")
                 .font(.system(size: 11))

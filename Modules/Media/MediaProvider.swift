@@ -23,6 +23,9 @@ protocol MediaProvider: Sendable {
     func isRunning() -> Bool
     /// Current playback, or `nil` when the app is stopped or has nothing loaded.
     func fetch() async throws -> MediaState?
+    /// The playhead caught at the instant the player updated it, for lyrics that must not drift;
+    /// `nil` when the player is not playing or cannot say.
+    func precisePosition() async throws -> PlayheadSample?
     func send(_ command: MediaCommand) async throws
     /// Writes the current artwork somewhere readable, if the app cannot hand out a URL.
     func prepareArtwork(destination: URL) async throws -> Bool
@@ -38,6 +41,7 @@ extension MediaProvider {
 
     func prepareArtwork(destination: URL) async throws -> Bool { false }
     func connectFavorites() {}
+    func precisePosition() async throws -> PlayheadSample? { nil }
 
     var favoriteSupport: MediaFavoriteSupport {
         capabilities.canFavorite ? .available : .unsupported(reason: "\(displayName) does not let other apps save tracks")
@@ -70,6 +74,39 @@ nonisolated enum MediaScript {
     /// A separator is still tolerated here in case an app ever returns one.
     static func milliseconds(_ field: String) -> Double? {
         Double(field.replacingOccurrences(of: ",", with: "."))
+    }
+
+    /// A script that waits for the player's position to tick and returns the fresh value.
+    ///
+    /// Players update the position they report in coarse steps, so a single read can be a good
+    /// part of a second stale — and the lyrics with it. Polling inside one osascript process every
+    /// 20 ms until the value changes catches the update within a few tens of milliseconds. Gives
+    /// up after ~1.5 s (paused mid-way, or a player that does not tick) with `-1`.
+    static func precisePositionScript(app: String) -> String {
+        """
+        tell application "\(app)"
+            if player state is not playing then return "-1"
+            set p0 to (round (player position * 1000))
+            set p to p0
+            set n to 0
+            repeat while p = p0 and n < 60
+                delay 0.02
+                set p to (round (player position * 1000))
+                set n to n + 1
+            end repeat
+            if p = p0 then return "-1"
+            return p as text
+        end tell
+        """
+    }
+
+    /// Between the script observing the tick and us receiving its output: process exit and pipe.
+    static let receiptLatency: TimeInterval = 0.015
+
+    /// Reads the precise script's output, `nil` for its `-1` sentinel.
+    static func precisePosition(_ output: String, receivedAt: Date) -> PlayheadSample? {
+        guard let ms = milliseconds(output), ms >= 0 else { return nil }
+        return PlayheadSample(position: ms / 1000, sampledAt: receivedAt.addingTimeInterval(-receiptLatency))
     }
 
     /// Splits a fetch script's output; `nil` when the app returned nothing or an unexpected shape.

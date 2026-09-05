@@ -26,8 +26,17 @@ final class LyricsService {
 
     static let shiftsKey = "lyricsShifts"
     /// One tap of the nudge control.
-    static let shiftStep: TimeInterval = 0.5
+    static let shiftStep: TimeInterval = 0.25
     static let maxShift: TimeInterval = 15
+
+    /// Seconds the current output device delays the sound; lyrics are held back by as much so a
+    /// line lands when it is heard, not when the player thinks it played it. Re-read whenever the
+    /// lyrics come on screen, because headphones come and go.
+    private(set) var outputLatency: TimeInterval = 0
+
+    func refreshOutputLatency() {
+        outputLatency = AudioOutputLatency.current() ?? 0
+    }
 
     /// Off by default only if the user turned it off (`-lyricsEnabled NO`).
     var isEnabled: Bool {

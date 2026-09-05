@@ -41,6 +41,14 @@ nonisolated struct MediaState: Equatable, Sendable {
         return min(1, max(0, liveElapsed(at: now) / duration))
     }
 
+    /// A copy anchored at a fresh reading of the playhead.
+    func anchored(position: TimeInterval, at date: Date) -> MediaState {
+        var copy = self
+        copy.elapsed = position
+        copy.elapsedAt = date
+        return copy
+    }
+
     /// A copy with playback flipped and the playhead frozen where it is now, so a tap on
     /// play/pause shows immediately instead of waiting for the round-trip.
     func togglingPlayback(at now: Date = Date()) -> MediaState {
@@ -160,5 +168,42 @@ nonisolated enum MediaActivityRules {
     static func pollInterval(isPlaying: Bool, detailVisible: Bool = false) -> Duration {
         guard isPlaying else { return .seconds(60) }
         return detailVisible ? .seconds(2) : .seconds(15)
+    }
+}
+
+/// The player's position caught at the instant it updated.
+nonisolated struct PlayheadSample: Equatable, Sendable {
+    let position: TimeInterval
+    let sampledAt: Date
+}
+
+/// How the playhead anchor is kept honest without being jittered.
+///
+/// A player reports its position in coarse steps, so every routine read lands at a random phase
+/// of that step and would move the anchor back and forth by up to a second. Once an anchor is
+/// good, a routine read only matters when it says something new: a different track, play/pause,
+/// or a jump that can only be a seek.
+nonisolated enum PlayheadRules {
+    /// A routine read further than this from where the anchor says we are is a seek.
+    static let seekThreshold: TimeInterval = 1.2
+    /// How often the fine anchor is refreshed while the lyrics are on screen and playing.
+    static let refineInterval: Duration = .seconds(30)
+
+    /// The state to keep after a routine read: the read's facts, on the anchor we trust.
+    static func merge(current: MediaState?, sampled: MediaState) -> MediaState {
+        guard let current,
+              current.trackID == sampled.trackID,
+              current.isPlaying, sampled.isPlaying else { return sampled }
+        let expected = current.liveElapsed(at: sampled.elapsedAt)
+        guard abs(sampled.elapsed - expected) < seekThreshold else { return sampled }
+        var kept = sampled
+        kept.elapsed = current.elapsed
+        kept.elapsedAt = current.elapsedAt
+        return kept
+    }
+
+    /// Whether a routine read replaced the anchor — the moment to refine it with a precise read.
+    static func adoptedNewAnchor(current: MediaState?, merged: MediaState, sampled: MediaState) -> Bool {
+        merged.elapsedAt == sampled.elapsedAt && merged.isPlaying
     }
 }

@@ -13,9 +13,17 @@ struct AppleMusicProvider: MediaProvider {
     let capabilities = MediaCapabilities(canShuffle: true, canRepeat: true, canFavorite: true, hasRepeatModes: true)
 
     private let runner: any AppleScriptRunning
+    /// The precise read blocks its queue for up to ~1.5 s, so it never shares one with transport commands.
+    private let positionRunner: any AppleScriptRunning
 
-    init(runner: any AppleScriptRunning) {
+    init(runner: any AppleScriptRunning, positionRunner: (any AppleScriptRunning)? = nil) {
         self.runner = runner
+        self.positionRunner = positionRunner ?? runner
+    }
+
+    func precisePosition() async throws -> PlayheadSample? {
+        let output = try await positionRunner.run(MediaScript.precisePositionScript(app: "Music"))
+        return MediaScript.precisePosition(output, receivedAt: Date())
     }
 
     func fetch() async throws -> MediaState? {

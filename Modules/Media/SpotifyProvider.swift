@@ -32,11 +32,19 @@ struct SpotifyProvider: MediaProvider {
     }
 
     private let runner: any AppleScriptRunning
+    /// The precise read blocks its queue for up to ~1.5 s, so it never shares one with transport commands.
+    private let positionRunner: any AppleScriptRunning
     private let library: SpotifyLibraryClient
 
-    init(runner: any AppleScriptRunning, library: SpotifyLibraryClient) {
+    init(runner: any AppleScriptRunning, library: SpotifyLibraryClient, positionRunner: (any AppleScriptRunning)? = nil) {
         self.runner = runner
+        self.positionRunner = positionRunner ?? runner
         self.library = library
+    }
+
+    func precisePosition() async throws -> PlayheadSample? {
+        let output = try await positionRunner.run(MediaScript.precisePositionScript(app: "Spotify"))
+        return MediaScript.precisePosition(output, receivedAt: Date())
     }
 
     func fetch() async throws -> MediaState? {

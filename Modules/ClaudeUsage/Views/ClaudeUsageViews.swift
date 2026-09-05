@@ -124,7 +124,10 @@ struct UsageRing: View {
 private enum DashboardFocus: Hashable {
     /// A limit ring, by `UsageSubject.id`.
     case ring(String)
+    /// The blocks row's title.
     case blocks
+    /// One block card, by the block's id.
+    case block(String)
     case spend
     case tokens
     case pace
@@ -187,15 +190,14 @@ struct ClaudeDashboardView: View {
                 }
             }
             .reveal(appeared, index: 0)
-            BlocksChart(
+            BlocksRow(
                 blocks: service.cost?.todayBlocks ?? [],
                 activeID: service.cost?.activeBlock?.id,
                 now: now,
-                highlighted: focus == .blocks,
-                isWorking: service.isWorking
+                isWorking: service.isWorking,
+                focus: $focus
             )
             .frame(maxWidth: .infinity)
-            .spotlight(.blocks, focus: $focus)
             .reveal(appeared, index: 2)
         }
         .frame(width: width)
@@ -469,6 +471,9 @@ struct ClaudeDashboardView: View {
             )
         case .blocks:
             return ClaudeUsageRules.blocksExplanation(blocks: service.cost?.todayBlocks ?? [], activeID: service.cost?.activeBlock?.id)
+        case .block(let id):
+            guard let block = service.cost?.todayBlocks.first(where: { $0.id == id }) else { return "" }
+            return ClaudeUsageRules.blockExplanation(block, isActive: block.id == service.cost?.activeBlock?.id, now: now)
         case .spend:
             switch service.costState {
             case .notInstalled:
@@ -588,102 +593,92 @@ private extension View {
 
 // MARK: - Charts
 
-/// Today's 5-hour blocks laid on a 24-hour strip: each block sits where it happened, with its token
-/// count written inside, the active one in the accent, and a thin marker tracking the time of day.
-/// Constant height on purpose — a bar chart made a block that had just begun look like nothing had
-/// happened, while the number says exactly what did. Segments grow out of their start hour when
-/// the card opens.
-private struct BlocksChart: View {
+/// Today's 5-hour blocks as a row of cards, oldest first: each card names the hour the block
+/// began and how many tokens it used; the block that is still running is drawn in the accent with
+/// a thin line along its foot showing how much of its five hours have passed. No time axis — the
+/// question a glance asks is "which sessions did I have today and how big were they", and a
+/// block that crosses midnight or has only just begun reads the same as any other.
+private struct BlocksRow: View {
     let blocks: [CCUsageBlock]
     let activeID: String?
     let now: Date
-    var highlighted = false
     var isWorking = false
+    @Binding var focus: DashboardFocus?
 
     @State private var appeared = false
 
-    private static let stripHeight: CGFloat = 12
-    private static let hoursInDay: Double = 24
+    private static let cardHeight: CGFloat = 29
+    private static let maxCardWidth: CGFloat = 72
 
     var body: some View {
-        let dayStart = Calendar.current.startOfDay(for: now)
-        let nowHour = Self.hour(of: now, dayStart: dayStart)
-        VStack(alignment: .leading, spacing: 2) {
+        VStack(alignment: .leading, spacing: 3) {
             Text(String(localized: "chart.blocks", defaultValue: "today's 5-hour blocks"))
                 .font(.system(size: 8, weight: .medium))
-                .foregroundStyle(Color.white.opacity(highlighted ? 0.8 : 0.4))
+                .foregroundStyle(Color.white.opacity(focus == .blocks ? 0.9 : 0.45))
                 .lineLimit(1)
-            GeometryReader { proxy in
-                ZStack(alignment: .leading) {
-                    Capsule()
-                        .fill(Color.white.opacity(0.07))
-                        .frame(height: Self.stripHeight)
-                    // The marker sits under the segments so a block's number stays legible; being
-                    // taller than the strip, it still shows above and below.
-                    Rectangle()
-                        .fill(Color.white.opacity(0.85))
-                        .frame(width: 1, height: Self.stripHeight + 4)
-                        .offset(x: proxy.size.width * CGFloat(nowHour / Self.hoursInDay))
-                        .animation(.easeInOut(duration: 0.6), value: nowHour)
+                .spotlight(.blocks, focus: $focus)
+            HStack(spacing: 4) {
+                if blocks.isEmpty {
+                    Text(String(localized: "chart.blocks.none", defaultValue: "none yet"))
+                        .font(.system(size: 9, weight: .medium))
+                        .foregroundStyle(Color.white.opacity(0.4))
+                        .frame(height: Self.cardHeight)
+                        .padding(.horizontal, 8)
+                        .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 6, style: .continuous))
+                } else {
                     ForEach(Array(blocks.enumerated()), id: \.element.id) { index, block in
-                        segment(block, index: index, width: proxy.size.width, dayStart: dayStart)
+                        card(block, index: index)
                     }
                 }
             }
-            .frame(height: Self.stripHeight + 4)
-            axis
         }
-        .animation(Anim.subtle, value: highlighted)
         .onAppear { appeared = true }
     }
 
-    /// One block at its hours of the day, its token count inside when there is room for it.
-    private func segment(_ block: CCUsageBlock, index: Int, width: CGFloat, dayStart: Date) -> some View {
-        let start = Self.hour(of: block.startTime, dayStart: dayStart)
-        let end = max(start, Self.hour(of: block.endTime, dayStart: dayStart))
+    private func card(_ block: CCUsageBlock, index: Int) -> some View {
         let active = block.id == activeID
-        let segmentWidth = max(4, width * CGFloat((end - start) / Self.hoursInDay) - 2)
-        let fill: Color = active ? ClaudeStyle.accent : Color.white.opacity(highlighted ? 0.45 : 0.28)
-        let label: Color = active ? Color.black.opacity(0.75) : Color.white.opacity(0.9)
-        return RoundedRectangle(cornerRadius: 3, style: .continuous)
-            .fill(fill)
-            .frame(width: segmentWidth, height: Self.stripHeight)
-            .overlay {
-                if segmentWidth >= 22 {
-                    Text(ClaudeUsageRules.formatTokens(block.totalTokens))
-                        .font(.system(size: 7.5, weight: .semibold, design: .rounded).monospacedDigit())
-                        .foregroundStyle(label)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.7)
-                        .contentTransition(.numericText())
-                }
-            }
-            .shadow(color: ClaudeStyle.accent.opacity(active && isWorking ? 0.6 : 0), radius: 4)
-            .scaleEffect(x: appeared ? 1 : 0.02, anchor: .leading)
-            .opacity(appeared ? 1 : 0)
-            .offset(x: width * CGFloat(start / Self.hoursInDay))
-            .animation(.spring(response: 0.6, dampingFraction: 0.85).delay(Double(index) * 0.06), value: appeared)
-    }
-
-    private var axis: some View {
-        HStack(spacing: 0) {
-            Text("00")
-            Spacer(minLength: 0)
-            Text("06")
-            Spacer(minLength: 0)
-            Text("12")
-            Spacer(minLength: 0)
-            Text("18")
-            Spacer(minLength: 0)
-            Text("24")
+        let focused = focus == .block(block.id)
+        let elapsed = min(1, max(0, now.timeIntervalSince(block.startTime) / max(1, block.endTime.timeIntervalSince(block.startTime))))
+        let background: Color = active ? ClaudeStyle.accent : Color.white.opacity(focused ? 0.18 : 0.1)
+        let primary: Color = active ? Color.black.opacity(0.85) : Color.white.opacity(0.92)
+        let secondary: Color = active ? Color.black.opacity(0.6) : Color.white.opacity(0.5)
+        return VStack(spacing: 1) {
+            Text(block.startTime.formatted(.dateTime.hour(.twoDigits(amPM: .omitted)).minute()))
+                .font(.system(size: 8, weight: .medium).monospacedDigit())
+                .foregroundStyle(secondary)
+            Text(ClaudeUsageRules.formatTokens(block.totalTokens))
+                .font(.system(size: 10, weight: .semibold, design: .rounded).monospacedDigit())
+                .foregroundStyle(primary)
+                .contentTransition(.numericText())
         }
-        .font(.system(size: 7).monospacedDigit())
-        .foregroundStyle(Color.white.opacity(highlighted ? 0.7 : 0.35))
-    }
-
-    /// Hours since the start of the day, clamped to the strip.
-    private static func hour(of date: Date, dayStart: Date) -> Double {
-        min(hoursInDay, max(0, date.timeIntervalSince(dayStart) / 3600))
+        .lineLimit(1)
+        .minimumScaleFactor(0.7)
+        // Room at the foot for the running block's progress line.
+        .padding(.bottom, active ? 4 : 0)
+        .frame(maxWidth: Self.maxCardWidth)
+        .frame(maxWidth: .infinity)
+        .frame(height: Self.cardHeight)
+        .background(background, in: RoundedRectangle(cornerRadius: 6, style: .continuous))
+        .overlay(alignment: .bottom) {
+            if active {
+                // How far into its five hours the running block is.
+                GeometryReader { proxy in
+                    ZStack(alignment: .leading) {
+                        Capsule().fill(Color.black.opacity(0.25))
+                        Capsule().fill(Color.white.opacity(0.9)).frame(width: proxy.size.width * CGFloat(appeared ? elapsed : 0))
+                    }
+                }
+                .frame(height: 2)
+                .padding(.horizontal, 6)
+                .padding(.bottom, 3)
+                .animation(.easeOut(duration: 0.8), value: elapsed)
+            }
+        }
+        .shadow(color: ClaudeStyle.accent.opacity(active && isWorking ? 0.55 : 0), radius: 5)
+        .scaleEffect(appeared ? 1 : 0.8)
+        .opacity(appeared ? 1 : 0)
+        .animation(.spring(response: 0.5, dampingFraction: 0.8).delay(Double(index) * 0.06), value: appeared)
+        .spotlight(.block(block.id), focus: $focus)
     }
 }
 

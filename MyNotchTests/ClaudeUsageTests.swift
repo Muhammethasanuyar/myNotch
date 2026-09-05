@@ -529,6 +529,14 @@ final class ClaudeUsageRulesTests: XCTestCase {
         XCTAssertTrue(text.hasPrefix("Today's 5-hour blocks by tokens: "), text)
         XCTAssertTrue(text.contains("4.0M") && text.contains("12.9M (active)"), text)
         XCTAssertEqual(ClaudeUsageRules.blocksExplanation(blocks: [], activeID: nil, bundle: english), "No 5-hour block has started today.")
+
+        let now = blocks[1].startTime.addingTimeInterval(100 * 60)
+        let active = ClaudeUsageRules.blockExplanation(blocks[1], isActive: true, now: now, bundle: english)
+        XCTAssertTrue(active.hasPrefix("Active block "), active)
+        XCTAssertTrue(active.contains("12.9M tokens so far; 3h 20m left in it."), active)
+        let finished = ClaudeUsageRules.blockExplanation(blocks[0], isActive: false, now: now, bundle: english)
+        XCTAssertTrue(finished.hasPrefix("Block "), finished)
+        XCTAssertTrue(finished.contains("4.0M tokens; last activity at"), finished)
     }
 
     func testCompactLabelPrefersTheLimit() {

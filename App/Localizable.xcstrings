@@ -721,6 +721,36 @@
           }
         }
       }
+    },
+    "explain.block.active": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aktif blok %1$@–%2$@: şimdiye kadar %3$@ token; %4$@ kaldı."
+          }
+        }
+      }
+    },
+    "explain.block.finished": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@–%2$@ bloğu: %3$@ token; son etkinlik %4$@."
+          }
+        }
+      }
+    },
+    "chart.blocks.none": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "henüz yok"
+          }
+        }
+      }
     }
   }
 }

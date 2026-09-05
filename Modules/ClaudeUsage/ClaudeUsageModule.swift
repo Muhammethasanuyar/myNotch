@@ -256,6 +256,19 @@ nonisolated enum ClaudeUsageRules {
             : String(localized: "explain.models.byTokens", defaultValue: "Today's work by model, by output tokens (no prices): \(parts).", bundle: bundle)
     }
 
+    /// One block under the cursor: when it ran, how much it used, and how much of it is left.
+    static func blockExplanation(_ block: CCUsageBlock, isActive: Bool, now: Date, bundle: Bundle = .main) -> String {
+        let start = block.startTime.formatted(date: .omitted, time: .shortened)
+        let end = block.endTime.formatted(date: .omitted, time: .shortened)
+        let tokens = formatTokens(block.totalTokens)
+        if isActive {
+            let left = formatRemaining(max(0, block.endTime.timeIntervalSince(now)), bundle: bundle)
+            return String(localized: "explain.block.active", defaultValue: "Active block \(start)–\(end): \(tokens) tokens so far; \(left) left in it.", bundle: bundle)
+        }
+        let lastActivity = (block.actualEndTime ?? block.endTime).formatted(date: .omitted, time: .shortened)
+        return String(localized: "explain.block.finished", defaultValue: "Block \(start)–\(end): \(tokens) tokens; last activity at \(lastActivity).", bundle: bundle)
+    }
+
     static func blocksExplanation(blocks: [CCUsageBlock], activeID: String?, bundle: Bundle = .main) -> String {
         guard !blocks.isEmpty else { return String(localized: "explain.blocks.none", defaultValue: "No 5-hour block has started today.", bundle: bundle) }
         let parts = blocks.map { block -> String in

@@ -68,18 +68,22 @@ struct NotchRootView: View {
         switch state {
         case .closed:
             EmptyView()
-        case .compact:
-            compactLayer(radii: radii)
+        case .compact, .popup:
+            // One row for both states, so the wings keep their identity (and their artwork and
+            // meter) while the surface widens for a popup and the text strip unfolds beneath them.
+            VStack(spacing: 0) {
+                compactLayer(radii: radii)
+                    .frame(height: metrics.notchSize.height)
+                if case .popup(let event) = state {
+                    content.popup(event, morphNamespace)
+                        .padding(.horizontal, radii.ear + NotchLayout.popupContentInset)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .transition(NotchTransitions.popup)
+                }
+            }
+            .frame(width: size.width, height: size.height, alignment: .top)
         case .expanded(let moduleID):
             expandedLayer(moduleID: moduleID, size: size, radii: radii, screens: screens)
-        case .popup(let event):
-            // The row hangs below the housing across the surface's full width, so a long title is
-            // read rather than hidden behind the camera; a floating capsule centres it.
-            content.popup(event, morphNamespace)
-                .padding(.horizontal, radii.ear + NotchLayout.popupContentInset)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .padding(.top, NotchLayout.popupTopInset(for: metrics))
-                .transition(NotchTransitions.popup)
         }
     }
 
@@ -90,11 +94,9 @@ struct NotchRootView: View {
             content.compactLeading(morphNamespace)
                 .frame(width: wing, height: height)
                 .transition(NotchTransitions.compactWing(edge: .leading))
-            if metrics.style == .notch {
-                Spacer(minLength: 0).frame(width: metrics.notchSize.width)
-            } else {
-                Spacer(minLength: 12)
-            }
+            // At least the housing's width, and all the surplus a popup adds: the wings then sit
+            // at the surface's outer edges instead of leaving its corners empty.
+            Spacer(minLength: metrics.style == .notch ? metrics.notchSize.width : 12)
             content.compactTrailing(morphNamespace)
                 .frame(width: wing, height: height)
                 .transition(NotchTransitions.compactWing(edge: .trailing))

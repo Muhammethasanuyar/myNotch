@@ -326,27 +326,12 @@ struct MediaScrubber: View {
 
 /// Track-change popup: artwork plus title and artist.
 struct MediaPopupView: View {
-    let controller: MediaController
     let event: NotchEvent
 
     var body: some View {
-        HStack(spacing: 10) {
-            MediaArtworkView(artwork: controller.artwork, cornerRadius: 6)
-                .frame(width: 26, height: 26)
-            VStack(alignment: .leading, spacing: 1) {
-                Text(event.title)
-                    .font(.caption.bold())
-                    .lineLimit(1)
-                if let detail = event.detail {
-                    Text(detail)
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                }
-            }
-            Spacer(minLength: 0)
-        }
-        .foregroundStyle(.white)
+        // Title and artist on one centred line under the housing; the compact wings on either
+        // side keep showing the artwork and the level meter, so the strip is text only.
+        NotchPopupLine(title: event.title, detail: event.detail)
     }
 }
 

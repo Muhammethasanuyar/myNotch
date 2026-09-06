@@ -55,8 +55,9 @@ nonisolated enum NotchLayout {
     /// points past their frames, and the housing's corners are rounded; without this a ring drawn
     /// flush against the housing reads as tucked underneath it.
     static let expandedTopGap: CGFloat = 8
-    /// Extra width a popup adds around the housing, and the strip it hangs below it: the popup's
-    /// row lives entirely in that strip, so no part of a title is ever behind the camera.
+    /// Extra width a popup adds around the housing, and the text strip it hangs below the compact
+    /// row: the wings keep showing their artwork and meter while the title reads in the strip, so
+    /// nothing hides behind the camera and no part of the surface is left empty.
     static let popupExtraWidth: CGFloat = 240
     static let popupExtraHeight: CGFloat = 36
     /// Inset between the shape's edge (past the ears) and popup content.
@@ -139,7 +140,7 @@ nonisolated enum NotchLayout {
             case .compact:
                 return floatingCompactSize
             case .popup:
-                return CGSize(width: floatingCompactSize.width + 100, height: 48)
+                return CGSize(width: floatingCompactSize.width + 100, height: floatingCompactSize.height + popupExtraHeight)
             case .expanded:
                 // The same content area as over a housing: the card there is 150 high minus the
                 // bottom inset, so the floating card gets one inset added to its 150.
@@ -151,12 +152,6 @@ nonisolated enum NotchLayout {
     /// Distance from the panel's top edge to the surface.
     static func topInset(for metrics: NotchLayoutMetrics) -> CGFloat {
         metrics.style == .notch ? 0 : metrics.menuBarHeight + floatingTopGap
-    }
-
-    /// Where popup content starts below the surface's top edge: under the housing, or at the top of
-    /// a floating capsule, which has nothing to hide behind.
-    static func popupTopInset(for metrics: NotchLayoutMetrics) -> CGFloat {
-        metrics.style == .notch ? metrics.notchSize.height : 0
     }
 
     /// Where expanded content starts below the surface's top edge: under the housing plus a gap.

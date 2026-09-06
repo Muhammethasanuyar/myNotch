@@ -104,7 +104,7 @@ final class MediaModule: NotchModule {
     }
 
     func popupView(for event: NotchEvent, namespace: Namespace.ID) -> AnyView? {
-        AnyView(MediaPopupView(controller: controller, event: event))
+        AnyView(MediaPopupView(event: event))
     }
 
     /// Shared id for the artwork that morphs between compact and expanded.

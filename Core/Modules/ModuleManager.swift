@@ -170,26 +170,40 @@ final class ModuleManager {
     }
 }
 
-/// Generic popup body for modules that do not provide their own.
+/// Generic popup body for modules that do not provide their own: the event's symbol and one line.
 struct NotchEventRow: View {
     let event: NotchEvent
 
     var body: some View {
-        HStack(spacing: 10) {
-            Image(systemName: event.symbolName ?? "bell.fill")
-                .font(.title3)
-            VStack(alignment: .leading, spacing: 1) {
-                Text(event.title)
-                    .font(.caption.bold())
-                if let detail = event.detail {
-                    Text(detail)
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                }
+        NotchPopupLine(title: event.title, detail: event.detail, symbolName: event.symbolName ?? "bell.fill")
+    }
+}
+
+/// The one-line popup text every module shares: bold title, dimmed detail, centred in the strip
+/// under the housing (or in the banner capsule inside an expanded card), never more than a line.
+struct NotchPopupLine: View {
+    let title: String
+    var detail: String?
+    var symbolName: String?
+
+    var body: some View {
+        HStack(spacing: 6) {
+            if let symbolName {
+                Image(systemName: symbolName)
+                    .font(.system(size: 12, weight: .semibold))
             }
-            Spacer(minLength: 0)
+            text
         }
+        .font(.system(size: 13))
+        .lineLimit(1)
+        .truncationMode(.tail)
+        .frame(maxWidth: .infinity)
         .foregroundStyle(.white)
+    }
+
+    private var text: Text {
+        let titleText = Text(title).fontWeight(.semibold)
+        guard let detail, !detail.isEmpty else { return titleText }
+        return titleText + Text(" — \(detail)").foregroundStyle(.white.opacity(0.6))
     }
 }

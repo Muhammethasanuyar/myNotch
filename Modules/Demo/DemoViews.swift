@@ -75,22 +75,8 @@ struct DemoPopupView: View {
     let event: NotchEvent
 
     var body: some View {
-        HStack(spacing: 10) {
-            DemoArtwork(track: module.track, cornerRadius: 6)
-                .frame(width: 26, height: 26)
-            VStack(alignment: .leading, spacing: 1) {
-                Text(event.title)
-                    .font(.caption.bold())
-                if let detail = event.detail {
-                    Text(detail)
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                }
-            }
-            Spacer(minLength: 0)
-        }
-        .foregroundStyle(.white)
+        // The wings show the demo artwork and meter; the strip carries the line, like every module.
+        NotchPopupLine(title: event.title, detail: event.detail)
     }
 }
 

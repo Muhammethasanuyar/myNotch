@@ -81,6 +81,11 @@ final class LyricsService {
         defaults.set(shifts, forKey: Self.shiftsKey)
     }
 
+    /// Every per-song offset is gone (the settings window's reset); the key was already removed.
+    func clearShifts() {
+        shifts = [:]
+    }
+
     func resetShift(for state: MediaState) {
         nudge(state, by: -shift(for: state))
     }

@@ -4,7 +4,9 @@ import AppKit
 /// Debug Preview window.
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private let model = NotchViewModel()
+    private let settings = SettingsStore()
     private var moduleManager: ModuleManager?
+    private var settingsApplier: SettingsApplier?
     private var notchWindowController: NotchWindowController?
     private var debugPreviewWindowController: DebugPreviewWindowController?
 
@@ -14,12 +16,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let manager = ModuleManager(model: model)
         // Registered first: with nothing live, hovering the notch opens whoever comes first, and
         // the usage dashboard is worth a look at any time while an idle player is not.
-        manager.register(ClaudeUsageModule())
-        manager.register(MediaModule())
+        register(ClaudeUsageModule(), in: manager)
+        register(MediaModule(), in: manager)
         // The demo module only exists to exercise the engine, so it never ships in a release build.
         let demo = DemoModule()
         #if DEBUG
-        manager.register(demo)
+        register(demo, in: manager)
         #endif
         moduleManager = manager
 
@@ -31,6 +33,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         )
         notchController.show()
         notchWindowController = notchController
+
+        let applier = SettingsApplier(store: settings, model: model, manager: manager, notch: notchController)
+        applier.applyAll()
+        settings.onChange = { applier.apply($0) }
+        settingsApplier = applier
 
         // `-liveContent YES` / `-demoLive YES`: makes the demo module live so the engine can be
         // exercised without a real player running.
@@ -57,6 +64,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         false
+    }
+
+    /// A module the user switched off stays off across launches: the flag is set before
+    /// registration so `register` never starts it.
+    private func register(_ module: any NotchModule, in manager: ModuleManager) {
+        module.isEnabled = settings.isModuleEnabled(module.id)
+        manager.register(module)
     }
 
     /// Opens (or brings forward) the Debug Preview window with the current notch metrics.

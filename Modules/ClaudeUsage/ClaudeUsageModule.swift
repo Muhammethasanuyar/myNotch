@@ -12,6 +12,8 @@ final class ClaudeUsageModule: NotchModule {
 
     var isEnabled = true
     private(set) var activity: ModuleActivity = .idle
+    /// Threshold and reset popups; the rings keep their colours either way.
+    var alertsEnabled = true
 
     let service: ClaudeUsageService
     @ObservationIgnored private var context: ModuleContext?
@@ -37,11 +39,11 @@ final class ClaudeUsageModule: NotchModule {
         service.onWorkingChanged = { [weak self] _ in self?.updateActivity() }
         service.onDataChanged = { [weak self] in self?.updateActivity() }
         service.onCrossing = { [weak self] crossing in
-            guard let self else { return }
+            guard let self, alertsEnabled else { return }
             self.context?.post(ClaudeUsageRules.crossingEvent(crossing, moduleID: id, now: Date()))
         }
         service.onWindowReset = { [weak self] kind, _ in
-            guard let self else { return }
+            guard let self, alertsEnabled else { return }
             self.context?.post(ClaudeUsageRules.resetEvent(kind, moduleID: id))
         }
         service.start()

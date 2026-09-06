@@ -26,6 +26,9 @@ final class MediaController {
 
     /// Timed lyrics for the current track; the expanded player scrolls them.
     let lyrics = LyricsService()
+    /// The Spotify Web API connection, when the Spotify provider is wired; the settings window
+    /// connects, disconnects and shows its state.
+    let spotifyLibrary: SpotifyLibraryClient?
 
     private let providers: [any MediaProvider]
     private let cache = ArtworkCache()
@@ -39,8 +42,9 @@ final class MediaController {
     @ObservationIgnored private var refineTask: Task<Void, Never>?
     @ObservationIgnored private var workspaceObservers: [NSObjectProtocol] = []
 
-    init(providers: [any MediaProvider]) {
+    init(providers: [any MediaProvider], spotifyLibrary: SpotifyLibraryClient? = nil) {
         self.providers = providers
+        self.spotifyLibrary = spotifyLibrary
     }
 
     convenience init() {
@@ -50,7 +54,7 @@ final class MediaController {
         self.init(providers: [
             SpotifyProvider(runner: runner, library: library, positionRunner: positionRunner),
             AppleMusicProvider(runner: runner, positionRunner: positionRunner)
-        ])
+        ], spotifyLibrary: library)
         // Once Spotify is connected, re-read the track so the heart reflects the library.
         library.onChange = { [weak self] in self?.refresh() }
     }
@@ -280,6 +284,12 @@ final class MediaController {
             lyrics.load(for: newState)
         }
         onStateChange?(previous, newState)
+    }
+
+    /// The lyrics toggle moved: drop what is on screen and load again, which is a no-op when off.
+    func lyricsSettingChanged() {
+        lyrics.clear()
+        lyrics.load(for: state)
     }
 
     private func loadArtwork(for state: MediaState, provider: any MediaProvider) async {

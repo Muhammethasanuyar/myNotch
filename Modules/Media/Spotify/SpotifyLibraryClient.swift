@@ -115,9 +115,12 @@ final class SpotifyLibraryClient {
         onChange?()
     }
 
-    /// Re-reads the client ID after the user sets it while the app is running.
+    /// Re-reads the client ID after the user sets or clears it while the app is running. Tokens
+    /// belong to the client they were issued for, so clearing the ID also drops the connection.
     func refreshConfiguration() {
-        if connection == .notConfigured, clientID != nil {
+        if clientID == nil {
+            if connection != .notConfigured { disconnect() }
+        } else if connection == .notConfigured {
             connection = .disconnected
             onChange?()
         }

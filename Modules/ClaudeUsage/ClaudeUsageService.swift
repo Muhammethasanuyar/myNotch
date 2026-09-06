@@ -30,6 +30,8 @@ final class ClaudeUsageService {
     private(set) var hasLogs = true
 
     var thresholds = UsageThresholds()
+    /// Seconds between scheduled polls; the settings window offers a few multiples of the floor.
+    var pollInterval: TimeInterval = UsagePolling.interval
     var onCrossing: ((ThresholdCrossing) -> Void)?
     var onWindowReset: ((UsageWindowKind, UsageWindow) -> Void)?
     var onWorkingChanged: ((Bool) -> Void)?
@@ -93,7 +95,8 @@ final class ClaudeUsageService {
                 await self?.pollOnce()
                 // The suspending clock does not run while the Mac sleeps, so a lid opening does
                 // not fire a burst of overdue polls into the shared limiter.
-                try? await Task.sleep(for: .seconds(UsagePolling.interval), clock: SuspendingClock())
+                let interval = self?.pollInterval ?? UsagePolling.interval
+                try? await Task.sleep(for: .seconds(interval), clock: SuspendingClock())
             }
         }
     }
@@ -114,6 +117,15 @@ final class ClaudeUsageService {
         sleepObservers.forEach { NSWorkspace.shared.notificationCenter.removeObserver($0) }
         sleepObservers.removeAll()
         isWorking = false
+    }
+
+    /// The ccusage path setting changed: look again and, if something turned up, refresh the cost.
+    func relocateCCUsage() {
+        guard pollTask != nil else { return }
+        launcher = CCUsageRunner.locate()
+        costState = launcher.map(CCUsageState.ready) ?? .notInstalled
+        lastCostRefresh = nil
+        refreshCost()
     }
 
     private var overriddenEnvironment: [String: String] {

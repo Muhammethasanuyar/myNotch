@@ -10,6 +10,10 @@ final class NotchWindowController: NSWindowController {
     private let debugTint: Bool
     private(set) var metrics: NotchLayoutMetrics = .placeholder
     private var clickOutsideMonitor: Any?
+    /// Which display to sit on; changing it moves the panel at once.
+    var screenPreference: ScreenPreference = .automatic {
+        didSet { if screenPreference != oldValue { reposition() } }
+    }
 
     /// - Parameter collapsesOnOutsideClick: normally true; the Debug Preview's forced states turn it off
     ///   so a screenshot session is not undone by an unrelated click.
@@ -69,7 +73,7 @@ final class NotchWindowController: NSWindowController {
             assertionFailure("NotchWindowController lost its panel")
             return
         }
-        guard let screen = Self.targetScreen() else {
+        guard let screen = Self.targetScreen(preference: screenPreference) else {
             panel.orderOut(nil)
             return
         }
@@ -81,8 +85,15 @@ final class NotchWindowController: NSWindowController {
         panel.orderFrontRegardless()
     }
 
-    /// Prefers a screen with a notch; falls back to the main screen.
-    private static func targetScreen() -> NSScreen? {
-        NSScreen.screens.first { $0.hasNotch } ?? NSScreen.main
+    /// The preferred screen while it is connected; otherwise the notch screen, then the main one.
+    private static func targetScreen(preference: ScreenPreference) -> NSScreen? {
+        let screens = NSScreen.screens
+        let candidates = screens.map {
+            ScreenPreference.Candidate(name: $0.localizedName, hasNotch: $0.hasNotch, isMain: $0 == NSScreen.main)
+        }
+        guard let chosen = preference.resolve(in: candidates), let index = candidates.firstIndex(of: chosen) else {
+            return nil
+        }
+        return screens[index]
     }
 }

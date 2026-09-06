@@ -27,6 +27,17 @@ targets:
       - Modules
       - DebugPreview
       - Settings
+      # mediaremote-adapter (BSD-3): launched by /usr/bin/perl, never linked. Built by
+      # scripts/vendor-mediaremote-adapter.sh; the framework is embedded below.
+      - path: Vendor/mediaremote-adapter/mediaremote-adapter.pl
+        buildPhase: resources
+      - path: Vendor/mediaremote-adapter/MediaRemoteAdapterTestClient
+        buildPhase: resources
+    dependencies:
+      - framework: Vendor/mediaremote-adapter/MediaRemoteAdapter.framework
+        embed: true
+        codeSign: true
+        link: false
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.emre.mynotch

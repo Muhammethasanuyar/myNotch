@@ -1,0 +1,7 @@
+source: https://github.com/ungive/mediaremote-adapter
+commit: 3ac3d4bdf862c7b5399b4fba4df5689f5c38609a
+built: 2026-09-06T17:49:49Z with Apple clang version 21.0.0 (clang-2100.0.123.102) on macOS 26.6.2
+archs: arm64 x86_64
+8e2c68eae3f709c4dbfb4bdc8a37ac97431dd6d32b59c3c410482323dd2b57fd  Vendor/mediaremote-adapter/MediaRemoteAdapter.framework/Versions/A/MediaRemoteAdapter
+d5b0f9ab35a9f09219f34fc4e48c45bb41cd44a84ca4efe645d8bc1270f2c435  Vendor/mediaremote-adapter/MediaRemoteAdapterTestClient
+984d622eeebbcb17656d157a49272b02fb741593ae2ec624d1926c12d955c8a1  Vendor/mediaremote-adapter/mediaremote-adapter.pl

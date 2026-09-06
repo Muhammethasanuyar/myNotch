@@ -78,6 +78,7 @@ nonisolated enum ModuleCatalog {
         switch moduleID {
         case "media": "music.note"
         case "claude": "asterisk"
+        case "battery": "battery.100percent.bolt"
         case "demo": "wand.and.stars"
         default: "puzzlepiece.extension"
         }
@@ -89,6 +90,8 @@ nonisolated enum ModuleCatalog {
             L("settings.modules.media.summary", "Now playing from Spotify and Music, synced lyrics, your Spotify library heart.")
         case "claude":
             L("settings.modules.claude.summary", "Claude Code limits, today's cost and a pulse while it works.")
+        case "battery":
+            L("settings.modules.battery.summary", "Charging and low-battery popups, a gauge while it matters.")
         case "demo":
             L("settings.modules.demo.summary", "Exercises the notch engine; Debug builds only.")
         default:

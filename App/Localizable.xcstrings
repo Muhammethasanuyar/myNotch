@@ -31,6 +31,256 @@
         }
       }
     },
+    "battery.estimate.left": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ kaldı"
+          }
+        }
+      }
+    },
+    "battery.estimate.pending": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hesaplanıyor…"
+          }
+        }
+      }
+    },
+    "battery.estimate.toFull": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ sonra dolar"
+          }
+        }
+      }
+    },
+    "battery.event.critical": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pil kritik"
+          }
+        }
+      }
+    },
+    "battery.event.critical.detail": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ — hemen şarja tak"
+          }
+        }
+      }
+    },
+    "battery.event.full": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tamamen dolu"
+          }
+        }
+      }
+    },
+    "battery.event.low": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pil azaldı"
+          }
+        }
+      }
+    },
+    "battery.event.lowPowerOff": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Düşük Güç Modu kapalı"
+          }
+        }
+      }
+    },
+    "battery.event.lowPowerOn": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Düşük Güç Modu açık"
+          }
+        }
+      }
+    },
+    "battery.event.pluggedIn": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Şarj oluyor"
+          }
+        }
+      }
+    },
+    "battery.event.unplugged": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pilde"
+          }
+        }
+      }
+    },
+    "battery.explain.charging": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Adaptörden şarj alıyor. Tahmin macOS'un kendi tahmini, yüke göre değişir."
+          }
+        }
+      }
+    },
+    "battery.explain.estimating": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "macOS bir tahmine bağlanmak için birkaç dakika düzenli kullanım ister."
+          }
+        }
+      }
+    },
+    "battery.explain.gauge": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ dolu. Gösterge %%%2$lld'de turuncuya, %%%3$lld'de kırmızıya döner; ikisi de Ayarlar'da."
+          }
+        }
+      }
+    },
+    "battery.explain.lowPowerOff": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Düşük Güç Modu kapalı. Saatlere ihtiyacın olduğunda Sistem Ayarları → Pil'den aç."
+          }
+        }
+      }
+    },
+    "battery.explain.lowPowerOn": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Düşük Güç Modu açık: daha yavaş işlemci, daha loş ekran, daha uzun süre."
+          }
+        }
+      }
+    },
+    "battery.explain.onBattery": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pille çalışıyor. Kalan süre macOS'un mevcut tüketimden tahmini."
+          }
+        }
+      }
+    },
+    "battery.explain.plugged": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prizde. macOS pili korumak için şarjı burada tutuyor."
+          }
+        }
+      }
+    },
+    "battery.lowPower.off": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tam güç"
+          }
+        }
+      }
+    },
+    "battery.lowPower.on": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Düşük Güç Modu"
+          }
+        }
+      }
+    },
+    "battery.none": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu Mac'te pil yok"
+          }
+        }
+      }
+    },
+    "battery.status.charging": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Şarj oluyor"
+          }
+        }
+      }
+    },
+    "battery.status.full": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tamamen dolu"
+          }
+        }
+      }
+    },
+    "battery.status.onBattery": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pilde"
+          }
+        }
+      }
+    },
+    "battery.status.plugged": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prizde, şarj olmuyor"
+          }
+        }
+      }
+    },
     "burn.perHour": {
       "localizations": {
         "tr": {
@@ -781,6 +1031,16 @@
         }
       }
     },
+    "module.battery": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pil"
+          }
+        }
+      }
+    },
     "percent": {
       "localizations": {
         "tr": {
@@ -917,6 +1177,106 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sürüm %@"
+          }
+        }
+      }
+    },
+    "settings.battery.alerts": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uyarılar"
+          }
+        }
+      }
+    },
+    "settings.battery.alerts.critical": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kritik eşik"
+          }
+        }
+      }
+    },
+    "settings.battery.alerts.enabled": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Adaptör takılıp çıkarılınca ya da pil azalınca açılır bildirim"
+          }
+        }
+      }
+    },
+    "settings.battery.alerts.help": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Her seviye bir boşalmada bir kez duyurulur; şarja takmak yeniden silahlandırır. Çentikteki gösterge aynı noktalarda turuncuya ve kırmızıya döner."
+          }
+        }
+      }
+    },
+    "settings.battery.alerts.low": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Düşük eşiği"
+          }
+        }
+      }
+    },
+    "settings.battery.alerts.reset": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eşikleri sıfırla"
+          }
+        }
+      }
+    },
+    "settings.battery.missing": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pil modülü kayıtlı değil."
+          }
+        }
+      }
+    },
+    "settings.battery.none": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dahili pil yok"
+          }
+        }
+      }
+    },
+    "settings.battery.none.help": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modül bu Mac'te boşta kalır."
+          }
+        }
+      }
+    },
+    "settings.battery.status": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Durum"
           }
         }
       }
@@ -1811,6 +2171,16 @@
         }
       }
     },
+    "settings.modules.battery.summary": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Şarj ve düşük pil bildirimleri, gerektiğinde bir gösterge."
+          }
+        }
+      }
+    },
     "settings.modules.claude.summary": {
       "localizations": {
         "tr": {
@@ -2147,6 +2517,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Hakkında"
+          }
+        }
+      }
+    },
+    "settings.tab.battery": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pil"
           }
         }
       }

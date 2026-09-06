@@ -72,6 +72,8 @@ struct SettingsView: View {
             MediaPane(store: context.store, module: context.media)
         case .claude:
             ClaudePane(store: context.store, module: context.claude)
+        case .battery:
+            BatteryPane(store: context.store, module: context.battery)
         case .setup:
             SetupPane(context: context, navigation: navigation, closeWindow: closeWindow)
         case .about:

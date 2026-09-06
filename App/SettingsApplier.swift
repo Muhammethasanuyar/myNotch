@@ -13,7 +13,8 @@ struct SettingsApplier {
     /// before registration, and the path keys would only redo work `start()` has just done.
     static let appliedAtLaunch: [SettingsKey] = [
         .hoverDelay, .closeDelay, .hapticsEnabled, .displaySelection,
-        .usageWarningThreshold, .usagePollInterval, .usageAlertsEnabled
+        .usageWarningThreshold, .usagePollInterval, .usageAlertsEnabled,
+        .batteryLowThreshold, .batteryAlertsEnabled
     ]
 
     func applyAll() {
@@ -58,6 +59,10 @@ struct SettingsApplier {
             guard let claude, claude.isEnabled else { return }
             claude.service.stop()
             claude.service.start()
+        case .batteryLowThreshold, .batteryCriticalThreshold:
+            battery?.service.thresholds = BatteryThresholds(low: store.batteryLowThreshold, critical: store.batteryCriticalThreshold)
+        case .batteryAlertsEnabled:
+            battery?.alertsEnabled = store.batteryAlertsEnabled
         case .onboardingCompleted:
             break
         }
@@ -69,5 +74,9 @@ struct SettingsApplier {
 
     private var claude: ClaudeUsageModule? {
         manager.module(id: "claude") as? ClaudeUsageModule
+    }
+
+    private var battery: BatteryModule? {
+        manager.module(id: "battery") as? BatteryModule
     }
 }

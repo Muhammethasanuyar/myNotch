@@ -22,6 +22,10 @@ nonisolated enum SettingsKey: String, CaseIterable, Sendable {
     case usageAlertsEnabled
     case ccusagePath
     case claudeConfigDir
+    // Battery
+    case batteryLowThreshold
+    case batteryCriticalThreshold
+    case batteryAlertsEnabled
     // App
     case onboardingCompleted
 }
@@ -39,6 +43,10 @@ nonisolated enum SettingsRules {
     static let thresholdGap = 0.05
     /// Poll intervals the picker offers, in seconds; the first is the endpoint's floor.
     static let pollIntervalChoices: [TimeInterval] = [300, 600, 900, 1800]
+    static let batteryLowRange: ClosedRange<Double> = 0.10...0.35
+    static let batteryCriticalRange: ClosedRange<Double> = 0.05...0.25
+    /// Smallest gap kept between the battery's low and critical levels.
+    static let batteryThresholdGap = 0.05
 
     static func hoverDelay(_ value: TimeInterval) -> TimeInterval { clamp(value, to: hoverDelayRange) }
     static func closeDelay(_ value: TimeInterval) -> TimeInterval { clamp(value, to: closeDelayRange) }
@@ -49,6 +57,13 @@ nonisolated enum SettingsRules {
         let warning = clamp(warning, to: warningRange)
         let critical = max(clamp(critical, to: criticalRange), min(warning + thresholdGap, criticalRange.upperBound))
         return (warning, critical)
+    }
+
+    /// Both battery levels inside their ranges and `critical` at least `batteryThresholdGap` below `low`.
+    static func batteryThresholds(low: Double, critical: Double) -> (low: Double, critical: Double) {
+        let low = clamp(low, to: batteryLowRange)
+        let critical = min(clamp(critical, to: batteryCriticalRange), max(low - batteryThresholdGap, batteryCriticalRange.lowerBound))
+        return (low, critical)
     }
 
     /// The offered interval closest to `value`, never below the floor.
@@ -117,6 +132,18 @@ final class SettingsStore {
     var ccusagePath: String { didSet { persist(trimmed(ccusagePath), .ccusagePath) } }
     var claudeConfigDir: String { didSet { persist(trimmed(claudeConfigDir), .claudeConfigDir) } }
 
+    // MARK: Battery
+
+    var batteryLowThreshold: Double {
+        get { access(keyPath: \.batteryLowThreshold); return storedBatteryLow }
+        set { setBatteryThresholds(low: newValue, critical: storedBatteryCritical, changed: .batteryLowThreshold) }
+    }
+    var batteryCriticalThreshold: Double {
+        get { access(keyPath: \.batteryCriticalThreshold); return storedBatteryCritical }
+        set { setBatteryThresholds(low: storedBatteryLow, critical: newValue, changed: .batteryCriticalThreshold) }
+    }
+    var batteryAlertsEnabled: Bool { didSet { persist(batteryAlertsEnabled, .batteryAlertsEnabled) } }
+
     // MARK: App
 
     var onboardingCompleted: Bool { didSet { persist(onboardingCompleted, .onboardingCompleted) } }
@@ -126,6 +153,8 @@ final class SettingsStore {
     static let defaultLyricsLead: TimeInterval = 0.15
     static let defaultWarningThreshold = 0.80
     static let defaultCriticalThreshold = 0.95
+    static let defaultBatteryLow = 0.20
+    static let defaultBatteryCritical = 0.10
 
     private let defaults: UserDefaults
     @ObservationIgnored private var storedHoverDelay: TimeInterval
@@ -134,6 +163,8 @@ final class SettingsStore {
     @ObservationIgnored private var storedWarning: Double
     @ObservationIgnored private var storedCritical: Double
     @ObservationIgnored private var storedPollInterval: TimeInterval
+    @ObservationIgnored private var storedBatteryLow: Double
+    @ObservationIgnored private var storedBatteryCritical: Double
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -155,6 +186,13 @@ final class SettingsStore {
         usageAlertsEnabled = defaults.object(forKey: SettingsKey.usageAlertsEnabled.rawValue) as? Bool ?? true
         ccusagePath = defaults.string(forKey: SettingsKey.ccusagePath.rawValue) ?? ""
         claudeConfigDir = defaults.string(forKey: SettingsKey.claudeConfigDir.rawValue) ?? ""
+        let battery = SettingsRules.batteryThresholds(
+            low: defaults.object(forKey: SettingsKey.batteryLowThreshold.rawValue) as? Double ?? Self.defaultBatteryLow,
+            critical: defaults.object(forKey: SettingsKey.batteryCriticalThreshold.rawValue) as? Double ?? Self.defaultBatteryCritical
+        )
+        storedBatteryLow = battery.low
+        storedBatteryCritical = battery.critical
+        batteryAlertsEnabled = defaults.object(forKey: SettingsKey.batteryAlertsEnabled.rawValue) as? Bool ?? true
         onboardingCompleted = defaults.bool(forKey: SettingsKey.onboardingCompleted.rawValue)
     }
 
@@ -190,6 +228,11 @@ final class SettingsStore {
         usageCriticalThreshold = Self.defaultCriticalThreshold
     }
 
+    func resetBatteryThresholds() {
+        batteryLowThreshold = Self.defaultBatteryLow
+        batteryCriticalThreshold = Self.defaultBatteryCritical
+    }
+
     // MARK: Persistence
 
     private func persist(_ value: Any?, _ key: SettingsKey) {
@@ -205,6 +248,19 @@ final class SettingsStore {
     private func trimmed(_ text: String) -> String? {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         return trimmed.isEmpty ? nil : trimmed
+    }
+
+    private func setBatteryThresholds(low: Double, critical: Double, changed key: SettingsKey) {
+        let fixed = SettingsRules.batteryThresholds(low: low, critical: critical)
+        withMutation(keyPath: \.batteryLowThreshold) {
+            withMutation(keyPath: \.batteryCriticalThreshold) {
+                storedBatteryLow = fixed.low
+                storedBatteryCritical = fixed.critical
+            }
+        }
+        defaults.set(storedBatteryLow, forKey: SettingsKey.batteryLowThreshold.rawValue)
+        defaults.set(storedBatteryCritical, forKey: SettingsKey.batteryCriticalThreshold.rawValue)
+        onChange?(key)
     }
 
     private func setThresholds(warning: Double, critical: Double, changed key: SettingsKey) {

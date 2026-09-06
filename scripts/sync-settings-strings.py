@@ -169,6 +169,50 @@ TR = {
     "media.lyrics.earlier": "Sözleri daha erken göster",
     "media.lyrics.later": "Sözleri daha geç göster",
     "spotify.error.noClientID": "Spotify client ID ayarlanmamış",
+    # Battery module
+    "module.battery": "Pil",
+    "settings.tab.battery": "Pil",
+    "settings.modules.battery.summary": "Şarj ve düşük pil bildirimleri, gerektiğinde bir gösterge.",
+    "settings.battery.missing": "Pil modülü kayıtlı değil.",
+    "settings.battery.status": "Durum",
+    "settings.battery.none": "Dahili pil yok",
+    "settings.battery.none.help": "Modül bu Mac'te boşta kalır.",
+    "settings.battery.alerts": "Uyarılar",
+    "settings.battery.alerts.enabled": "Adaptör takılıp çıkarılınca ya da pil azalınca açılır bildirim",
+    "settings.battery.alerts.low": "Düşük eşiği",
+    "settings.battery.alerts.critical": "Kritik eşik",
+    "settings.battery.alerts.reset": "Eşikleri sıfırla",
+    "settings.battery.alerts.help": "Her seviye bir boşalmada bir kez duyurulur; şarja takmak yeniden silahlandırır. Çentikteki gösterge aynı noktalarda turuncuya ve kırmızıya döner.",
+    "battery.none": "Bu Mac'te pil yok",
+    "battery.estimate.pending": "Hesaplanıyor…",
+    "battery.lowPower.on": "Düşük Güç Modu",
+    "battery.lowPower.off": "Tam güç",
+    "battery.explain.estimating": "macOS bir tahmine bağlanmak için birkaç dakika düzenli kullanım ister.",
+}
+
+# Keys used through `String(localized:defaultValue:bundle:)` in the pure rules (interpolated
+# text needs the `bundle:` form); they are not scanned from code, only merged.
+EXTRA_TR = {
+    "battery.status.full": "Tamamen dolu",
+    "battery.status.charging": "Şarj oluyor",
+    "battery.status.plugged": "Prizde, şarj olmuyor",
+    "battery.status.onBattery": "Pilde",
+    "battery.estimate.toFull": "%@ sonra dolar",
+    "battery.estimate.left": "%@ kaldı",
+    "battery.event.pluggedIn": "Şarj oluyor",
+    "battery.event.unplugged": "Pilde",
+    "battery.event.low": "Pil azaldı",
+    "battery.event.critical": "Pil kritik",
+    "battery.event.critical.detail": "%@ — hemen şarja tak",
+    "battery.event.full": "Tamamen dolu",
+    "battery.event.lowPowerOn": "Düşük Güç Modu açık",
+    "battery.event.lowPowerOff": "Düşük Güç Modu kapalı",
+    "battery.explain.gauge": "%1$@ dolu. Gösterge %%%2$lld'de turuncuya, %%%3$lld'de kırmızıya döner; ikisi de Ayarlar'da.",
+    "battery.explain.charging": "Adaptörden şarj alıyor. Tahmin macOS'un kendi tahmini, yüke göre değişir.",
+    "battery.explain.plugged": "Prizde. macOS pili korumak için şarjı burada tutuyor.",
+    "battery.explain.onBattery": "Pille çalışıyor. Kalan süre macOS'un mevcut tüketimden tahmini.",
+    "battery.explain.lowPowerOn": "Düşük Güç Modu açık: daha yavaş işlemci, daha loş ekran, daha uzun süre.",
+    "battery.explain.lowPowerOff": "Düşük Güç Modu kapalı. Saatlere ihtiyacın olduğunda Sistem Ayarları → Pil'den aç.",
 }
 
 
@@ -185,6 +229,13 @@ def main() -> int:
         translation = TR.get(key)
         if translation is None:
             continue
+        entry = strings.setdefault(key, {})
+        localizations = entry.setdefault("localizations", {})
+        if "tr" not in localizations:
+            localizations["tr"] = {"stringUnit": {"state": "translated", "value": translation}}
+            added += 1
+
+    for key, translation in EXTRA_TR.items():
         entry = strings.setdefault(key, {})
         localizations = entry.setdefault("localizations", {})
         if "tr" not in localizations:

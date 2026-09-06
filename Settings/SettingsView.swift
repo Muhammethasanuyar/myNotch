@@ -78,6 +78,8 @@ struct SettingsView: View {
             BatteryPane(store: context.store, module: context.battery)
         case .pomodoro:
             PomodoroPane(store: context.store, module: context.pomodoro)
+        case .shelf:
+            ShelfPane(store: context.store, module: context.shelf)
         case .setup:
             SetupPane(context: context, navigation: navigation, closeWindow: closeWindow)
         case .about:

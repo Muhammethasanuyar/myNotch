@@ -39,6 +39,8 @@ nonisolated enum SettingsKey: String, CaseIterable, Sendable {
     case calendarLeadMinutes
     case calendarSelectedIDs
     case calendarAlertsEnabled
+    // Shelf
+    case shelfKeepInterval
     // App
     case onboardingCompleted
 }
@@ -85,6 +87,8 @@ nonisolated enum SettingsRules {
     }
 
     static func calendarLead(_ minutes: Int) -> Int { clamp(minutes, to: calendarLeadRange) }
+    /// One of the shelf's offered retention periods; zero is "until removed".
+    static func shelfKeepInterval(_ seconds: TimeInterval) -> TimeInterval { ShelfRules.snappedKeepInterval(seconds) }
 
     /// Every pomodoro length inside its range.
     static func pomodoroConfig(work: Int, breakMinutes: Int, longBreak: Int, every: Int) -> PomodoroConfig {
@@ -217,6 +221,14 @@ final class SettingsStore {
     var calendarSelectedIDs: [String] { didSet { persist(calendarSelectedIDs.isEmpty ? nil : calendarSelectedIDs, .calendarSelectedIDs) } }
     var calendarAlertsEnabled: Bool { didSet { persist(calendarAlertsEnabled, .calendarAlertsEnabled) } }
 
+    // MARK: Shelf
+
+    /// How long the shelf keeps a copy, in seconds; `0` keeps it until removed by hand.
+    var shelfKeepInterval: TimeInterval {
+        get { access(keyPath: \.shelfKeepInterval); return storedShelfKeep }
+        set { withMutation(keyPath: \.shelfKeepInterval) { storedShelfKeep = SettingsRules.shelfKeepInterval(newValue) }; persist(storedShelfKeep, .shelfKeepInterval) }
+    }
+
     // MARK: App
 
     var onboardingCompleted: Bool { didSet { persist(onboardingCompleted, .onboardingCompleted) } }
@@ -242,6 +254,7 @@ final class SettingsStore {
     /// Lengths only; the two switches are ordinary stored properties.
     @ObservationIgnored private var storedPomodoro: PomodoroConfig
     @ObservationIgnored private var storedCalendarLead: Int
+    @ObservationIgnored private var storedShelfKeep: TimeInterval
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -284,6 +297,7 @@ final class SettingsStore {
         storedCalendarLead = SettingsRules.calendarLead(defaults.object(forKey: SettingsKey.calendarLeadMinutes.rawValue) as? Int ?? Self.defaultCalendarLead)
         calendarSelectedIDs = defaults.stringArray(forKey: SettingsKey.calendarSelectedIDs.rawValue) ?? []
         calendarAlertsEnabled = defaults.object(forKey: SettingsKey.calendarAlertsEnabled.rawValue) as? Bool ?? true
+        storedShelfKeep = SettingsRules.shelfKeepInterval(defaults.object(forKey: SettingsKey.shelfKeepInterval.rawValue) as? Double ?? ShelfRules.defaultKeepInterval)
         onboardingCompleted = defaults.bool(forKey: SettingsKey.onboardingCompleted.rawValue)
     }
 

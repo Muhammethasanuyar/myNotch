@@ -155,4 +155,19 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertEqual(SettingsRules.pollInterval(449), 300)
         XCTAssertEqual(SettingsRules.pollInterval(451), 600)
     }
+
+    func testShelfRetentionSnapsToTheOfferedPeriods() {
+        let suite = "SettingsStoreTests-shelf-\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suite)!
+        addTeardownBlock { UserDefaults(suiteName: suite)?.removePersistentDomain(forName: suite) }
+        let store = SettingsStore(defaults: defaults)
+        XCTAssertEqual(store.shelfKeepInterval, ShelfRules.defaultKeepInterval)
+        store.shelfKeepInterval = 100_000
+        XCTAssertEqual(store.shelfKeepInterval, 86_400, "snapped to the nearest choice")
+        XCTAssertEqual(defaults.double(forKey: SettingsKey.shelfKeepInterval.rawValue), 86_400)
+        store.shelfKeepInterval = 0
+        XCTAssertEqual(store.shelfKeepInterval, 0, "zero is forever")
+        defaults.set(-4.0, forKey: SettingsKey.shelfKeepInterval.rawValue)
+        XCTAssertEqual(SettingsStore(defaults: defaults).shelfKeepInterval, 0, "a hand-edited negative reads as forever")
+    }
 }

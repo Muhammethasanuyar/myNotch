@@ -37,6 +37,9 @@ struct SetupPane: View {
 
             Section(L("settings.setup.system", "System")) {
                 loginRow
+                if let shelf = context.shelf {
+                    shelfRow(shelf.store)
+                }
             }
 
             Section {
@@ -147,6 +150,19 @@ struct SetupPane: View {
             } else {
                 SystemSettingsLink.open(SystemSettingsLink.calendars)
             }
+        }
+    }
+
+    private func shelfRow(_ shelf: ShelfStore) -> some View {
+        SetupRow(
+            tone: shelf.items.isEmpty ? .neutral : .ok,
+            title: L("settings.setup.shelf", "Shelf (optional)"),
+            detail: shelf.items.isEmpty
+                ? L("settings.setup.shelf.todo", "Drag a file onto the notch: it opens, keeps a copy for a while and can AirDrop it.")
+                : L("settings.setup.shelf.ok", "Files are on the shelf. Copies live in Application Support and expire on their own."),
+            actionTitle: L("settings.setup.shelf.open", "Shelf settings…")
+        ) {
+            navigation.selectedTab = .shelf
         }
     }
 

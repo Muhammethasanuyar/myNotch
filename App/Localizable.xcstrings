@@ -3371,6 +3371,46 @@
         }
       }
     },
+    "settings.setup.shelf": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Raf (isteğe bağlı)"
+          }
+        }
+      }
+    },
+    "settings.setup.shelf.ok": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rafta dosyalar var. Kopyalar Application Support'ta durur ve kendiliğinden süresi dolar."
+          }
+        }
+      }
+    },
+    "settings.setup.shelf.open": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Raf ayarları…"
+          }
+        }
+      }
+    },
+    "settings.setup.shelf.todo": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bir dosyayı çentiğe sürükle: açılır, bir süre kopyasını tutar ve AirDrop'la gönderebilir."
+          }
+        }
+      }
+    },
     "settings.setup.signIn": {
       "localizations": {
         "tr": {
@@ -3437,6 +3477,126 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sistem"
+          }
+        }
+      }
+    },
+    "settings.shelf.clear": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rafı boşalt"
+          }
+        }
+      }
+    },
+    "settings.shelf.count.many": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld dosya · %2$@"
+          }
+        }
+      }
+    },
+    "settings.shelf.count.one": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 dosya · %@"
+          }
+        }
+      }
+    },
+    "settings.shelf.empty": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rafta bir şey yok"
+          }
+        }
+      }
+    },
+    "settings.shelf.error": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Son dosya işlemi başarısız oldu"
+          }
+        }
+      }
+    },
+    "settings.shelf.keep": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saklama"
+          }
+        }
+      }
+    },
+    "settings.shelf.keep.help": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Süresi dolan kopyalar raf yüklenirken ya da yeni bir dosya bırakılınca gider; zamanlayıcı yok. Dosyayı karttan dışarı sürüklemek kopyayı öteki uygulamaya verir; kaldırmak için öğeye Option ile dokun ya da ✕'e bas."
+          }
+        }
+      }
+    },
+    "settings.shelf.keep.picker": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kopyaları sakla"
+          }
+        }
+      }
+    },
+    "settings.shelf.missing": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Raf modülü kayıtlı değil."
+          }
+        }
+      }
+    },
+    "settings.shelf.reveal": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Finder'da Göster"
+          }
+        }
+      }
+    },
+    "settings.shelf.status": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Raftakiler"
+          }
+        }
+      }
+    },
+    "settings.shelf.status.help": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bırakma dosyayı kopyalar; özgün dosya yerinde kalır. Rafı boşaltmak yalnızca kopyaları siler."
           }
         }
       }
@@ -3527,6 +3687,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Kurulum"
+          }
+        }
+      }
+    },
+    "settings.tab.shelf": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Raf"
           }
         }
       }

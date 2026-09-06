@@ -15,7 +15,7 @@ struct SettingsApplier {
         .hoverDelay, .closeDelay, .hapticsEnabled, .displaySelection, .visualizerEnabled, .genericPlayerEnabled,
         .usageWarningThreshold, .usagePollInterval, .usageAlertsEnabled,
         .batteryLowThreshold, .batteryAlertsEnabled, .pomodoroWorkMinutes,
-        .calendarLeadMinutes, .calendarSelectedIDs, .calendarAlertsEnabled
+        .calendarLeadMinutes, .calendarSelectedIDs, .calendarAlertsEnabled, .shelfKeepInterval
     ]
 
     func applyAll() {
@@ -68,6 +68,8 @@ struct SettingsApplier {
             battery?.service.thresholds = BatteryThresholds(low: store.batteryLowThreshold, critical: store.batteryCriticalThreshold)
         case .batteryAlertsEnabled:
             battery?.alertsEnabled = store.batteryAlertsEnabled
+        case .shelfKeepInterval:
+            shelf?.store.keepInterval = store.shelfKeepInterval
         case .pomodoroWorkMinutes, .pomodoroBreakMinutes, .pomodoroLongBreakMinutes, .pomodoroLongBreakEvery, .pomodoroAutoStart, .pomodoroSoundEnabled:
             pomodoro?.timer.config = store.pomodoroConfig
         case .calendarLeadMinutes:
@@ -99,5 +101,9 @@ struct SettingsApplier {
 
     private var calendar: CalendarModule? {
         manager.module(id: "calendar") as? CalendarModule
+    }
+
+    private var shelf: ShelfModule? {
+        manager.module(id: "shelf") as? ShelfModule
     }
 }

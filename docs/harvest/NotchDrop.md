@@ -171,3 +171,25 @@ Kaynak: `references/NotchDrop/NotchDrop/TrayDrop+DropItem.swift:67-75` (MIT)
 4. **S4 — Shelf ile Medya modülü öncelik çatışması.** Dosya sürüklenirken müzik çalıyorsa hangisi notch'u kazanır? `docs/PLAN.md` §4.3'e göre `urgent > live(priority)`; sürükleme muhtemelen geçici bir `urgent` olmalı ve bırakma bitince eski duruma dönmeli. `ModuleManager`'da "geçici öncelik devralma" kavramı gerekiyor mu?
 5. **S5 — Depolama politikası.** Varsayılan saklama süresi (NotchDrop: 24 saat) bizde ne olmalı? Kopyalanan dosyaların toplam boyutu için üst sınır ve kullanıcıya gösterim gerekli mi? Silme "yalnızca raftan kaldır" mı yoksa "kopyayı da sil" mi (NotchDrop ikincisini yapıyor, `TrayDrop.swift:95-114`)?
 6. **S6 — `Modules/Shelf/` planına eklenmeli mi?** `docs/PLAN.md` §9 klasör planı yalnızca Media ve ClaudeUsage içeriyor. Backlog modülü hayata geçtiğinde plan §7/§9 birlikte güncellenmeli.
+
+### 6.1 Deney turu ve cevaplar (2026-09-06, Faz 6 C4)
+
+Sürükleme deneyleri sentetik girdiyle yapılmaz (kural: kullanıcının imleci asla hareket ettirilmez); kodda alınan yol ve elle doğrulanacaklar `docs/manual-tests.md` "Raf" bölümünde.
+
+| Deney | Sonuç / karar |
+|---|---|
+| **E-1** SwiftUI `onDrop` nonactivating panelde | **Kullanılmadı.** Notch kapalıyken yüzey boş olduğu için üzerine `onDrop` konacak SwiftUI view yok; dosyayı alacak modül de sürükleme onu açmadan render edilmiyor. `NSHostingView` `NSDraggingDestination` uygulamıyor (yalnızca `NSDraggingSource`, SwiftUI arayüzü `arm64e-apple-macos.swiftinterface:9354`), SwiftUI kendi drop hedeflerini içeride kuruyor → iki katmanı karıştırmak yerine tek yol seçildi. |
+| **E-2** AppKit `registerForDraggedTypes([.fileURL])` + `NSDraggingDestination` | **Uygulandı** (`Core/Window/NotchPanel.swift` `NotchHostingView`). `NSView` protokole resmen uyuyor (`NSView.h:81`), `override func draggingEntered/Updated/Exited/performDragOperation/draggingEnded` derleniyor; `draggingLocation` pencere koordinatı → `convert(_:from: nil)` (hosting view `isFlipped == true`, sol-üst orijin). Canlı sürükleme doğrulaması **kullanıcıda**. |
+| **E-3** 32 pt taşan dedektör menü bar tıklamasını yer mi | **Konu dışı kaldı:** dedektör (`NotchDropDetector`, alfa 0,001) yalnızca `NotchViewModel.isDragSessionActive` iken çiziliyor; sürükleme oturumunda düğme basılı olduğundan yenecek tıklama yok. Oturum tespiti `NotchDragSessionMonitor`: global `leftMouseDown/Dragged/Up` monitörü (Erişilebilirlik izni gerekmez) + `NSPasteboard(name: .drag).changeCount` — pencere taşımak ya da metin seçmek panoyu değiştirmediği için dedektör açılmaz. `mouseMoved` hiç izlenmiyor; boşta CPU %0,01 ölçüldü (kart açık). |
+| **E-4** `.draggable(Transferable)` key olmayan panelden | `ShelfItem: Transferable` (`FileRepresentation(exportedContentType: .item)`, `SentTransferredFile(fileURL, allowAccessingOriginalFile: true)`) ile uygulandı; Finder'a bırakma **elle doğrulanacak**. |
+| **E-5** `NSSharingService(named: .sendViaAirDrop)` | **Var ve çalışır:** `swiftc` ile derlenen tek dosyalık deney `canPerform(withItems: [dosya]) == true`, `title == "AirDrop"` döndürdü (UI açılmadan). `perform(withItems:)` sistemin kendi AirDrop penceresini açar, key pencere gerekmez. `NSSharingServicePicker` **alınmadı**: `show(relativeTo:of:preferredEdge:)` key pencere ister; AirDrop bölgesi + öğeyi dışarı sürükleme yeterli görüldü. |
+| **E-6** Masaüstü/İndirilenler'den bırakılan dosyada TCC | Sürükleme panosundan gelen URL kullanıcı onayı taşır; ek bir klasör usage description eklenmedi. İstem çıkarsa `project.yml`'e `NSDesktopFolderUsageDescription`/`NSDownloadsFolderUsageDescription` eklenir — **elle gözlenecek**. |
+| **E-7** `NSSharingService(named:)` deprecation | **Yok:** `NSSharingService.h`'de yalnızca sosyal servis adları (Twitter, Facebook…) `API_DEPRECATED(10.8, 10.14)`; `sendViaAirDrop` güncel. Sarmalayıcıya gerek kalmadı. |
+
+- **S1** — `onDrop` yerine AppKit hedefi (E-1/E-2).
+- **S2** — Picker yok; AirDrop doğrudan servis (E-5).
+- **S3** — Oturum tespiti pano `changeCount` + basılı-düğme monitörü; dedektör yalnızca oturumda (E-3).
+- **S4** — Çözüldü, öncelik devralma **gerekmedi:** `NotchTransition.stateOnDragTarget` bir sürüklemede hangi modül açık olsa da rafı açar (sürükleme = bırakma niyeti); `ModuleResolver` öncelikleri değişmez, raf `activity`'si bırakmadan sonra 120 s `live` (`ShelfRules.liveWindow`), sonra `idle` — hiçbir modül `.urgent` döndürmez.
+- **S5** — Varsayılan 24 saat; seçenekler 1 sa / 12 sa / 1 gün / 2 gün / 1 hafta / kaldırılana kadar (`ShelfRules.keepIntervalChoices`, `shelfKeepInterval`). Silme kopyayı da siler (özgün dosyaya dokunulmaz — bırakma her zaman **kopyalar**). Toplam boyut ayarlar panelinde ve öğe açıklamasında; üst sınır yok. Depo `~/Library/Application Support/MyNotch/Shelf/<uuid>/<dosya>` + `preview.png` + `index.json`.
+- **S6** — `Modules/Shelf/` eklendi; `docs/PLAN.md` §7/§9 güncellendi.
+

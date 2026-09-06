@@ -5,5 +5,26 @@
     <link>https://github.com/Muhammethasanuyar/myNotch</link>
     <description>MyNotch releases. Items are appended by scripts/release.sh; newest first.</description>
     <language>en</language>
+    <item>
+      <title>MyNotch 0.1.0</title>
+      <link>https://github.com/Muhammethasanuyar/myNotch/releases/tag/v0.1.0</link>
+      <sparkle:version>1</sparkle:version>
+      <sparkle:shortVersionString>0.1.0</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <pubDate>Mon, 07 Sep 2026 02:36:29 +0300</pubDate>
+      <description><![CDATA[<h3>Added</h3>
+<ul>
+<li>The notch engine: closed, compact, expanded and popup states drawn over the housing (or floating below the menu bar on a Mac without one), hover to open with a grace zone, click-through everywhere the surface is not drawn, drag a file onto the housing to open the shelf.</li>
+<li>Now playing for Spotify and Apple Music: artwork and a level meter beside the housing; transport, scrubber, shuffle and repeat, synced lyrics (LRCLIB) and the Spotify library heart (Web API, bring-your-own client ID) on the card. An optional system-wide source through the bundled mediaremote-adapter covers Safari, Chrome and other players; an optional real-audio level meter through a Core Audio process tap.</li>
+<li>Claude Code usage: the five-hour and weekly limits from the CLI&#x27;s own sign-in (read only), today&#x27;s tokens, blocks and pace parsed from the local session logs, dollars from <code>ccusage</code> when installed, a pulse while Claude works, threshold popups.</li>
+<li>Calendar: countdown to the next meeting, popups before it starts, a Join button for Zoom, Meet, Teams and Webex links.</li>
+<li>Battery: charging and low-battery popups, a gauge with the estimate.</li>
+<li>Pomodoro: focus timer with a ring beside the housing, controls on the card and a chime between phases; survives a relaunch.</li>
+<li>Shelf: files dropped on the notch are copied and kept for a while, then AirDropped or dragged into another app.</li>
+<li>Settings window with one pane per module, a Setup checklist for permissions and sign-ins, launch at login, display selection, English and Turkish.</li>
+<li>Updates through Sparkle, offered once a day and never installed unasked.</li>
+</ul>]]></description>
+      <enclosure url="https://github.com/Muhammethasanuyar/myNotch/releases/download/v0.1.0/MyNotch-0.1.0.zip" type="application/octet-stream" sparkle:edSignature="PHi/BIDDdKUmn/1jq+EQcHWxHKlmbjmMbiPSWcQ405PYX8o3Su5k6jJQNWd0kSTYwLivAq7VzGbis9+/pytDDQ==" length="3798247"/>
+    </item>
   </channel>
 </rss>

@@ -6,6 +6,19 @@
     <description>MyNotch releases. Items are appended by scripts/release.sh; newest first.</description>
     <language>en</language>
     <item>
+      <title>MyNotch 0.1.1</title>
+      <link>https://github.com/Muhammethasanuyar/myNotch/releases/tag/v0.1.1</link>
+      <sparkle:version>2</sparkle:version>
+      <sparkle:shortVersionString>0.1.1</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <pubDate>Mon, 07 Sep 2026 02:38:59 +0300</pubDate>
+      <description><![CDATA[<h3>Changed</h3>
+<ul>
+<li>No functional changes: this release exercises the update channel end to end (appcast, EdDSA signature, in-app install) from 0.1.0.</li>
+</ul>]]></description>
+      <enclosure url="https://github.com/Muhammethasanuyar/myNotch/releases/download/v0.1.1/MyNotch-0.1.1.zip" type="application/octet-stream" sparkle:edSignature="ZF7PggvGj4EVP3R13kOlNqsIxc9rAYsf/88V9ixAXB5A5aZKQacMXKzX/gdIUzVfSPJhH7tVMWMLCSnrtRPuAw==" length="3798245"/>
+    </item>
+    <item>
       <title>MyNotch 0.1.0</title>
       <link>https://github.com/Muhammethasanuyar/myNotch/releases/tag/v0.1.0</link>
       <sparkle:version>1</sparkle:version>

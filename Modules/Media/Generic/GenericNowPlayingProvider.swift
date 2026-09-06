@@ -39,7 +39,7 @@ final class GenericNowPlayingProvider: MediaProvider {
     init(scriptOwners: Set<String>, bundle: Bundle = .main, defaults: UserDefaults = .standard) {
         self.scriptOwners = scriptOwners
         paths = MediaRemoteAdapterProcess.Paths.bundled(bundle)
-        healthCheck = AdapterHealthCheck(defaults: defaults)
+        healthCheck = AdapterHealthCheck(defaults: defaults, artefact: AdapterHealthCheck.artefact(for: paths))
         orphanSweep = paths.map { paths in Task { await MediaRemoteAdapterProcess.killOrphans(scriptPath: paths.script.path) } }
         if paths == nil {
             health = .artefactsMissing

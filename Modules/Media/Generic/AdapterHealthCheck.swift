@@ -1,3 +1,4 @@
+import CryptoKit
 import Foundation
 import os
 
@@ -56,34 +57,36 @@ nonisolated enum AdapterHealth: Equatable, Sendable {
     }
 }
 
-/// A `test` result, valid for one OS build and one app version: the private API can vanish with
-/// either, and the check itself briefly publishes a fake now-playing item other apps can see, so
-/// it is not something to run casually.
+/// A `test` result, valid for one OS build and one set of bundled artefacts: the private API can
+/// vanish with a macOS update and the adapter can change with a re-vendoring, and the check itself
+/// briefly publishes a fake now-playing item other apps can see, so it is not something to run
+/// casually — in particular not on every app version bump.
 nonisolated struct AdapterHealthRecord: Equatable, Sendable {
     let status: AdapterHealth
     let osBuild: String
-    let appVersion: String
+    /// Fingerprint of the bundled framework and test client (`AdapterHealthCheck.artefact(for:)`).
+    let artefact: String
     let checkedAt: Date
 
     var storedValue: String {
-        [status.storedValue, osBuild, appVersion, String(checkedAt.timeIntervalSince1970)].joined(separator: "|")
+        [status.storedValue, osBuild, artefact, String(checkedAt.timeIntervalSince1970)].joined(separator: "|")
     }
 
-    init(status: AdapterHealth, osBuild: String, appVersion: String, checkedAt: Date) {
+    init(status: AdapterHealth, osBuild: String, artefact: String, checkedAt: Date) {
         self.status = status
         self.osBuild = osBuild
-        self.appVersion = appVersion
+        self.artefact = artefact
         self.checkedAt = checkedAt
     }
 
     init?(storedValue: String) {
         let parts = storedValue.split(separator: "|", omittingEmptySubsequences: false).map(String.init)
         guard parts.count == 4, let status = AdapterHealth(storedValue: parts[0]), let seconds = TimeInterval(parts[3]) else { return nil }
-        self.init(status: status, osBuild: parts[1], appVersion: parts[2], checkedAt: Date(timeIntervalSince1970: seconds))
+        self.init(status: status, osBuild: parts[1], artefact: parts[2], checkedAt: Date(timeIntervalSince1970: seconds))
     }
 
-    func isCurrent(osBuild: String, appVersion: String) -> Bool {
-        self.osBuild == osBuild && self.appVersion == appVersion
+    func isCurrent(osBuild: String, artefact: String) -> Bool {
+        self.osBuild == osBuild && self.artefact == artefact
     }
 }
 
@@ -92,10 +95,13 @@ nonisolated struct AdapterHealthRecord: Equatable, Sendable {
 final class AdapterHealthCheck {
     static let key = "genericPlayerHealth"
     private let defaults: UserDefaults
+    /// The artefacts this app carries; a re-vendored adapter gets a fresh verdict.
+    let artefact: String
     private static let log = Logger(subsystem: "com.emre.mynotch", category: "mediaremote-adapter")
 
-    init(defaults: UserDefaults = .standard) {
+    init(defaults: UserDefaults = .standard, artefact: String) {
         self.defaults = defaults
+        self.artefact = artefact
     }
 
     static var osBuild: String {
@@ -103,19 +109,27 @@ final class AdapterHealthCheck {
         return "\(version.majorVersion).\(version.minorVersion).\(version.patchVersion)"
     }
 
-    static var appVersion: String {
-        (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0") + "/" + (Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "0")
+    /// SHA-256 over the framework binary and the test client, shortened: what actually runs, so a
+    /// version bump alone never repeats the check. `"none"` when the artefacts are not bundled.
+    nonisolated static func artefact(for paths: MediaRemoteAdapterProcess.Paths?) -> String {
+        guard let paths else { return "none" }
+        var hasher = SHA256()
+        let binary = paths.framework.appendingPathComponent("Versions/A/MediaRemoteAdapter")
+        for url in [binary, paths.testClient].compactMap({ $0 }) {
+            if let data = try? Data(contentsOf: url) { hasher.update(data: data) }
+        }
+        return hasher.finalize().prefix(8).map { String(format: "%02x", $0) }.joined()
     }
 
-    /// The last result, if it was taken on this OS build with this app version.
+    /// The last result, if it was taken on this OS build with these artefacts.
     func cached() -> AdapterHealthRecord? {
         guard let stored = defaults.string(forKey: Self.key), let record = AdapterHealthRecord(storedValue: stored),
-              record.isCurrent(osBuild: Self.osBuild, appVersion: Self.appVersion) else { return nil }
+              record.isCurrent(osBuild: Self.osBuild, artefact: artefact) else { return nil }
         return record
     }
 
     func record(_ status: AdapterHealth) -> AdapterHealthRecord {
-        let record = AdapterHealthRecord(status: status, osBuild: Self.osBuild, appVersion: Self.appVersion, checkedAt: Date())
+        let record = AdapterHealthRecord(status: status, osBuild: Self.osBuild, artefact: artefact, checkedAt: Date())
         defaults.set(record.storedValue, forKey: Self.key)
         return record
     }

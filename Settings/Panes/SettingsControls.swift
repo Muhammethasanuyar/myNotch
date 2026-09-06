@@ -173,6 +173,7 @@ struct CopyableText: View {
 /// Opens a System Settings pane by its URL scheme.
 nonisolated enum SystemSettingsLink {
     static let automation = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Automation")!
+    static let calendars = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Calendars")!
 
     @MainActor
     static func open(_ url: URL) {

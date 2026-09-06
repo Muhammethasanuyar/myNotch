@@ -14,7 +14,8 @@ struct SettingsApplier {
     static let appliedAtLaunch: [SettingsKey] = [
         .hoverDelay, .closeDelay, .hapticsEnabled, .displaySelection,
         .usageWarningThreshold, .usagePollInterval, .usageAlertsEnabled,
-        .batteryLowThreshold, .batteryAlertsEnabled, .pomodoroWorkMinutes
+        .batteryLowThreshold, .batteryAlertsEnabled, .pomodoroWorkMinutes,
+        .calendarLeadMinutes, .calendarSelectedIDs, .calendarAlertsEnabled
     ]
 
     func applyAll() {
@@ -65,6 +66,12 @@ struct SettingsApplier {
             battery?.alertsEnabled = store.batteryAlertsEnabled
         case .pomodoroWorkMinutes, .pomodoroBreakMinutes, .pomodoroLongBreakMinutes, .pomodoroLongBreakEvery, .pomodoroAutoStart, .pomodoroSoundEnabled:
             pomodoro?.timer.config = store.pomodoroConfig
+        case .calendarLeadMinutes:
+            calendar?.service.leadMinutes = store.calendarLeadMinutes
+        case .calendarSelectedIDs:
+            calendar?.service.selectedCalendarIDs = Set(store.calendarSelectedIDs)
+        case .calendarAlertsEnabled:
+            calendar?.alertsEnabled = store.calendarAlertsEnabled
         case .onboardingCompleted:
             break
         }
@@ -84,5 +91,9 @@ struct SettingsApplier {
 
     private var pomodoro: PomodoroModule? {
         manager.module(id: "pomodoro") as? PomodoroModule
+    }
+
+    private var calendar: CalendarModule? {
+        manager.module(id: "calendar") as? CalendarModule
     }
 }

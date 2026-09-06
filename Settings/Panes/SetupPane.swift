@@ -29,6 +29,12 @@ struct SetupPane: View {
                 }
             }
 
+            Section(L("settings.setup.calendarSection", "Calendar")) {
+                if let calendar = context.calendar {
+                    calendarRow(calendar.service)
+                }
+            }
+
             Section(L("settings.setup.system", "System")) {
                 loginRow
             }
@@ -123,6 +129,24 @@ struct SetupPane: View {
             actionTitle: ready ? nil : L("settings.setup.goTo.claude", "Set up in Claude…")
         ) {
             navigation.selectedTab = .claude
+        }
+    }
+
+    private func calendarRow(_ service: CalendarService) -> some View {
+        let (tone, detail, actionTitle): (StatusTone, String, String?) = switch service.access {
+        case .authorized:
+            (.ok, L("settings.setup.calendar.ok", "Allowed. The next meeting shows up in the notch when it is close."), nil)
+        case .notDetermined:
+            (.neutral, L("settings.setup.calendar.todo", "Optional. Lets the notch count down to the next meeting and open its link."), L("settings.calendar.grant", "Grant access…"))
+        case .denied, .restricted:
+            (.problem, L("settings.setup.calendar.denied", "Denied. Allow MyNotch under Privacy & Security → Calendars."), L("settings.calendar.openPrivacy", "Open Privacy Settings…"))
+        }
+        return SetupRow(tone: tone, title: L("settings.setup.calendar", "Calendar (optional)"), detail: detail, actionTitle: actionTitle) {
+            if service.access == .notDetermined {
+                Task { await service.requestAccess() }
+            } else {
+                SystemSettingsLink.open(SystemSettingsLink.calendars)
+            }
         }
     }
 

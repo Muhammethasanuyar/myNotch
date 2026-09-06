@@ -20,6 +20,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // the usage dashboard is worth a look at any time while an idle player is not.
         register(ClaudeUsageModule(), in: manager)
         register(MediaModule(), in: manager)
+        register(CalendarModule(), in: manager)
         register(PomodoroModule(), in: manager)
         register(BatteryModule(), in: manager)
         // The demo module only exists to exercise the engine, so it never ships in a release build.

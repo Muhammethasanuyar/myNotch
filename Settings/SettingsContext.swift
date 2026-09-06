@@ -7,6 +7,7 @@ nonisolated enum SettingsTab: String, CaseIterable, Identifiable, Sendable {
     case modules
     case media
     case claude
+    case calendar
     case battery
     case pomodoro
     case setup
@@ -20,6 +21,7 @@ nonisolated enum SettingsTab: String, CaseIterable, Identifiable, Sendable {
         case .modules: L("settings.tab.modules", "Modules")
         case .media: L("settings.tab.media", "Media")
         case .claude: L("settings.tab.claude", "Claude")
+        case .calendar: L("settings.tab.calendar", "Calendar")
         case .battery: L("settings.tab.battery", "Battery")
         case .pomodoro: L("settings.tab.pomodoro", "Pomodoro")
         case .setup: L("settings.tab.setup", "Setup")
@@ -33,6 +35,7 @@ nonisolated enum SettingsTab: String, CaseIterable, Identifiable, Sendable {
         case .modules: "square.grid.2x2"
         case .media: "music.note"
         case .claude: "asterisk"
+        case .calendar: "calendar"
         case .battery: "battery.100percent.bolt"
         case .pomodoro: "timer"
         case .setup: "checklist"
@@ -69,5 +72,9 @@ struct SettingsContext {
 
     var pomodoro: PomodoroModule? {
         manager.module(id: "pomodoro") as? PomodoroModule
+    }
+
+    var calendar: CalendarModule? {
+        manager.module(id: "calendar") as? CalendarModule
     }
 }

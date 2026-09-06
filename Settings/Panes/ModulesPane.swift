@@ -80,6 +80,7 @@ nonisolated enum ModuleCatalog {
         case "claude": "asterisk"
         case "battery": "battery.100percent.bolt"
         case "pomodoro": "timer"
+        case "calendar": "calendar"
         case "demo": "wand.and.stars"
         default: "puzzlepiece.extension"
         }
@@ -95,6 +96,8 @@ nonisolated enum ModuleCatalog {
             L("settings.modules.battery.summary", "Charging and low-battery popups, a gauge while it matters.")
         case "pomodoro":
             L("settings.modules.pomodoro.summary", "A focus timer: ring beside the housing, controls on the card, a chime between phases.")
+        case "calendar":
+            L("settings.modules.calendar.summary", "The next meeting: a countdown when it is close, popups before it starts, a Join button.")
         case "demo":
             L("settings.modules.demo.summary", "Exercises the notch engine; Debug builds only.")
         default:

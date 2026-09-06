@@ -46,6 +46,7 @@ targets:
         LSMinimumSystemVersion: "$(MACOSX_DEPLOYMENT_TARGET)"
         NSHumanReadableCopyright: ""
         NSAppleEventsUsageDescription: "MyNotch asks Spotify and Music what is playing so it can show it in the notch."
+        NSCalendarsFullAccessUsageDescription: "MyNotch reads your upcoming events to count down to the next meeting in the notch. Nothing leaves this Mac."
     scheme:
       testTargets:
         - MyNotchTests

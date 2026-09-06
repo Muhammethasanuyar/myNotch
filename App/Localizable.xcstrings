@@ -311,6 +311,126 @@
         }
       }
     },
+    "calendar.empty": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bugün toplantı kalmadı"
+          }
+        }
+      }
+    },
+    "calendar.event.fiveMinutes": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 5 dakika sonra"
+          }
+        }
+      }
+    },
+    "calendar.event.starting": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ başlıyor"
+          }
+        }
+      }
+    },
+    "calendar.explain.join": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Davetiyedeki %@ bağlantısını tarayıcıda ya da uygulamada açar."
+          }
+        }
+      }
+    },
+    "calendar.explain.next": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ sonra başlıyor. Beş dakika önce ve başlarken bildirim gelir."
+          }
+        }
+      }
+    },
+    "calendar.explain.rail": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sıradaki %1$lld etkinlik %2$lld saatlik bir ray üzerinde, takvimlerinin renginde; işaret şu an."
+          }
+        }
+      }
+    },
+    "calendar.explain.underway": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@'dan beri sürüyor; %2$@'da bitiyor."
+          }
+        }
+      }
+    },
+    "calendar.join": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Katıl"
+          }
+        }
+      }
+    },
+    "calendar.noAccess": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Takvim erişimi gerekiyor"
+          }
+        }
+      }
+    },
+    "calendar.noAccess.help": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MyNotch Ayarları → Takvim'den izin ver."
+          }
+        }
+      }
+    },
+    "calendar.now": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "şimdi"
+          }
+        }
+      }
+    },
+    "calendar.provider.other": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Görüntülü görüşme"
+          }
+        }
+      }
+    },
     "caption.failed": {
       "localizations": {
         "tr": {
@@ -1041,6 +1161,16 @@
         }
       }
     },
+    "module.calendar": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Takvim"
+          }
+        }
+      }
+    },
     "module.pomodoro": {
       "localizations": {
         "tr": {
@@ -1437,6 +1567,176 @@
           "stringUnit": {
             "state": "translated",
             "value": "Durum"
+          }
+        }
+      }
+    },
+    "settings.calendar.access": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Erişim"
+          }
+        }
+      }
+    },
+    "settings.calendar.access.denied": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reddedildi — Takvimler altında MyNotch'a izin ver"
+          }
+        }
+      }
+    },
+    "settings.calendar.access.help": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Salt okuma. Etkinlikler bu Mac'ten çıkmaz; çentik sıradaki birkaçını ve toplantı bağlantılarını gösterir."
+          }
+        }
+      }
+    },
+    "settings.calendar.access.notAsked": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Henüz sorulmadı"
+          }
+        }
+      }
+    },
+    "settings.calendar.access.ok": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "İzin verildi"
+          }
+        }
+      }
+    },
+    "settings.calendar.access.restricted": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bir profil tarafından kısıtlanmış"
+          }
+        }
+      }
+    },
+    "settings.calendar.alerts": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Başlamadan beş dakika önce ve başlarken bildirim"
+          }
+        }
+      }
+    },
+    "settings.calendar.calendars": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Takvimler"
+          }
+        }
+      }
+    },
+    "settings.calendar.calendars.help": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hiçbiri seçili değilken her takvim sayılır."
+          }
+        }
+      }
+    },
+    "settings.calendar.calendars.none": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Takvim seçmek için erişim ver; o zamana kadar her takvim sayılır."
+          }
+        }
+      }
+    },
+    "settings.calendar.grant": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Erişim ver…"
+          }
+        }
+      }
+    },
+    "settings.calendar.lead": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Geri sayımı göster"
+          }
+        }
+      }
+    },
+    "settings.calendar.lead.value": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld dk önce"
+          }
+        }
+      }
+    },
+    "settings.calendar.missing": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Takvim modülü kayıtlı değil."
+          }
+        }
+      }
+    },
+    "settings.calendar.openPrivacy": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gizlilik Ayarları'nı aç…"
+          }
+        }
+      }
+    },
+    "settings.calendar.refresh": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yenile"
+          }
+        }
+      }
+    },
+    "settings.calendar.timing": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zamanlama"
           }
         }
       }
@@ -2341,6 +2641,16 @@
         }
       }
     },
+    "settings.modules.calendar.summary": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sıradaki toplantı: yaklaşınca geri sayım, başlamadan önce bildirim, Katıl düğmesi."
+          }
+        }
+      }
+    },
     "settings.modules.claude.summary": {
       "localizations": {
         "tr": {
@@ -2577,6 +2887,56 @@
           "stringUnit": {
             "state": "translated",
             "value": "macOS bir oynatıcı ilk kez çalışırken sorar. Reddettiyseniz Otomasyon altında MyNotch'a izin verin."
+          }
+        }
+      }
+    },
+    "settings.setup.calendar": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Takvim (isteğe bağlı)"
+          }
+        }
+      }
+    },
+    "settings.setup.calendar.denied": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reddedildi. Gizlilik ve Güvenlik → Takvimler altında MyNotch'a izin ver."
+          }
+        }
+      }
+    },
+    "settings.setup.calendar.ok": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "İzin verildi. Sıradaki toplantı yaklaşınca çentikte görünür."
+          }
+        }
+      }
+    },
+    "settings.setup.calendar.todo": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "İsteğe bağlı. Çentiğin sıradaki toplantıya geri saymasını ve bağlantısını açmasını sağlar."
+          }
+        }
+      }
+    },
+    "settings.setup.calendarSection": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Takvim"
           }
         }
       }
@@ -2827,6 +3187,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Pil"
+          }
+        }
+      }
+    },
+    "settings.tab.calendar": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Takvim"
           }
         }
       }

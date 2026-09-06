@@ -33,6 +33,10 @@ nonisolated enum SettingsKey: String, CaseIterable, Sendable {
     case pomodoroLongBreakEvery
     case pomodoroAutoStart
     case pomodoroSoundEnabled
+    // Calendar
+    case calendarLeadMinutes
+    case calendarSelectedIDs
+    case calendarAlertsEnabled
     // App
     case onboardingCompleted
 }
@@ -58,6 +62,7 @@ nonisolated enum SettingsRules {
     static let pomodoroBreakRange = 1...30
     static let pomodoroLongBreakRange = 5...60
     static let pomodoroLongBreakEveryRange = 2...8
+    static let calendarLeadRange = 1...60
 
     static func hoverDelay(_ value: TimeInterval) -> TimeInterval { clamp(value, to: hoverDelayRange) }
     static func closeDelay(_ value: TimeInterval) -> TimeInterval { clamp(value, to: closeDelayRange) }
@@ -76,6 +81,8 @@ nonisolated enum SettingsRules {
         let critical = min(clamp(critical, to: batteryCriticalRange), max(low - batteryThresholdGap, batteryCriticalRange.lowerBound))
         return (low, critical)
     }
+
+    static func calendarLead(_ minutes: Int) -> Int { clamp(minutes, to: calendarLeadRange) }
 
     /// Every pomodoro length inside its range.
     static func pomodoroConfig(work: Int, breakMinutes: Int, longBreak: Int, every: Int) -> PomodoroConfig {
@@ -194,6 +201,16 @@ final class SettingsStore {
         return config
     }
 
+    // MARK: Calendar
+
+    var calendarLeadMinutes: Int {
+        get { access(keyPath: \.calendarLeadMinutes); return storedCalendarLead }
+        set { withMutation(keyPath: \.calendarLeadMinutes) { storedCalendarLead = SettingsRules.calendarLead(newValue) }; persist(storedCalendarLead, .calendarLeadMinutes) }
+    }
+    /// Calendar identifiers that count; empty means every calendar.
+    var calendarSelectedIDs: [String] { didSet { persist(calendarSelectedIDs.isEmpty ? nil : calendarSelectedIDs, .calendarSelectedIDs) } }
+    var calendarAlertsEnabled: Bool { didSet { persist(calendarAlertsEnabled, .calendarAlertsEnabled) } }
+
     // MARK: App
 
     var onboardingCompleted: Bool { didSet { persist(onboardingCompleted, .onboardingCompleted) } }
@@ -205,6 +222,7 @@ final class SettingsStore {
     static let defaultCriticalThreshold = 0.95
     static let defaultBatteryLow = 0.20
     static let defaultBatteryCritical = 0.10
+    static let defaultCalendarLead = 15
 
     private let defaults: UserDefaults
     @ObservationIgnored private var storedHoverDelay: TimeInterval
@@ -217,6 +235,7 @@ final class SettingsStore {
     @ObservationIgnored private var storedBatteryCritical: Double
     /// Lengths only; the two switches are ordinary stored properties.
     @ObservationIgnored private var storedPomodoro: PomodoroConfig
+    @ObservationIgnored private var storedCalendarLead: Int
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -254,6 +273,9 @@ final class SettingsStore {
         )
         pomodoroAutoStart = defaults.object(forKey: SettingsKey.pomodoroAutoStart.rawValue) as? Bool ?? shipped.autoStart
         pomodoroSoundEnabled = defaults.object(forKey: SettingsKey.pomodoroSoundEnabled.rawValue) as? Bool ?? shipped.soundEnabled
+        storedCalendarLead = SettingsRules.calendarLead(defaults.object(forKey: SettingsKey.calendarLeadMinutes.rawValue) as? Int ?? Self.defaultCalendarLead)
+        calendarSelectedIDs = defaults.stringArray(forKey: SettingsKey.calendarSelectedIDs.rawValue) ?? []
+        calendarAlertsEnabled = defaults.object(forKey: SettingsKey.calendarAlertsEnabled.rawValue) as? Bool ?? true
         onboardingCompleted = defaults.bool(forKey: SettingsKey.onboardingCompleted.rawValue)
     }
 

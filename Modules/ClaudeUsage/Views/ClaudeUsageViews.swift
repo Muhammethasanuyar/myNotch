@@ -22,11 +22,12 @@ enum ClaudeStyle {
 struct ClaudeCompactLeading: View {
     let service: ClaudeUsageService
     let namespace: Namespace.ID
+    @Environment(\.wingContentSize) private var size
 
     var body: some View {
         PulsingSymbol(
             systemName: "asterisk",
-            pointSize: 14,
+            pointSize: size * 0.7,
             weight: .bold,
             color: service.isWorking ? ClaudeStyle.accent : .white.opacity(0.5),
             isActive: service.isWorking
@@ -38,11 +39,12 @@ struct ClaudeCompactLeading: View {
 /// Compact trailing wing: the 5-hour percentage, or today's cost when the limits are unknown.
 struct ClaudeCompactTrailing: View {
     let service: ClaudeUsageService
+    @Environment(\.wingContentSize) private var size
 
     var body: some View {
         if let label = ClaudeUsageRules.compactLabel(fiveHour: service.snapshot?.fiveHour, todayCost: service.cost?.today?.totalCost) {
             Text(label)
-                .font(.system(size: 10, weight: .semibold, design: .rounded).monospacedDigit())
+                .font(.system(size: size * 0.5, weight: .semibold, design: .rounded).monospacedDigit())
                 .foregroundStyle(.white.opacity(service.isStale ? 0.5 : 0.9))
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)

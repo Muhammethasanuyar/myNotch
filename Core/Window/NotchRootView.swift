@@ -72,7 +72,7 @@ struct NotchRootView: View {
             // One row for both states, so the wings keep their identity (and their artwork and
             // meter) while the surface widens for a popup and the text strip unfolds beneath them.
             VStack(spacing: 0) {
-                compactLayer(radii: radii)
+                compactLayer(radii: radii, wingContentSize: NotchLayout.wingContentSize(for: state))
                     .frame(height: metrics.notchSize.height)
                 if case .popup(let event) = state {
                     content.popup(event, morphNamespace)
@@ -87,7 +87,9 @@ struct NotchRootView: View {
         }
     }
 
-    private func compactLayer(radii: NotchLayout.CornerRadii) -> some View {
+    /// - Parameter wingContentSize: how large the modules may draw their wing content; a popup
+    ///   hands them more room than the compact strip does.
+    private func compactLayer(radii: NotchLayout.CornerRadii, wingContentSize: CGFloat) -> some View {
         let height = metrics.notchSize.height
         let wing = metrics.style == .notch ? NotchLayout.compactWingWidth(notchHeight: height) : nil
         return HStack(spacing: 0) {
@@ -102,6 +104,7 @@ struct NotchRootView: View {
                 .transition(NotchTransitions.compactWing(edge: .trailing))
         }
         .padding(.horizontal, radii.ear + (metrics.style == .notch ? 0 : 12))
+        .environment(\.wingContentSize, wingContentSize)
     }
 
     private func expandedLayer(moduleID: String, size: CGSize, radii: NotchLayout.CornerRadii, screens: [ModuleScreen]) -> some View {

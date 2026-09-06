@@ -1,0 +1,108 @@
+import AppKit
+import SwiftUI
+
+/// Four bars that dance while something plays and rest low when it does not. Each bar is a layer
+/// with its own Core Animation scale loop, so the meter costs the app nothing per frame; the
+/// SwiftUI `TimelineView` version re-rendered the compact strip 24 times a second (~5% CPU while
+/// music played, 2026-09-06 measurement).
+struct EqualizerBars: NSViewRepresentable {
+    let isPlaying: Bool
+    var color: Color = .white
+    var barCount = 4
+    /// Bars and the gaps between them grow with the wing they sit in.
+    var barWidth: CGFloat = 2
+
+    func makeNSView(context: Context) -> EqualizerBarsView {
+        EqualizerBarsView()
+    }
+
+    func updateNSView(_ view: EqualizerBarsView, context: Context) {
+        view.apply(barCount: barCount, barWidth: barWidth, color: NSColor(color), isPlaying: isPlaying)
+    }
+
+    func sizeThatFits(_ proposal: ProposedViewSize, nsView: EqualizerBarsView, context: Context) -> CGSize? {
+        proposal.replacingUnspecifiedDimensions(by: CGSize(width: barWidth * CGFloat(2 * barCount - 1), height: barWidth * 7))
+    }
+}
+
+/// The layer-backed view behind `EqualizerBars`.
+final class EqualizerBarsView: NSView {
+    private var bars: [CALayer] = []
+    private var barWidth: CGFloat = 2
+    private var isPlaying = false
+    /// Slightly different periods per bar, so the pattern never visibly repeats.
+    private static let periods: [CFTimeInterval] = [0.46, 0.61, 0.53, 0.72, 0.58, 0.67]
+    private static let restingScale: CGFloat = 0.2
+    private static let animationKey = "dance"
+
+    override init(frame: NSRect) {
+        super.init(frame: frame)
+        wantsLayer = true
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("EqualizerBarsView does not support NSCoding")
+    }
+
+    func apply(barCount: Int, barWidth: CGFloat, color: NSColor, isPlaying: Bool) {
+        guard let layer else { return }
+        if bars.count != barCount {
+            bars.forEach { $0.removeFromSuperlayer() }
+            bars = (0..<barCount).map { _ in
+                let bar = CALayer()
+                bar.anchorPoint = CGPoint(x: 0.5, y: 0.5)
+                layer.addSublayer(bar)
+                return bar
+            }
+            self.isPlaying = !isPlaying // force the animation state to be applied below
+        }
+        self.barWidth = barWidth
+        for bar in bars {
+            bar.backgroundColor = color.cgColor
+            bar.cornerRadius = barWidth / 2
+        }
+        layoutBars()
+        guard isPlaying != self.isPlaying else { return }
+        self.isPlaying = isPlaying
+        for (index, bar) in bars.enumerated() {
+            if isPlaying {
+                let dance = CABasicAnimation(keyPath: "transform.scale.y")
+                dance.fromValue = 0.25
+                dance.toValue = 1.0
+                dance.duration = Self.periods[index % Self.periods.count]
+                dance.autoreverses = true
+                dance.repeatCount = .infinity
+                dance.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+                dance.timeOffset = Double(index) * 0.17
+                bar.transform = CATransform3DIdentity
+                bar.add(dance, forKey: Self.animationKey)
+            } else {
+                bar.removeAnimation(forKey: Self.animationKey)
+                bar.transform = CATransform3DMakeScale(1, Self.restingScale, 1)
+            }
+        }
+    }
+
+    override func layout() {
+        super.layout()
+        layoutBars()
+    }
+
+    /// Bars centred in the view, one bar's width apart; the transform is left alone so a running
+    /// dance survives a resize (the wing grows when a popup opens).
+    private func layoutBars() {
+        let count = CGFloat(bars.count)
+        guard count > 0 else { return }
+        let totalWidth = barWidth * (2 * count - 1)
+        let startX = (bounds.width - totalWidth) / 2
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        for (index, bar) in bars.enumerated() {
+            let frame = CGRect(x: startX + CGFloat(index) * barWidth * 2, y: 0, width: barWidth, height: bounds.height)
+            bar.bounds = CGRect(origin: .zero, size: frame.size)
+            bar.position = CGPoint(x: frame.midX, y: frame.midY)
+        }
+        CATransaction.commit()
+    }
+}

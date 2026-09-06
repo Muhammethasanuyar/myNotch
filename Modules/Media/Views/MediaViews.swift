@@ -27,24 +27,27 @@ struct MediaArtworkView: View {
 struct MediaCompactLeading: View {
     let controller: MediaController
     let namespace: Namespace.ID
+    @Environment(\.wingContentSize) private var size
 
     var body: some View {
-        MediaArtworkView(artwork: controller.artwork, cornerRadius: 5)
+        MediaArtworkView(artwork: controller.artwork, cornerRadius: size * 0.25)
             .matchedGeometryEffect(id: MediaModule.artworkID, in: namespace)
-            .frame(width: 20, height: 20)
+            .frame(width: size, height: size)
     }
 }
 
 /// Compact trailing wing: the level meter, tinted with the artwork's accent.
 struct MediaCompactTrailing: View {
     let controller: MediaController
+    @Environment(\.wingContentSize) private var size
 
     var body: some View {
         EqualizerBars(
             isPlaying: controller.state?.isPlaying ?? false,
-            color: controller.artwork?.accent ?? .white
+            color: controller.artwork?.accent ?? .white,
+            barWidth: size / 10
         )
-        .frame(width: 20, height: 14)
+        .frame(width: size, height: size * 0.7)
     }
 }
 
@@ -375,43 +378,6 @@ struct MediaIdleView: View {
     }
 }
 
-/// Placeholder visualizer: animated while playing, flat when paused. Phase 6 may swap in a real
-/// audio meter; the shape of this view stays the same.
-struct EqualizerBars: View {
-    let isPlaying: Bool
-    var color: Color = .white
-    var barCount = 4
-
-    var body: some View {
-        if isPlaying {
-            TimelineView(.animation(minimumInterval: 1.0 / 24.0)) { context in
-                bars(at: context.date.timeIntervalSinceReferenceDate)
-            }
-        } else {
-            bars(at: nil)
-        }
-    }
-
-    private func bars(at time: Double?) -> some View {
-        HStack(alignment: .center, spacing: 2) {
-            ForEach(0..<barCount, id: \.self) { index in
-                Capsule(style: .continuous)
-                    .fill(color)
-                    .frame(width: 2)
-                    .frame(maxHeight: .infinity)
-                    .scaleEffect(y: height(at: time, phase: Double(index) * 1.1), anchor: .center)
-            }
-        }
-    }
-
-    /// Two summed sines give an organic, non-repeating wiggle; paused rests low and flat.
-    private func height(at time: Double?, phase: Double) -> CGFloat {
-        guard let time else { return 0.2 }
-        let a = sin(time * 5.2 + phase) * 0.5 + 0.5
-        let b = sin(time * 9.7 + phase * 2.1) * 0.5 + 0.5
-        return CGFloat(0.25 + (a * 0.6 + b * 0.4) * 0.75)
-    }
-}
 
 /// Synced lyrics that advance with the track, the way a player's lyrics strip does: the line being
 /// sung sits at the top in the artwork's accent colour, the next one waits below it dimmed, and the

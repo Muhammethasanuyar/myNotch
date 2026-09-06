@@ -45,6 +45,16 @@ final class NotchLayoutTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(NotchLayout.popupExtraHeight, 30, "a 13 pt line with breathing space")
     }
 
+    func testWingsGrowForAPopupAndFitTheirRow() {
+        XCTAssertEqual(NotchLayout.wingContentSize(for: .compact), NotchLayout.compactWingContentSize)
+        XCTAssertEqual(NotchLayout.wingContentSize(for: .closed), NotchLayout.compactWingContentSize)
+        XCTAssertGreaterThan(NotchLayout.wingContentSize(for: .popup(sampleEvent)), NotchLayout.compactWingContentSize)
+        for metrics in [notched, floating] {
+            XCTAssertLessThan(NotchLayout.popupWingContentSize, metrics.notchSize.height, "the artwork stays inside the housing row")
+            XCTAssertLessThanOrEqual(NotchLayout.popupWingContentSize, NotchLayout.compactWingWidth(notchHeight: metrics.notchSize.height), "and inside the wing")
+        }
+    }
+
     func testExpandedIncludesHousingAndEars() {
         let size = NotchLayout.shapeSize(for: .expanded(moduleID: "debug"), metrics: notched)
         XCTAssertEqual(size, CGSize(width: NotchLayout.expandedContentSize.width + 30, height: 37 + NotchLayout.expandedTopGap + 150))

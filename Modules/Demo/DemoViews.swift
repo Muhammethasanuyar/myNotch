@@ -21,21 +21,23 @@ struct DemoArtwork: View {
 struct DemoCompactLeading: View {
     let module: DemoModule
     let namespace: Namespace.ID
+    @Environment(\.wingContentSize) private var size
 
     var body: some View {
-        DemoArtwork(track: module.track, cornerRadius: 5)
+        DemoArtwork(track: module.track, cornerRadius: size * 0.25)
             .matchedGeometryEffect(id: DemoModule.artworkID, in: namespace)
-            .frame(width: 20, height: 20)
+            .frame(width: size, height: size)
     }
 }
 
 /// Compact trailing wing: four bars that wiggle while playing and rest when paused.
 struct DemoCompactTrailing: View {
     let module: DemoModule
+    @Environment(\.wingContentSize) private var size
 
     var body: some View {
-        DemoBars(isPlaying: module.isPlaying)
-            .frame(width: 20, height: 14)
+        EqualizerBars(isPlaying: module.isPlaying, barWidth: size / 10)
+            .frame(width: size, height: size * 0.7)
     }
 }
 
@@ -80,40 +82,6 @@ struct DemoPopupView: View {
     }
 }
 
-/// Placeholder visualizer: a 24 fps timeline while playing, flat bars when paused.
-/// Phase 6 may replace it with a real audio meter.
-private struct DemoBars: View {
-    let isPlaying: Bool
-
-    var body: some View {
-        if isPlaying {
-            TimelineView(.animation(minimumInterval: 1.0 / 24.0)) { context in
-                bars(at: context.date.timeIntervalSinceReferenceDate)
-            }
-        } else {
-            bars(at: nil)
-        }
-    }
-
-    private func bars(at time: Double?) -> some View {
-        HStack(alignment: .center, spacing: 2) {
-            ForEach(0..<4, id: \.self) { index in
-                Capsule(style: .continuous)
-                    .fill(.white)
-                    .frame(width: 2)
-                    .frame(maxHeight: .infinity)
-                    .scaleEffect(y: height(at: time, phase: Double(index) * 1.1), anchor: .center)
-            }
-        }
-    }
-
-    private func height(at time: Double?, phase: Double) -> CGFloat {
-        guard let time else { return 0.2 }
-        let a = sin(time * 5.2 + phase) * 0.5 + 0.5
-        let b = sin(time * 9.7 + phase * 2.1) * 0.5 + 0.5
-        return CGFloat(0.25 + (a * 0.6 + b * 0.4) * 0.75)
-    }
-}
 
 extension DemoModule {
     /// Shared id for the artwork that morphs between compact and expanded.

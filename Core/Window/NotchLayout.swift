@@ -64,6 +64,15 @@ nonisolated enum NotchLayout {
     static let popupContentInset: CGFloat = 12
     /// Vertical breathing room of compact content: icon height = housing height − this.
     static let compactContentInset: CGFloat = 12
+    /// Content inside a compact wing (artwork, meter, mark) beside the housing…
+    static let compactWingContentSize: CGFloat = 20
+    /// …and while a popup widens the surface, when the wings grow to match the title strip.
+    static let popupWingContentSize: CGFloat = 28
+
+    /// The wing content size the engine hands modules through `EnvironmentValues.wingContentSize`.
+    static func wingContentSize(for state: NotchState) -> CGFloat {
+        state.isPopup ? popupWingContentSize : compactWingContentSize
+    }
     /// Strip reserved above expanded content while another module's banner is showing, so the two
     /// never overlap.
     static let bannerHeight: CGFloat = 28

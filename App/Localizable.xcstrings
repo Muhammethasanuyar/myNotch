@@ -1031,6 +1031,16 @@
         }
       }
     },
+    "media.generic.name": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Şimdi Çalıyor"
+          }
+        }
+      }
+    },
     "media.idle.nothing": {
       "localizations": {
         "tr": {
@@ -2397,6 +2407,146 @@
           "stringUnit": {
             "state": "translated",
             "value": "Henüz sorulmadı — Spotify ya da Müzik'i başlatın"
+          }
+        }
+      }
+    },
+    "settings.media.generic": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diğer oynatıcılar"
+          }
+        }
+      }
+    },
+    "settings.media.generic.broken": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Adaptör durdu (çıkış %lld); Spotify ve Müzik çalışmaya devam eder"
+          }
+        }
+      }
+    },
+    "settings.media.generic.checking": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Adaptör denetleniyor…"
+          }
+        }
+      }
+    },
+    "settings.media.generic.enabled": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mac'te ne çalıyorsa göster"
+          }
+        }
+      }
+    },
+    "settings.media.generic.help": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Safari, Chrome, IINA, podcast uygulamaları — Now Playing'e yazan her şey. Paketlenmiş mediaremote-adapter'ı kullanır: perl, Apple'ın özel bir framework'ünü ayrı bir süreçte yükler; bir macOS güncellemesi bunu kırabilir. Sağlık kontrolü sürüm başına bir kez çalışır, kırılırsa çentik Spotify ve Müzik'e döner. Bu Mac'ten hiçbir şey çıkmaz."
+          }
+        }
+      }
+    },
+    "settings.media.generic.idle": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dinliyor — başka yerde çalan yok"
+          }
+        }
+      }
+    },
+    "settings.media.generic.missing": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu derlemede adaptör paketlenmemiş"
+          }
+        }
+      }
+    },
+    "settings.media.generic.noData": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "macOS adaptörün Now Playing'i okumasına artık izin vermiyor"
+          }
+        }
+      }
+    },
+    "settings.media.generic.off": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kapalı"
+          }
+        }
+      }
+    },
+    "settings.media.generic.playing": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ izleniyor"
+          }
+        }
+      }
+    },
+    "settings.media.generic.ready": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Adaptör çalışıyor; kullanmak için anahtarı aç"
+          }
+        }
+      }
+    },
+    "settings.media.generic.recheck": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yeniden test et"
+          }
+        }
+      }
+    },
+    "settings.media.generic.testFailed": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Adaptörün kendi testi çalıştırılamadı"
+          }
+        }
+      }
+    },
+    "settings.media.generic.timedOut": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kendi testi zaman aşımına uğradı"
           }
         }
       }

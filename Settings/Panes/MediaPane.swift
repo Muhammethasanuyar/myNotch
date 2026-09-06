@@ -23,6 +23,22 @@ struct MediaPane: View {
                 SettingsFootnote(L("settings.media.visualizer.help", "Taps what the Mac plays (macOS 14.2 or later) and reduces it to six band levels inside the app; no audio is stored or sent. macOS asks once for system-audio recording permission. Off, the bars keep their own rhythm."))
             }
 
+            Section(L("settings.media.generic", "Other players")) {
+                Toggle(L("settings.media.generic.enabled", "Show whatever the Mac is playing"), isOn: $store.genericPlayerEnabled)
+                    .toggleStyle(.switch)
+                if let generic = controller.genericPlayer {
+                    genericStatus(generic)
+                    HStack {
+                        Button(L("settings.media.generic.recheck", "Test again")) {
+                            controller.recheckGenericPlayer()
+                        }
+                        .controlSize(.small)
+                        Spacer()
+                    }
+                }
+                SettingsFootnote(L("settings.media.generic.help", "Safari, Chrome, IINA, podcast apps — anything that publishes to Now Playing. Uses the bundled mediaremote-adapter: perl loads a private Apple framework in a separate process, so a macOS update can break it; a health check runs once per version and the notch falls back to Spotify and Music if it does. Nothing leaves this Mac."))
+            }
+
             Section(L("settings.media.lyrics", "Lyrics")) {
                 Toggle(L("settings.media.lyrics.enabled", "Show synced lyrics"), isOn: $store.lyricsEnabled)
                     .toggleStyle(.switch)
@@ -87,6 +103,27 @@ struct MediaPane: View {
                 SettingsFootnote(L("settings.media.automation.help", "MyNotch asks Spotify and Music what is playing through AppleScript. macOS shows the permission prompt the first time a player is running."))
             }
         }
+    }
+
+    private func genericStatus(_ generic: GenericNowPlayingProvider) -> some View {
+        let (tone, title): (StatusTone, String) = switch generic.health {
+        case .unchecked:
+            store.genericPlayerEnabled
+                ? (.pending, L("settings.media.generic.checking", "Checking the adapter…"))
+                : (.neutral, L("settings.media.generic.off", "Off"))
+        case .ok:
+            generic.isStreaming
+                ? (generic.snapshot == nil
+                    ? (.ok, L("settings.media.generic.idle", "Listening — nothing playing elsewhere"))
+                    : (.ok, L("settings.media.generic.playing", "Following \(generic.displayName)")))
+                : (.neutral, L("settings.media.generic.ready", "Adapter works; turn the switch on to use it"))
+        case .artefactsMissing: (.problem, L("settings.media.generic.missing", "This build has no adapter bundled"))
+        case .testClientFailed, .setupTimeout: (.problem, L("settings.media.generic.testFailed", "The adapter's self-test could not run"))
+        case .noData: (.problem, L("settings.media.generic.noData", "macOS no longer lets the adapter read Now Playing"))
+        case .broken(let code): (.problem, L("settings.media.generic.broken", "The adapter stopped (exit \(code)); Spotify and Music still work"))
+        case .timedOut: (.attention, L("settings.media.generic.timedOut", "The self-test timed out"))
+        }
+        return StatusRow(tone: tone, title: title)
     }
 
     private func visualizerStatus(_ state: AudioMeterState) -> some View {

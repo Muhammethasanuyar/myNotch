@@ -12,6 +12,7 @@ nonisolated enum SettingsKey: String, CaseIterable, Sendable {
     case displaySelection
     // Media
     case visualizerEnabled
+    case genericPlayerEnabled
     case lyricsEnabled
     case lyricsLeadSeconds
     case lyricsShifts
@@ -136,6 +137,8 @@ final class SettingsStore {
 
     /// Off until asked for: the tap needs a system-audio recording permission.
     var visualizerEnabled: Bool { didSet { persist(visualizerEnabled, .visualizerEnabled) } }
+    /// Off until asked for: runs a helper that reads a private framework through perl.
+    var genericPlayerEnabled: Bool { didSet { persist(genericPlayerEnabled, .genericPlayerEnabled) } }
     var lyricsEnabled: Bool { didSet { persist(lyricsEnabled, .lyricsEnabled) } }
     var lyricsLeadSeconds: TimeInterval {
         get { access(keyPath: \.lyricsLeadSeconds); return storedLyricsLead }
@@ -248,6 +251,7 @@ final class SettingsStore {
         disabledModuleIDs = Set(defaults.stringArray(forKey: SettingsKey.disabledModules.rawValue) ?? [])
         displaySelection = ScreenPreference(storedValue: defaults.string(forKey: SettingsKey.displaySelection.rawValue))
         visualizerEnabled = defaults.object(forKey: SettingsKey.visualizerEnabled.rawValue) as? Bool ?? false
+        genericPlayerEnabled = defaults.object(forKey: SettingsKey.genericPlayerEnabled.rawValue) as? Bool ?? false
         lyricsEnabled = defaults.object(forKey: SettingsKey.lyricsEnabled.rawValue) as? Bool ?? true
         storedLyricsLead = SettingsRules.lyricsLead(defaults.object(forKey: SettingsKey.lyricsLeadSeconds.rawValue) as? Double ?? Self.defaultLyricsLead)
         spotifyClientID = defaults.string(forKey: SettingsKey.spotifyClientID.rawValue) ?? ""

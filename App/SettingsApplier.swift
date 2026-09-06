@@ -12,7 +12,7 @@ struct SettingsApplier {
     /// Launch: the values the objects do not read for themselves. Module on/off flags are set
     /// before registration, and the path keys would only redo work `start()` has just done.
     static let appliedAtLaunch: [SettingsKey] = [
-        .hoverDelay, .closeDelay, .hapticsEnabled, .displaySelection, .visualizerEnabled,
+        .hoverDelay, .closeDelay, .hapticsEnabled, .displaySelection, .visualizerEnabled, .genericPlayerEnabled,
         .usageWarningThreshold, .usagePollInterval, .usageAlertsEnabled,
         .batteryLowThreshold, .batteryAlertsEnabled, .pomodoroWorkMinutes,
         .calendarLeadMinutes, .calendarSelectedIDs, .calendarAlertsEnabled
@@ -40,6 +40,8 @@ struct SettingsApplier {
             notch.screenPreference = store.displaySelection
         case .visualizerEnabled:
             media?.controller.setVisualizer(enabled: store.visualizerEnabled)
+        case .genericPlayerEnabled:
+            media?.controller.setGenericPlayer(enabled: store.genericPlayerEnabled)
         case .lyricsEnabled:
             // The service reads the flag on every load; only the lyrics on screen need a nudge.
             media?.controller.lyricsSettingChanged()

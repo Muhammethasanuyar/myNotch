@@ -40,6 +40,9 @@ struct SetupPane: View {
                 if let shelf = context.shelf {
                     shelfRow(shelf.store)
                 }
+                if let volume = context.volume, context.store.volumeHUDReplacement {
+                    volumeRow(volume.service)
+                }
             }
 
             Section {
@@ -163,6 +166,26 @@ struct SetupPane: View {
             actionTitle: L("settings.setup.shelf.open", "Shelf settings…")
         ) {
             navigation.selectedTab = .shelf
+        }
+    }
+
+    private func volumeRow(_ service: VolumeService) -> some View {
+        let (tone, detail, actionTitle): (StatusTone, String, String?) = switch service.tapState {
+        case .running:
+            (.ok, L("settings.setup.volume.ok", "Allowed. Volume keys open the notch instead of the system HUD."), nil)
+        case .needsPermission:
+            (.attention, L("settings.setup.volume.todo", "Needs Accessibility so MyNotch can read the volume keys before macOS does. The grant is tied to the app's signature."), L("settings.sound.hud.grant", "Grant access…"))
+        case .failed:
+            (.problem, L("settings.setup.volume.failed", "The key tap could not start; the system HUD is showing."), L("settings.sound.hud.retry", "Try again"))
+        case .off:
+            (.pending, L("settings.setup.volume.starting", "Starting…"), nil)
+        }
+        return SetupRow(tone: tone, title: L("settings.setup.volume", "Volume keys (optional)"), detail: detail, actionTitle: actionTitle) {
+            if service.tapState == .needsPermission {
+                service.requestAccessibility()
+            } else {
+                service.syncTap()
+            }
         }
     }
 

@@ -11,6 +11,7 @@ nonisolated enum SettingsTab: String, CaseIterable, Identifiable, Sendable {
     case battery
     case pomodoro
     case shelf
+    case sound
     case setup
     case about
 
@@ -26,6 +27,7 @@ nonisolated enum SettingsTab: String, CaseIterable, Identifiable, Sendable {
         case .battery: L("settings.tab.battery", "Battery")
         case .pomodoro: L("settings.tab.pomodoro", "Pomodoro")
         case .shelf: L("settings.tab.shelf", "Shelf")
+        case .sound: L("settings.tab.sound", "Sound")
         case .setup: L("settings.tab.setup", "Setup")
         case .about: L("settings.tab.about", "About")
         }
@@ -41,6 +43,7 @@ nonisolated enum SettingsTab: String, CaseIterable, Identifiable, Sendable {
         case .battery: "battery.100percent.bolt"
         case .pomodoro: "timer"
         case .shelf: "tray.full.fill"
+        case .sound: "speaker.wave.2"
         case .setup: "checklist"
         case .about: "info.circle"
         }
@@ -84,5 +87,9 @@ struct SettingsContext {
 
     var shelf: ShelfModule? {
         manager.module(id: "shelf") as? ShelfModule
+    }
+
+    var volume: VolumeModule? {
+        manager.module(id: "volume") as? VolumeModule
     }
 }

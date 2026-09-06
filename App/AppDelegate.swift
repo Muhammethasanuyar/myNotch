@@ -6,6 +6,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let model = NotchViewModel()
     private let settings = SettingsStore()
     private let updater = UpdaterManager()
+    /// One set of Core Audio listeners shared by the modules that watch the output.
+    private let audioOutput = AudioOutputWatcher()
     private let launchAtLogin = LaunchAtLogin()
     private var moduleManager: ModuleManager?
     private var terminationSignal: DispatchSourceSignal?
@@ -27,6 +29,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         register(PomodoroModule(), in: manager)
         register(BatteryModule(), in: manager)
         register(ShelfModule(), in: manager)
+        register(VolumeModule(service: VolumeService(watcher: audioOutput)), in: manager)
         // The demo module only exists to exercise the engine, so it never ships in a release build.
         let demo = DemoModule()
         #if DEBUG

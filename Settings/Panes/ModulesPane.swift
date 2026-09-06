@@ -82,6 +82,7 @@ nonisolated enum ModuleCatalog {
         case "pomodoro": "timer"
         case "calendar": "calendar"
         case "shelf": "tray.full.fill"
+        case "volume": "speaker.wave.2.fill"
         case "demo": "wand.and.stars"
         default: "puzzlepiece.extension"
         }
@@ -101,6 +102,8 @@ nonisolated enum ModuleCatalog {
             L("settings.modules.calendar.summary", "The next meeting: a countdown when it is close, popups before it starts, a Join button.")
         case "shelf":
             L("settings.modules.shelf.summary", "Drag files onto the notch to keep a copy for a while, then AirDrop them or drag them on.")
+        case "volume":
+            L("settings.modules.volume.summary", "The output level as a popup when it changes; optionally the volume keys themselves, so the system HUD stays away.")
         case "demo":
             L("settings.modules.demo.summary", "Exercises the notch engine; Debug builds only.")
         default:

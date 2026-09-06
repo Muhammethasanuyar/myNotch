@@ -41,6 +41,9 @@ nonisolated enum SettingsKey: String, CaseIterable, Sendable {
     case calendarAlertsEnabled
     // Shelf
     case shelfKeepInterval
+    // Sound
+    case volumePopupsEnabled
+    case volumeHUDReplacement
     // App
     case onboardingCompleted
     case updateChecksEnabled
@@ -245,6 +248,12 @@ final class SettingsStore {
         set { withMutation(keyPath: \.shelfKeepInterval) { storedShelfKeep = SettingsRules.shelfKeepInterval(newValue) }; persist(storedShelfKeep, .shelfKeepInterval) }
     }
 
+    // MARK: Sound
+
+    var volumePopupsEnabled: Bool { didSet { persist(volumePopupsEnabled, .volumePopupsEnabled) } }
+    /// Off until asked for: taking the volume keys needs the Accessibility permission.
+    var volumeHUDReplacement: Bool { didSet { persist(volumeHUDReplacement, .volumeHUDReplacement) } }
+
     // MARK: App
 
     var onboardingCompleted: Bool { didSet { persist(onboardingCompleted, .onboardingCompleted) } }
@@ -325,6 +334,8 @@ final class SettingsStore {
         calendarSelectedIDs = defaults.stringArray(forKey: SettingsKey.calendarSelectedIDs.rawValue) ?? []
         calendarAlertsEnabled = defaults.object(forKey: SettingsKey.calendarAlertsEnabled.rawValue) as? Bool ?? true
         storedShelfKeep = SettingsRules.shelfKeepInterval(defaults.object(forKey: SettingsKey.shelfKeepInterval.rawValue) as? Double ?? ShelfRules.defaultKeepInterval)
+        volumePopupsEnabled = defaults.object(forKey: SettingsKey.volumePopupsEnabled.rawValue) as? Bool ?? true
+        volumeHUDReplacement = defaults.object(forKey: SettingsKey.volumeHUDReplacement.rawValue) as? Bool ?? false
         onboardingCompleted = defaults.bool(forKey: SettingsKey.onboardingCompleted.rawValue)
         updateChecksEnabled = defaults.object(forKey: SettingsKey.updateChecksEnabled.rawValue) as? Bool ?? true
     }

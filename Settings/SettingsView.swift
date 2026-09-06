@@ -80,6 +80,8 @@ struct SettingsView: View {
             PomodoroPane(store: context.store, module: context.pomodoro)
         case .shelf:
             ShelfPane(store: context.store, module: context.shelf)
+        case .sound:
+            SoundPane(store: context.store, volume: context.volume)
         case .setup:
             SetupPane(context: context, navigation: navigation, closeWindow: closeWindow)
         case .about:

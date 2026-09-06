@@ -1251,6 +1251,16 @@
         }
       }
     },
+    "module.volume": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ses"
+          }
+        }
+      }
+    },
     "percent": {
       "localizations": {
         "tr": {
@@ -3101,6 +3111,16 @@
         }
       }
     },
+    "settings.modules.volume.summary": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Değişince çıkış seviyesi popup olarak; isteğe bağlı olarak ses tuşlarının kendisi, sistem HUD'u görünmesin diye."
+          }
+        }
+      }
+    },
     "settings.nav.back": {
       "localizations": {
         "tr": {
@@ -3601,6 +3621,56 @@
         }
       }
     },
+    "settings.setup.volume": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ses tuşları (isteğe bağlı)"
+          }
+        }
+      }
+    },
+    "settings.setup.volume.failed": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tuş dinleyicisi başlatılamadı; sistem HUD'u gösteriliyor."
+          }
+        }
+      }
+    },
+    "settings.setup.volume.ok": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "İzin verildi. Ses tuşları sistem HUD'u yerine çentiği açar."
+          }
+        }
+      }
+    },
+    "settings.setup.volume.starting": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Başlatılıyor…"
+          }
+        }
+      }
+    },
+    "settings.setup.volume.todo": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MyNotch'un ses tuşlarını macOS'tan önce okuması için Erişilebilirlik gerekir. İzin uygulamanın imzasına bağlıdır."
+          }
+        }
+      }
+    },
     "settings.shelf.clear": {
       "localizations": {
         "tr": {
@@ -3721,6 +3791,156 @@
         }
       }
     },
+    "settings.sound.hud": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ses tuşları"
+          }
+        }
+      }
+    },
+    "settings.sound.hud.enabled": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sistem ses HUD'unu değiştir"
+          }
+        }
+      }
+    },
+    "settings.sound.hud.failed": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tuş dinleyicisi başlatılamadı"
+          }
+        }
+      }
+    },
+    "settings.sound.hud.grant": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Erişim ver…"
+          }
+        }
+      }
+    },
+    "settings.sound.hud.help": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MyNotch ses ve sessiz tuşlarını macOS'tan önce alır, seviyeyi on altıda birlerle (Option-Shift: çeyrek, Shift: geri bildirim sesiyle) hareket ettirir ve çentikte gösterir; sistem HUD'u hiç görünmez. macOS'un uygulama imzasına bağladığı Erişilebilirlik izni gerekir: yeniden derlenen ya da yeniden imzalanan uygulama yeniden sorar. Parlaklık tuşlarına dokunulmaz; sesi olmayan aygıt (HDMI, optik) sistem davranışını korur."
+          }
+        }
+      }
+    },
+    "settings.sound.hud.openPrivacy": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gizlilik Ayarlarını Aç…"
+          }
+        }
+      }
+    },
+    "settings.sound.hud.permission": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tuşları macOS'tan önce okumak için Erişilebilirlik gerekir"
+          }
+        }
+      }
+    },
+    "settings.sound.hud.recheck": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yeniden denetle"
+          }
+        }
+      }
+    },
+    "settings.sound.hud.reenabled": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "macOS tuş dinleyicisini %lld kez duraklattı; kendiliğinden geri geldi."
+          }
+        }
+      }
+    },
+    "settings.sound.hud.retry": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yeniden dene"
+          }
+        }
+      }
+    },
+    "settings.sound.hud.running": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Açık — ses tuşları çentiğe gidiyor"
+          }
+        }
+      }
+    },
+    "settings.sound.hud.starting": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Başlatılıyor…"
+          }
+        }
+      }
+    },
+    "settings.sound.popups": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Değişince seviyeyi çentikte göster"
+          }
+        }
+      }
+    },
+    "settings.sound.popups.help": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nereden yapılsa yapılsın — tuşlar, menü barı, başka bir uygulama — ses ve sessiz değişimleri için kısa bir popup. İzin gerekmez; macOS kendi HUD'unu da gösterir."
+          }
+        }
+      }
+    },
+    "settings.sound.volume": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ses düzeyi"
+          }
+        }
+      }
+    },
     "settings.tab.about": {
       "localizations": {
         "tr": {
@@ -3817,6 +4037,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Raf"
+          }
+        }
+      }
+    },
+    "settings.tab.sound": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ses"
           }
         }
       }
@@ -4097,6 +4327,166 @@
           "stringUnit": {
             "state": "translated",
             "value": "dk"
+          }
+        }
+      }
+    },
+    "volume.explain.device": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Geçerli çıkış. AirPods ya da ekran değiştirmek burayı da değiştirir."
+          }
+        }
+      }
+    },
+    "volume.explain.level": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Çıkış seviyesi, ses tuşlarının hareket ettirdiği on altıda birlerle. Nereden değişirse değişsin izler."
+          }
+        }
+      }
+    },
+    "volume.explain.mode.failed": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Olay dinleyicisi başlatılamadı: %@"
+          }
+        }
+      }
+    },
+    "volume.explain.mode.off": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "macOS kendi HUD'unu gösterir; çentik kısa bir popup ekler. Ayarlar → Ses tuşları çentiğe verebilir."
+          }
+        }
+      }
+    },
+    "volume.explain.mode.permission": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tuşları almak Erişilebilirlik izni ister. Sormak için dokun; uygulama yeniden derlenip ya da yeni imzayla güncellenince izin sıfırlanır."
+          }
+        }
+      }
+    },
+    "volume.explain.mode.running": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ses ve sessiz tuşları önce buraya gelir; parlaklık tuşları macOS'ta kalır. Shift geri bildirim sesini çalar, Option-Shift çeyrek adımlarla hareket eder."
+          }
+        }
+      }
+    },
+    "volume.explain.mute": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sessize almak ya da açmak için dokun."
+          }
+        }
+      }
+    },
+    "volume.explain.noControl": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu aygıtın kendi sesi yok; tuşlar burada sistem davranışını korur."
+          }
+        }
+      }
+    },
+    "volume.mode.failed": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap başarısız"
+          }
+        }
+      }
+    },
+    "volume.mode.notch": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tuşlar çentiğe gider"
+          }
+        }
+      }
+    },
+    "volume.mode.permission": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Erişilebilirlik gerekir"
+          }
+        }
+      }
+    },
+    "volume.mode.system": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sistem HUD'u"
+          }
+        }
+      }
+    },
+    "volume.muted": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sessiz"
+          }
+        }
+      }
+    },
+    "volume.noControl": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ses denetimi yok"
+          }
+        }
+      }
+    },
+    "volume.noDevice": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Çıkış aygıtı yok"
+          }
+        }
+      }
+    },
+    "volume.percent": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%%%lld"
           }
         }
       }

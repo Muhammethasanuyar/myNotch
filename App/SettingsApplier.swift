@@ -17,7 +17,7 @@ struct SettingsApplier {
         .usageWarningThreshold, .usagePollInterval, .usageAlertsEnabled,
         .batteryLowThreshold, .batteryAlertsEnabled, .pomodoroWorkMinutes,
         .calendarLeadMinutes, .calendarSelectedIDs, .calendarAlertsEnabled, .shelfKeepInterval,
-        .updateChecksEnabled
+        .volumePopupsEnabled, .volumeHUDReplacement, .updateChecksEnabled
     ]
 
     func applyAll() {
@@ -72,6 +72,10 @@ struct SettingsApplier {
             battery?.alertsEnabled = store.batteryAlertsEnabled
         case .shelfKeepInterval:
             shelf?.store.keepInterval = store.shelfKeepInterval
+        case .volumePopupsEnabled:
+            volume?.service.popupsEnabled = store.volumePopupsEnabled
+        case .volumeHUDReplacement:
+            volume?.service.hudReplacement = store.volumeHUDReplacement
         case .updateChecksEnabled:
             updater?.automaticallyChecksForUpdates = store.updateChecksEnabled
         case .moduleDefaultsApplied:
@@ -112,5 +116,9 @@ struct SettingsApplier {
 
     private var shelf: ShelfModule? {
         manager.module(id: "shelf") as? ShelfModule
+    }
+
+    private var volume: VolumeModule? {
+        manager.module(id: "volume") as? VolumeModule
     }
 }

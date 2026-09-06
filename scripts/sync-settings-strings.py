@@ -189,6 +189,7 @@ TR = {
     "shelf.explain.hint": "Bir dosyayı çentiğe sürükle: açılır, kopyasını burada tutar ve sonra başka bir uygulamaya sürüklemene izin verir.",
     "shelf.explain.item": "%1$@ · dokun aç, sürükle taşı, ✕ kaldır. %2$@ gider.",
     "shelf.explain.item.forever": "%@ · dokun aç, sürükle taşı, ✕ kaldır.",
+    "settings.media.visualizer.openPrivacy": "Gizlilik Ayarlarını Aç…",
     "settings.media.generic": "Diğer oynatıcılar",
     "settings.media.generic.enabled": "Mac'te ne çalıyorsa göster",
     "settings.media.generic.recheck": "Yeniden test et",

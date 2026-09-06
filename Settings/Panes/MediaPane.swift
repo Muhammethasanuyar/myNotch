@@ -20,6 +20,15 @@ struct MediaPane: View {
                 Toggle(L("settings.media.visualizer.enabled", "Move the bars to the music"), isOn: $store.visualizerEnabled)
                     .toggleStyle(.switch)
                 visualizerStatus(controller.audioMeter.state)
+                if controller.audioMeter.state == .silent {
+                    HStack {
+                        Button(L("settings.media.visualizer.openPrivacy", "Open Privacy Settings…")) {
+                            SystemSettingsLink.open(SystemSettingsLink.screenAudio)
+                        }
+                        .controlSize(.small)
+                        Spacer()
+                    }
+                }
                 SettingsFootnote(L("settings.media.visualizer.help", "Taps what the Mac plays (macOS 14.2 or later) and reduces it to six band levels inside the app; no audio is stored or sent. macOS asks once for system-audio recording permission. Off, the bars keep their own rhythm."))
             }
 

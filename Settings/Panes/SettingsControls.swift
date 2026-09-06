@@ -174,6 +174,8 @@ struct CopyableText: View {
 nonisolated enum SystemSettingsLink {
     static let automation = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Automation")!
     static let calendars = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Calendars")!
+    /// "Screen & System Audio Recording" — system-audio capture lives in the screen-recording pane.
+    static let screenAudio = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture")!
 
     @MainActor
     static func open(_ url: URL) {

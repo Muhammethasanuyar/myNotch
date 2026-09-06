@@ -12,8 +12,9 @@ final class GenericNowPlayingProvider: MediaProvider {
     let id = "generic"
     let changeNotification: Notification.Name? = nil
     let symbolName = "waveform"
-    /// MediaRemote takes transport and seek; shuffle, repeat and likes depend on the player.
-    let capabilities = MediaCapabilities(canShuffle: false, canRepeat: false, canFavorite: false, hasRepeatModes: false)
+    /// MediaRemote takes transport, seek and the shuffle/repeat toggles; the true state comes back
+    /// on the next diff line, so a toggle can never drift. Likes depend on the player and stay off.
+    let capabilities = MediaCapabilities(canShuffle: true, canRepeat: true, canFavorite: false, hasRepeatModes: true)
 
     private(set) var snapshot: NowPlayingSnapshot?
     private(set) var health: AdapterHealth = .unchecked

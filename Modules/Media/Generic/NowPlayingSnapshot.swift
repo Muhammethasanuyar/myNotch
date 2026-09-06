@@ -107,6 +107,9 @@ nonisolated struct NowPlayingSnapshot: Equatable, Sendable {
     let contentItemIdentifier: String?
     let artworkMimeType: String?
     let artworkBase64: String?
+    /// The adapter's numbers: shuffle 1 off / 2 albums / 3 tracks, repeat 1 off / 2 track / 3 playlist.
+    let shuffleMode: Int?
+    let repeatMode: Int?
 
     /// Mandatory: the process, a title and the playing flag. `bundleIdentifier` is not guaranteed.
     init?(payload: AdapterPayload) {
@@ -128,6 +131,8 @@ nonisolated struct NowPlayingSnapshot: Equatable, Sendable {
         contentItemIdentifier = values["contentItemIdentifier"]?.string
         artworkMimeType = values["artworkMimeType"]?.string
         artworkBase64 = values["artworkData"]?.string
+        shuffleMode = values["shuffleMode"]?.number.map { Int($0) }
+        repeatMode = values["repeatMode"]?.number.map { Int($0) }
     }
 
     /// The app to name and draw: the player itself, else the app hosting it (a browser tab's parent).
@@ -154,7 +159,9 @@ nonisolated struct NowPlayingSnapshot: Equatable, Sendable {
             duration: duration.flatMap { $0 > 0 ? $0 : nil },
             elapsed: elapsedTime ?? 0,
             elapsedAt: anchor,
-            artwork: nil
+            artwork: nil,
+            isShuffling: GenericSourceRules.isShuffling(adapter: shuffleMode),
+            repeatMode: GenericSourceRules.repeatMode(adapter: repeatMode)
         )
     }
 
@@ -175,6 +182,20 @@ nonisolated enum GenericSourceRules {
     /// The name the switcher shows: the running app's, else a generic label.
     static func sourceName(_ snapshot: NowPlayingSnapshot, runningAppName: (Int32) -> String?, fallback: String) -> String {
         runningAppName(snapshot.processIdentifier) ?? fallback
+    }
+
+    /// Adapter shuffle modes: 1 off, 2 albums, 3 tracks — anything past "off" counts as shuffling.
+    static func isShuffling(adapter mode: Int?) -> Bool {
+        (mode ?? 1) > 1
+    }
+
+    /// Adapter repeat modes: 1 off, 2 track, 3 playlist — the reverse of `MediaRepeatMode`'s order.
+    static func repeatMode(adapter mode: Int?) -> MediaRepeatMode {
+        switch mode {
+        case 2: .one
+        case 3: .all
+        default: .off
+        }
     }
 }
 

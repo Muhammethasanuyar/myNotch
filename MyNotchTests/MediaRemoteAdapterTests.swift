@@ -101,6 +101,30 @@ final class MediaRemoteAdapterTests: XCTestCase {
         let pausedState = NowPlayingSnapshot(payload: paused)!.mediaState(providerID: "generic", providerName: "App", now: Date())
         XCTAssertFalse(pausedState.isPlaying, "a zero rate is paused whatever the flag says")
         XCTAssertEqual(pausedState.trackID, "item-1", "the adapter's own item id wins when present")
+        XCTAssertFalse(pausedState.isShuffling)
+        XCTAssertEqual(pausedState.repeatMode, .off, "no mode keys means off")
+
+        var modes = AdapterPayload()
+        _ = modes.apply(try AdapterEnvelope.decode(Data(#"{"type":"data","diff":false,"payload":{"processIdentifier":1,"title":"x","playing":true,"shuffleMode":3,"repeatMode":2}}"#.utf8))!)
+        let modeState = NowPlayingSnapshot(payload: modes)!.mediaState(providerID: "generic", providerName: "App", now: Date())
+        XCTAssertTrue(modeState.isShuffling)
+        XCTAssertEqual(modeState.repeatMode, .one, "adapter 2 is a single track")
+        _ = modes.apply(try AdapterEnvelope.decode(Data(#"{"type":"data","diff":true,"payload":{"shuffleMode":1,"repeatMode":3}}"#.utf8))!)
+        let toggled = NowPlayingSnapshot(payload: modes)!.mediaState(providerID: "generic", providerName: "App", now: Date())
+        XCTAssertFalse(toggled.isShuffling, "a diff line carries the new mode")
+        XCTAssertEqual(toggled.repeatMode, .all, "adapter 3 is the playlist")
+    }
+
+    func testAdapterModesMapToTheMediaState() {
+        XCTAssertFalse(GenericSourceRules.isShuffling(adapter: nil))
+        XCTAssertFalse(GenericSourceRules.isShuffling(adapter: 1))
+        XCTAssertTrue(GenericSourceRules.isShuffling(adapter: 2))
+        XCTAssertTrue(GenericSourceRules.isShuffling(adapter: 3))
+        XCTAssertEqual(GenericSourceRules.repeatMode(adapter: nil), .off)
+        XCTAssertEqual(GenericSourceRules.repeatMode(adapter: 1), .off)
+        XCTAssertEqual(GenericSourceRules.repeatMode(adapter: 2), .one)
+        XCTAssertEqual(GenericSourceRules.repeatMode(adapter: 3), .all)
+        XCTAssertEqual(GenericSourceRules.repeatMode(adapter: 9), .off, "unknown numbers read as off")
     }
 
     func testScriptPlayersSilenceTheGenericSource() throws {

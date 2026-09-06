@@ -400,3 +400,40 @@ Ada/
 | Claude usage endpoint | `GET https://api.anthropic.com/api/oauth/usage`, `anthropic-beta: oauth-2025-04-20`, `User-Agent: claude-code/2.1.121` → 2026-09-04'te 200 (UA'sız varyant denenmedi; UA masrafsız, gönderiliyor). Poll 5 dk (`SuspendingClock`: uyku sayılmaz), 429 → 900 sn cooldown + tek retry, uyanmada 60 sn grace, `>15 dk` bayat = soluk. Başarısız poll son iyi değeri korur (reset geçmiş pencereler düşer) |
 | ccusage | `ccusage` binary'si bulunursa o, yoksa `npx --yes ccusage@20` (nvm/Homebrew/bun/npm-global dizinleri taranır; GUI PATH'i kısıtlı). Ölçüm 2026-09-04: blocks 2,8 sn, daily 0,9 sn (~300 MB log). Her çağrı `--offline`; kadans: aktivite bittikten 20 sn sonra, çalışma sürerken en geç 2 dk'da bir. `Decodable` varsayılan değerleri kaçan anahtarları **kapsamaz** → DTO'lar elle `decodeIfPresent` |
 | EventBus | Combine yerine main-actor callback kaydı (`Core/Modules/EventBus.swift`): Swift 6'da `Sendable` gereksinimleri modül sözleşmesini kirletmesin diye. Abonelik token'ı bırakılınca bir sonraki main-actor turunda iptal olur, `invalidate()` anında iptal eder |
+
+## 16. Faz 5 Planı — Ayarlar & Cila (2026-09-06)
+
+Amaç: Faz 1–4'te `defaults write` ile ayarlanan her şeyin bir yüzü olsun, uygulama temiz bir Mac'te kendini kurdursun ve boşta neredeyse hiç kaynak yemesin. Bu faz **yeni bir modül eklemez**; motor, modüller ve Settings katmanı arasındaki bağı tamamlar.
+
+### 16.1 Kapsam ve dosyalar
+
+| İş parçası | Dosyalar | Not |
+|---|---|---|
+| **A. Ayar deposu** | `Settings/SettingsStore.swift` (+ `SettingsKey`) | `@MainActor @Observable`, enjekte edilebilir `UserDefaults`. Faz 1–4 anahtarları (`spotifyClientID`, `lyricsEnabled`, `lyricsLeadSeconds`, `lyricsShifts`, `ccusagePath`, `claudeConfigDir`) ve yeniler (`hoverDelay`, `closeDelay`, `hapticsEnabled`, `disabledModules`, `usageWarningThreshold`, `usageCriticalThreshold`, `usagePollInterval`, `usageAlertsEnabled`, `displaySelection`, `onboardingCompleted`) **tek yerde**. Değerler okunurken sınırlanır (ör. `closeDelay ≤ 1 s`, poll ≥ 300 s, `warning < critical`). `preferredModuleID` `ModuleManager`'da kalır (kullanıcı tercihi, ayar değil). |
+| **B. Motora bağlama** | `App/SettingsApplier.swift`, `NotchViewModel`, `ModuleManager`, `ClaudeUsageService`, `ClaudeUsageModule`, `MediaController` | Depo değişince `SettingsApplier` ilgili nesneye yazar: `hoverDelay/closeDelay/hapticsEnabled → NotchViewModel`, modül aç/kapa → `ModuleManager.setEnabled`, eşikler/poll aralığı/uyarılar → `ClaudeUsageService`/`ClaudeUsageModule`, ccusage yolu → `service.relocateCCUsage()`, Spotify client ID → `library.refreshConfiguration()`, ekran → `NotchWindowController.screenPreference`. `LyricsService` ve `configDirectory` zaten her okumada defaults'a bakıyor; anahtar aynı kaldığı için ek bağ yok. Modüller `SettingsStore`'u tanımaz — değerler var olan servis özellikleri üzerinden gider. |
+| **C. Ayarlar penceresi** | `Settings/SettingsWindowController.swift`, `Settings/SettingsView.swift`, `Settings/Panes/*.swift`, `App/MenuBar.swift`, `App/MyNotchApp.swift` | `macos-settings-ui` skill deseni: AppKit `NSWindowController` + `.fullSizeContentView` (liquid glass), `NavigationSplitView` kenar çubuğu, `Form.formStyle(.grouped).scrollContentBackground(.hidden)`, geri/ileri araç çubuğu. Sekmeler: **Genel** (açılışta başlat, hover/kapanma süresi, haptik, ekran), **Modüller** (aç/kapa), **Medya** (şarkı sözü, sözler kayması sıfırla, Spotify bağlantısı + client ID + redirect URI, Otomasyon izni), **Claude** (giriş durumu, eşikler, uyarılar, poll aralığı, ccusage yolu/durumu, config dizini), **Kurulum** (izin/kimlik kontrol listesi = onboarding), **Hakkında** (sürüm, dışarı ne gidiyor, üçüncü taraf kaynaklar). SwiftUI `Settings` sahnesi ve `SettingsLink` kalkar; menü bar "Settings…" (⌘,) `SettingsWindowController.show(tab:)` çağırır. Tüm metinler String Catalog'da (en kaynak, tr). |
+| **D. Açılışta başlat** | `Settings/LaunchAtLogin.swift` | `SMAppService.mainApp` (macOS 13+): `register/unregister`, `status → LaunchAtLoginState` saf eşleme (`.enabled/.disabled/.requiresApproval/.notFound`); `requiresApproval`'da Sistem Ayarları → Giriş Öğeleri düğmesi. |
+| **E. Ekran seçimi** | `Core/Window/ScreenPreference.swift`, `NotchWindowController` | `automatic` (çentikli ekran, yoksa ana ekran) ya da ekran adı; ad bulunamazsa otomatiğe düşer. Çözüm saf ve testli (`ScreenCandidate`), `NSScreen` yalnızca adaptör. Harici ekranda floating stil zaten `NotchLayout` tarafından üretiliyor. |
+| **F. Onboarding** | `SetupPane`, `AppDelegate`, `LaunchOptions` | İlk açılışta (`onboardingCompleted == false`) ayarlar penceresi **Kurulum** sekmesiyle açılır: Otomasyon izni (`MediaController.permission`), Claude girişi (`service.auth`), ccusage (`service.costState`), oturum logları (`service.hasLogs`), Spotify (isteğe bağlı, `library.connection`), açılışta başlat. Her satırda durum simgesi + tek eylem. "Bitti" bayrağı kalıcı yapar. `-openSettings <sekme>` başlatma argümanı ekran görüntüsü için. |
+| **G. Cila** | `Modules/Media/**`, `Core/Window/NotchScreenSwitcher.swift`, `App/Localizable.xcstrings` | Medya modülü ve değiştirici metinleri kataloğa (tr). `scripts/measure-idle.sh`: MyNotch PID'sini `top` ile 30 sn örnekler (kapalı / compact / expanded); sonuç `docs/PLAN.md` §16.4'e işlenir, %1'in üzerindeki her durum düzeltilir. |
+| **H. Test & belge** | `MyNotchTests/SettingsStoreTests.swift`, `ScreenPreferenceTests.swift`, `LaunchAtLoginTests.swift`, `docs/manual-tests.md`, `CLAUDE.md`, §15 | Depo varsayılanları/kalıcılık/sınırlama, ekran çözümü, durum eşlemesi, `ModuleManager` kayıt sırasında `isEnabled`. Manuel senaryolar Faz 5 bölümü. |
+
+### 16.2 Kabul kriterleri (Faz 5 çıkışı)
+
+1. Ayarlar penceresindeki her denetim **anında** etki eder (yeniden başlatma yok) ve yeniden açılışta korunur.
+2. `defaults write` ile daha önce ayarlanan hiçbir anahtar kırılmaz; aynı anahtarlar kullanılır.
+3. "Açılışta başlat" açıkken oturum kapatıp açınca uygulama menü barda; onay bekleyen durumda pencere bunu söyler.
+4. Harici ekran seçilince notch o ekranın üst orta noktasında floating stilde çıkar; ekran çıkarılınca otomatiğe döner.
+5. Temiz kullanıcı hesabında ilk açılış Kurulum sekmesini gösterir; tüm satırlar yeşile döndükten sonra "Bitti" ile bir daha açılmaz.
+6. Boşta CPU: kapalı < %0,5, compact (şarkı çalıyor) < %1,5, expanded ≤ %5 (animasyonlar); ölçüm `scripts/measure-idle.sh` ile.
+7. Türkçe sistemde pencere tamamen Türkçe; İngilizce'de İngilizce. `scripts/test.sh` yeşil.
+
+### 16.3 Bilinçli dışarıda bırakılanlar
+
+- Keychain'e Spotify token taşıma (Faz 5'te planlanmıştı): 0600 dosya + tek kullanıcı hesabı için yeterli; Keychain girişi dağıtım imzasıyla anlamlı olur → Faz 6 / release.
+- Sparkle/auto-update ve notarize: `macos-release` skill'iyle ayrı bir iş.
+- Kısayol tuşları (notch'u klavyeyle aç/kapa): backlog.
+
+### 16.4 Ölçümler
+
+(doldurulacak: `scripts/measure-idle.sh` çıktıları)

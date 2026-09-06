@@ -59,7 +59,13 @@ final class SpotifyLibraryClient {
         self.store = store
         self.session = session
         self.defaults = defaults
-        tokens = store.load()
+        do {
+            tokens = try store.load()
+        } catch {
+            // A corrupt file is worth a red status row, not a silent "not connected".
+            lastError = String(describing: error)
+            tokens = nil
+        }
         connection = tokens != nil ? .connected : (clientID == nil ? .notConfigured : .disconnected)
     }
 

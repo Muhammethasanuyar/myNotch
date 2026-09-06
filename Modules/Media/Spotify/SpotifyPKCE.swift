@@ -145,4 +145,6 @@ nonisolated enum SpotifyLibraryError: Error, Equatable {
     case malformedResponse(String)
     /// Local files and ads have no library entry.
     case notSaveable(String)
+    /// The token file exists but cannot be read or decoded.
+    case storeUnreadable(String)
 }

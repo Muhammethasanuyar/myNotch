@@ -106,16 +106,43 @@ final class SpotifyLibraryTests: XCTestCase {
     func testStoreRoundTripsWithOwnerOnlyPermissions() throws {
         let store = temporaryStore()
         defer { store.clear() }
-        XCTAssertNil(store.load())
+        XCTAssertNil(try store.load())
 
         let tokens = SpotifyTokens(accessToken: "a", refreshToken: "r", expiresAt: Date(timeIntervalSince1970: 5))
         try store.save(tokens)
-        XCTAssertEqual(store.load(), tokens)
+        XCTAssertEqual(try store.load(), tokens)
         let permissions = try FileManager.default.attributesOfItem(atPath: store.fileURL.path)[.posixPermissions] as? Int
         XCTAssertEqual(permissions, 0o600)
 
         store.clear()
-        XCTAssertNil(store.load())
+        XCTAssertNil(try store.load())
+    }
+
+    @MainActor func testACorruptTokenFileIsAnErrorNotADisconnect() throws {
+        let store = temporaryStore()
+        defer { store.clear() }
+        try FileManager.default.createDirectory(at: store.fileURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try Data("{not json".utf8).write(to: store.fileURL)
+        XCTAssertThrowsError(try store.load()) { error in
+            guard case SpotifyLibraryError.storeUnreadable = error as? SpotifyLibraryError ?? .timedOut else {
+                return XCTFail("unexpected \(error)")
+            }
+        }
+        let client = SpotifyLibraryClient(store: store, defaults: try isolatedDefaults())
+        XCTAssertEqual(client.connection, .notConfigured)
+        XCTAssertNotNil(client.lastError, "the settings pane shows why the connection is gone")
+    }
+
+    func testSavingNeverLeavesTheFileWorldReadable() throws {
+        let store = temporaryStore()
+        defer { store.clear() }
+        try store.save(SpotifyTokens(accessToken: "a", refreshToken: "r", expiresAt: .distantFuture))
+        try store.save(SpotifyTokens(accessToken: "b", refreshToken: "r2", expiresAt: .distantFuture))
+        let permissions = try FileManager.default.attributesOfItem(atPath: store.fileURL.path)[.posixPermissions] as? Int
+        XCTAssertEqual(permissions, 0o600, "the replacement keeps the owner-only mode")
+        XCTAssertEqual(try store.load()?.accessToken, "b")
+        let siblings = try FileManager.default.contentsOfDirectory(atPath: store.fileURL.deletingLastPathComponent().path)
+        XCTAssertEqual(siblings, [store.fileURL.lastPathComponent], "no temporary file is left behind")
     }
 
     // MARK: Library requests
@@ -206,7 +233,7 @@ final class SpotifyLibraryTests: XCTestCase {
         client.onChange = { changes += 1 }
         client.disconnect()
         XCTAssertEqual(client.connection, .notConfigured)
-        XCTAssertNil(store.load())
+        XCTAssertNil(try store.load())
         XCTAssertEqual(changes, 1)
     }
 

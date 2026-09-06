@@ -63,6 +63,7 @@ struct ClaudePane: View {
                     }
                 }
                 SettingsFootnote(L("settings.claude.polling.help", "The limiter is shared with every Claude Code session on the account, so never more often than every 5 minutes; a rate limit pauses polling for 15 minutes."))
+                SettingsFootnote(L("settings.claude.polling.fallback", "If Anthropic cannot be reached, a limit Claude Code itself reports in its session log stands in for the ring, drawn dashed, until that window resets. A stand-in never triggers threshold alerts; hitting the limit posts its own popup once."))
             }
 
             Section(L("settings.claude.cost", "Cost (ccusage)")) {

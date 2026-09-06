@@ -95,9 +95,10 @@ struct UsageRing: View {
                     PulsingSymbol(systemName: "circle", pointSize: size, weight: .black, color: color.opacity(alpha), isActive: isWorking)
                 }
                 .opacity(isWorking ? 1 : 0)
+                // Dashed when the reading is Claude Code's own "limit reached" line rather than Anthropic's number.
                 Circle()
                     .trim(from: 0, to: max(0.004, usage))
-                    .stroke(color, style: StrokeStyle(lineWidth: 6, lineCap: .round))
+                    .stroke(color, style: StrokeStyle(lineWidth: 6, lineCap: .round, dash: window?.isEstimate == true ? [3, 6] : []))
                     .rotationEffect(.degrees(-90))
                     .padding(7)
             }

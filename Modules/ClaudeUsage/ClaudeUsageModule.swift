@@ -46,6 +46,10 @@ final class ClaudeUsageModule: NotchModule {
             guard let self, alertsEnabled else { return }
             self.context?.post(ClaudeUsageRules.resetEvent(kind, moduleID: id))
         }
+        service.onQuotaHit = { [weak self] quota in
+            guard let self, alertsEnabled else { return }
+            self.context?.post(ClaudeUsageRules.quotaEvent(quota, moduleID: id, now: Date()))
+        }
         service.start()
     }
 
@@ -113,6 +117,18 @@ nonisolated enum ClaudeUsageRules {
             title: String(localized: "event.crossing.title", defaultValue: "\(subjectTitle(crossing.subject, bundle: bundle)) limit at \(percent)", bundle: bundle),
             detail: detail,
             symbolName: crossing.threshold >= 0.95 ? "exclamationmark.triangle.fill" : "gauge.with.needle",
+            duration: 4
+        )
+    }
+
+    /// Claude Code itself was just refused: the limit is spent whatever the endpoint says.
+    static func quotaEvent(_ quota: QuotaLimitEvent, moduleID: String, now: Date, bundle: Bundle = .main) -> NotchEvent {
+        let remaining = formatRemaining(max(0, quota.resetsAt.timeIntervalSince(now)), bundle: bundle)
+        return NotchEvent(
+            moduleID: moduleID,
+            title: String(localized: "event.quota.title", defaultValue: "\(quota.kind.title(bundle: bundle)) limit reached", bundle: bundle),
+            detail: String(localized: "event.quota.detail", defaultValue: "Claude Code was refused — resets in \(remaining)", bundle: bundle),
+            symbolName: "hand.raised.fill",
             duration: 4
         )
     }
@@ -204,6 +220,10 @@ nonisolated enum ClaudeUsageRules {
     static func ringExplanation(title: String, windowKind kind: UsageWindowKind, window: UsageWindow?, now: Date, bundle: Bundle = .main) -> String {
         guard let window else {
             return String(localized: "explain.ring.noData", defaultValue: "\(title) limit — Anthropic has not reported it yet.", bundle: bundle)
+        }
+        if window.isEstimate {
+            let resets = window.remaining(at: now).map { formatRemaining($0, bundle: bundle) } ?? "—"
+            return String(localized: "explain.ring.estimate", defaultValue: "\(title) limit — Anthropic could not be reached; Claude Code's own log says the limit was hit. Dashed until it resets in \(resets).", bundle: bundle)
         }
         let used = percent(Int((window.utilization * 100).rounded()), bundle: bundle)
         let resets = window.remaining(at: now).map {

@@ -13,7 +13,11 @@ import os
 @Observable
 final class ClaudeUsageService {
     private(set) var auth: UsageAuthState = .signedOut
+    /// Anthropic's reading, or — while it cannot be asked — a "limit reached" line from the logs
+    /// standing in as an estimate (`UsageWindow.isEstimate`).
     private(set) var snapshot: UsageSnapshot?
+    /// The newest "limit reached" line Claude Code wrote, whatever the endpoint says.
+    private(set) var quotaEvent: QuotaLimitEvent?
     private(set) var subscriptionType: String?
     private(set) var isRefreshing = false
     private(set) var lastPollAt: Date?
@@ -38,6 +42,10 @@ final class ClaudeUsageService {
     var onWindowReset: ((UsageWindowKind, UsageWindow) -> Void)?
     var onWorkingChanged: ((Bool) -> Void)?
     var onDataChanged: (() -> Void)?
+    /// Claude Code just hit a limit (a fresh `quotaLimits` line); the module turns it into a popup.
+    var onQuotaHit: ((QuotaLimitEvent) -> Void)?
+    /// A "limit reached" line older than this is history, not news.
+    static let quotaNewsWindow: TimeInterval = 600
 
     static let workingWindow: Duration = .seconds(10)
     /// ccusage re-reads every log on each run, so cost refreshes wait for a pause in the work…
@@ -60,6 +68,7 @@ final class ClaudeUsageService {
     @ObservationIgnored private var costDebounceTask: Task<Void, Never>?
     @ObservationIgnored private var sleepObservers: [NSObjectProtocol] = []
     @ObservationIgnored private var thresholdMemory = ThresholdMemory()
+    @ObservationIgnored private var announcedQuotaReset: Date?
     @ObservationIgnored private var cooldownUntil: Date?
     @ObservationIgnored private var launcher: CCUsageLauncher?
     @ObservationIgnored private var lastCostRefresh: Date?
@@ -209,6 +218,7 @@ final class ClaudeUsageService {
 
     private func apply(auth newAuth: UsageAuthState) {
         auth = newAuth
+        snapshot = UsageMerge.applyingQuota(snapshot, event: quotaEvent, endpointHealthy: newAuth == .ok, now: Date())
         if newAuth.awaitsSignIn {
             startSignInWatch()
         } else {
@@ -350,8 +360,22 @@ final class ClaudeUsageService {
             }
             latestEntries = snapshot.entries
             if let tail = snapshot.tail { session = tail }
+            if let quota = snapshot.quota, quota != quotaEvent { noteQuota(quota) }
             rebuildReport()
         }
+    }
+
+    /// A new "limit reached" line: it stands in for the ring while Anthropic is unreachable, and a
+    /// fresh one is announced once — that popup covers the window's thresholds too.
+    private func noteQuota(_ quota: QuotaLimitEvent) {
+        let now = Date()
+        quotaEvent = quota
+        self.snapshot = UsageMerge.applyingQuota(self.snapshot, event: quota, endpointHealthy: auth == .ok, now: now)
+        guard quota.isExhausted, quota.resetsAt > now, now.timeIntervalSince(quota.observedAt) < Self.quotaNewsWindow,
+              announcedQuotaReset != quota.resetsAt else { return }
+        announcedQuotaReset = quota.resetsAt
+        thresholdMemory.markAnnounced(subjectID: UsageSubject.window(quota.kind).id, resetsAt: quota.resetsAt, thresholds: thresholds)
+        onQuotaHit?(quota)
     }
 
     /// Today's report from the entries on hand and whatever dollars ccusage last reported.

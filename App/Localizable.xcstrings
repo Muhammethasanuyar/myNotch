@@ -541,6 +541,26 @@
         }
       }
     },
+    "event.quota.detail": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude Code geri çevrildi — %@ sonra sıfırlanır"
+          }
+        }
+      }
+    },
+    "event.quota.title": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ limiti doldu"
+          }
+        }
+      }
+    },
     "event.reset.detail": {
       "localizations": {
         "tr": {
@@ -737,6 +757,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "%1$@ limit — kullanılan pay %2$@%3$@. Dış yay: pencerenin geçen kısmı %4$@."
+          }
+        }
+      }
+    },
+    "explain.ring.estimate": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ limiti — Anthropic'e ulaşılamadı; Claude Code'un günlüğü limite çarpıldığını söylüyor. %2$@ sonra sıfırlanana kadar kesik çizgili."
           }
         }
       }
@@ -2157,6 +2187,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sorgulama"
+          }
+        }
+      }
+    },
+    "settings.claude.polling.fallback": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anthropic'e ulaşılamazsa, Claude Code'un kendi oturum günlüğüne yazdığı bir limit halkanın yerine geçer — kesik çizgili, o pencere sıfırlanana kadar. Yedek değer eşik uyarısı tetiklemez; limite çarpmak kendi popup'ını bir kez gösterir."
           }
         }
       }

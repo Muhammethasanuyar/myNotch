@@ -161,6 +161,7 @@ TR = {
     "settings.general.updates": "Güncellemeler",
     "settings.general.updates.enabled": "Güncellemeleri günde bir denetle",
     "settings.general.updates.help": "Projenin GitHub deposundaki appcast okunur; yalnızca uygulama ve macOS sürümü gider. Yeni sürüm notlarıyla önerilir ve yalnızca sen onaylayınca kurulur. Menü barındaki \"Güncellemeleri Denetle…\" her durumda çalışır.",
+    "settings.claude.polling.fallback": "Anthropic'e ulaşılamazsa, Claude Code'un kendi oturum günlüğüne yazdığı bir limit halkanın yerine geçer — kesik çizgili, o pencere sıfırlanana kadar. Yedek değer eşik uyarısı tetiklemez; limite çarpmak kendi popup'ını bir kez gösterir.",
     "settings.tab.shelf": "Raf",
     "settings.shelf.missing": "Raf modülü kayıtlı değil.",
     "settings.shelf.status": "Raftakiler",
@@ -304,6 +305,9 @@ TR = {
 # Keys used through `String(localized:defaultValue:bundle:)` in the pure rules (interpolated
 # text needs the `bundle:` form); they are not scanned from code, only merged.
 EXTRA_TR = {
+    "event.quota.title": "%@ limiti doldu",
+    "event.quota.detail": "Claude Code geri çevrildi — %@ sonra sıfırlanır",
+    "explain.ring.estimate": "%1$@ limiti — Anthropic'e ulaşılamadı; Claude Code'un günlüğü limite çarpıldığını söylüyor. %2$@ sonra sıfırlanana kadar kesik çizgili.",
     "shelf.keep.forever": "Kaldırılana kadar",
     "shelf.keep.hour": "1 saat",
     "shelf.keep.hours12": "12 saat",

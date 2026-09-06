@@ -58,20 +58,24 @@ nonisolated enum NotchLayout {
     /// Extra width a popup adds around the housing, and the text strip it hangs below the compact
     /// row: the wings keep showing their artwork and meter while the title reads in the strip, so
     /// nothing hides behind the camera and no part of the surface is left empty.
-    static let popupExtraWidth: CGFloat = 240
+    static let popupExtraWidth: CGFloat = 300
     static let popupExtraHeight: CGFloat = 36
     /// Inset between the shape's edge (past the ears) and popup content.
     static let popupContentInset: CGFloat = 12
     /// Vertical breathing room of compact content: icon height = housing height − this.
     static let compactContentInset: CGFloat = 12
-    /// Content inside a compact wing (artwork, meter, mark) beside the housing…
-    static let compactWingContentSize: CGFloat = 20
-    /// …and while a popup widens the surface, when the wings grow to match the title strip.
-    static let popupWingContentSize: CGFloat = 28
+    /// Room kept above and below wing content (artwork, meter, mark), and beside it in a popup.
+    static let wingContentInset: CGFloat = 8
+    /// Wing content size before the engine has measured anything: a floating capsule's.
+    static let defaultWingContentSize: CGFloat = 20
 
-    /// The wing content size the engine hands modules through `EnvironmentValues.wingContentSize`.
-    static func wingContentSize(for state: NotchState) -> CGFloat {
-        state.isPopup ? popupWingContentSize : compactWingContentSize
+    /// How large wing content may be, handed to modules through `EnvironmentValues.wingContentSize`:
+    /// the surface's height minus the insets, so it follows the surface — 20 pt beside a floating
+    /// capsule's rim, about the housing's height in the compact strip, and most of the surface
+    /// while a popup hangs its title strip beneath the housing.
+    static func wingContentSize(for state: NotchState, metrics: NotchLayoutMetrics) -> CGFloat {
+        let height = state.isResting ? metrics.notchSize.height : shapeSize(for: state, metrics: metrics).height
+        return max(12, height - 2 * wingContentInset)
     }
     /// Strip reserved above expanded content while another module's banner is showing, so the two
     /// never overlap.

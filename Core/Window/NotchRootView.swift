@@ -69,42 +69,48 @@ struct NotchRootView: View {
         case .closed:
             EmptyView()
         case .compact, .popup:
-            // One row for both states, so the wings keep their identity (and their artwork and
-            // meter) while the surface widens for a popup and the text strip unfolds beneath them.
-            VStack(spacing: 0) {
-                compactLayer(radii: radii, wingContentSize: NotchLayout.wingContentSize(for: state))
-                    .frame(height: metrics.notchSize.height)
-                if case .popup(let event) = state {
-                    content.popup(event, morphNamespace)
-                        .padding(.horizontal, radii.ear + NotchLayout.popupContentInset)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .transition(NotchTransitions.popup)
-                }
-            }
-            .frame(width: size.width, height: size.height, alignment: .top)
+            compactLayer(state: state, size: size, radii: radii)
+                .frame(width: size.width, height: size.height, alignment: .top)
         case .expanded(let moduleID):
             expandedLayer(moduleID: moduleID, size: size, radii: radii, screens: screens)
         }
     }
 
-    /// - Parameter wingContentSize: how large the modules may draw their wing content; a popup
-    ///   hands them more room than the compact strip does.
-    private func compactLayer(radii: NotchLayout.CornerRadii, wingContentSize: CGFloat) -> some View {
-        let height = metrics.notchSize.height
-        let wing = metrics.style == .notch ? NotchLayout.compactWingWidth(notchHeight: height) : nil
+    /// The compact row, and the popup that grows out of it: one HStack for both states, so the
+    /// wings keep their identity (and their artwork and meter) while the surface widens. Wing
+    /// content follows the surface's height, so in a popup the artwork spans the surface beside
+    /// the housing while the title reads on the strip beneath it.
+    private func compactLayer(state: NotchState, size: CGSize, radii: NotchLayout.CornerRadii) -> some View {
+        let isPopup = state.isPopup
+        // Beside the housing the wings have a fixed width the shape was sized for; in a popup they
+        // take their natural width plus breathing room, and the strip gets what is left.
+        let wingWidth: CGFloat? = metrics.style == .notch && !isPopup ? NotchLayout.compactWingWidth(notchHeight: size.height) : nil
+        let wingPadding: CGFloat = isPopup ? NotchLayout.wingContentInset : 0
         return HStack(spacing: 0) {
             content.compactLeading(morphNamespace)
-                .frame(width: wing, height: height)
+                .frame(width: wingWidth, height: size.height)
+                .padding(.horizontal, wingPadding)
                 .transition(NotchTransitions.compactWing(edge: .leading))
-            // At least the housing's width, and all the surplus a popup adds: the wings then sit
-            // at the surface's outer edges instead of leaving its corners empty.
-            Spacer(minLength: metrics.style == .notch ? metrics.notchSize.width : 12)
+            if case .popup(let event) = state {
+                VStack(spacing: 0) {
+                    // Nothing goes behind the camera: the strip starts under the housing.
+                    Color.clear
+                        .frame(height: metrics.style == .notch ? metrics.notchSize.height : 0)
+                    content.popup(event, morphNamespace)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
+                .padding(.horizontal, NotchLayout.popupContentInset)
+                .transition(NotchTransitions.popup)
+            } else {
+                Spacer(minLength: metrics.style == .notch ? metrics.notchSize.width : 12)
+            }
             content.compactTrailing(morphNamespace)
-                .frame(width: wing, height: height)
+                .frame(width: wingWidth, height: size.height)
+                .padding(.horizontal, wingPadding)
                 .transition(NotchTransitions.compactWing(edge: .trailing))
         }
         .padding(.horizontal, radii.ear + (metrics.style == .notch ? 0 : 12))
-        .environment(\.wingContentSize, wingContentSize)
+        .environment(\.wingContentSize, NotchLayout.wingContentSize(for: state, metrics: metrics))
     }
 
     private func expandedLayer(moduleID: String, size: CGSize, radii: NotchLayout.CornerRadii, screens: [ModuleScreen]) -> some View {

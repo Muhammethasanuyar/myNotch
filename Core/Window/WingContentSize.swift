@@ -2,8 +2,8 @@ import SwiftUI
 
 extension EnvironmentValues {
     /// How large the content of a compact wing (artwork, meter, mark) may be, in points. The engine
-    /// sets it per state: `NotchLayout.compactWingContentSize` beside the housing, and the larger
-    /// `popupWingContentSize` while a popup widens the surface, so the wings keep up with the title
-    /// strip beneath them instead of shrinking into its corners.
-    @Entry var wingContentSize: CGFloat = NotchLayout.compactWingContentSize
+    /// sets it from the surface's current height (`NotchLayout.wingContentSize`): about the
+    /// housing's height in the compact strip, most of the surface while a popup is open, so the
+    /// wings grow and shrink with the notch instead of staying small inside a large surface.
+    @Entry var wingContentSize: CGFloat = NotchLayout.defaultWingContentSize
 }

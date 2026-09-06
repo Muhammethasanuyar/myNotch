@@ -32,7 +32,7 @@ final class NotchLayoutTests: XCTestCase {
 
     func testPopupGrowsAroundHousing() {
         let size = NotchLayout.shapeSize(for: .popup(sampleEvent), metrics: notched)
-        XCTAssertEqual(size, CGSize(width: 168 + 240 + 16, height: 37 + NotchLayout.popupExtraHeight))
+        XCTAssertEqual(size, CGSize(width: 168 + NotchLayout.popupExtraWidth + 16, height: 37 + NotchLayout.popupExtraHeight))
     }
 
     func testPopupIsTheCompactRowPlusATextStrip() {
@@ -45,14 +45,17 @@ final class NotchLayoutTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(NotchLayout.popupExtraHeight, 30, "a 13 pt line with breathing space")
     }
 
-    func testWingsGrowForAPopupAndFitTheirRow() {
-        XCTAssertEqual(NotchLayout.wingContentSize(for: .compact), NotchLayout.compactWingContentSize)
-        XCTAssertEqual(NotchLayout.wingContentSize(for: .closed), NotchLayout.compactWingContentSize)
-        XCTAssertGreaterThan(NotchLayout.wingContentSize(for: .popup(sampleEvent)), NotchLayout.compactWingContentSize)
+    func testWingContentFollowsTheSurfaceHeight() {
         for metrics in [notched, floating] {
-            XCTAssertLessThan(NotchLayout.popupWingContentSize, metrics.notchSize.height, "the artwork stays inside the housing row")
-            XCTAssertLessThanOrEqual(NotchLayout.popupWingContentSize, NotchLayout.compactWingWidth(notchHeight: metrics.notchSize.height), "and inside the wing")
+            let compact = NotchLayout.wingContentSize(for: .compact, metrics: metrics)
+            let popup = NotchLayout.wingContentSize(for: .popup(sampleEvent), metrics: metrics)
+            XCTAssertEqual(compact, metrics.notchSize.height - 2 * NotchLayout.wingContentInset)
+            XCTAssertEqual(popup, NotchLayout.shapeSize(for: .popup(sampleEvent), metrics: metrics).height - 2 * NotchLayout.wingContentInset)
+            XCTAssertGreaterThan(popup, compact, "the artwork grows with the surface")
+            XCTAssertLessThanOrEqual(compact, NotchLayout.compactWingWidth(notchHeight: metrics.notchSize.height), "and still fits the compact wing")
         }
+        XCTAssertEqual(NotchLayout.wingContentSize(for: .closed, metrics: notched), NotchLayout.wingContentSize(for: .compact, metrics: notched))
+        XCTAssertEqual(NotchLayout.wingContentSize(for: .compact, metrics: floating), NotchLayout.defaultWingContentSize)
     }
 
     func testExpandedIncludesHousingAndEars() {

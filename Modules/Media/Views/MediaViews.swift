@@ -30,7 +30,7 @@ struct MediaCompactLeading: View {
     @Environment(\.wingContentSize) private var size
 
     var body: some View {
-        MediaArtworkView(artwork: controller.artwork, cornerRadius: size * 0.25)
+        MediaArtworkView(artwork: controller.artwork, cornerRadius: size * 0.2)
             .matchedGeometryEffect(id: MediaModule.artworkID, in: namespace)
             .frame(width: size, height: size)
     }

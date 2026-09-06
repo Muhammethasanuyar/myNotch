@@ -24,7 +24,7 @@ struct DemoCompactLeading: View {
     @Environment(\.wingContentSize) private var size
 
     var body: some View {
-        DemoArtwork(track: module.track, cornerRadius: size * 0.25)
+        DemoArtwork(track: module.track, cornerRadius: size * 0.2)
             .matchedGeometryEffect(id: DemoModule.artworkID, in: namespace)
             .frame(width: size, height: size)
     }

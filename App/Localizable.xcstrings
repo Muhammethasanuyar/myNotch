@@ -1191,6 +1191,16 @@
         }
       }
     },
+    "module.shelf": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Raf"
+          }
+        }
+      }
+    },
     "percent": {
       "localizations": {
         "tr": {
@@ -2961,6 +2971,16 @@
         }
       }
     },
+    "settings.modules.shelf.summary": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dosyaları çentiğe sürükle: bir süre kopyası kalır, sonra AirDrop'la gönder ya da başka yere sürükle."
+          }
+        }
+      }
+    },
     "settings.nav.back": {
       "localizations": {
         "tr": {
@@ -3517,6 +3537,196 @@
           "stringUnit": {
             "state": "translated",
             "value": "MyNotch Ayarları"
+          }
+        }
+      }
+    },
+    "shelf.airdrop": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AirDrop"
+          }
+        }
+      }
+    },
+    "shelf.empty": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dosyaları çentiğe bırak"
+          }
+        }
+      }
+    },
+    "shelf.empty.forever": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kopyalar sen kaldırana kadar durur."
+          }
+        }
+      }
+    },
+    "shelf.empty.keep": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kopyalar %@ durur, sonra kendiliğinden gider."
+          }
+        }
+      }
+    },
+    "shelf.event.airdrop.many": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld dosya AirDrop'la gönderiliyor"
+          }
+        }
+      }
+    },
+    "shelf.event.airdrop.one": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 dosya AirDrop'la gönderiliyor"
+          }
+        }
+      }
+    },
+    "shelf.event.dropped.many": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rafta %lld dosya"
+          }
+        }
+      }
+    },
+    "shelf.event.dropped.one": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rafta 1 dosya"
+          }
+        }
+      }
+    },
+    "shelf.explain.airdrop": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Raftaki tüm dosyaları AirDrop'la gönderir. Yalnızca birini göndermek için dosyayı bu tarafa bırak."
+          }
+        }
+      }
+    },
+    "shelf.explain.airdrop.empty": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Doğrudan AirDrop'a göndermek için dosyayı buraya bırak; sonra dokununca raftaki her şeyi gönderir."
+          }
+        }
+      }
+    },
+    "shelf.explain.hint": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bir dosyayı çentiğe sürükle: açılır, kopyasını burada tutar ve sonra başka bir uygulamaya sürüklemene izin verir."
+          }
+        }
+      }
+    },
+    "shelf.explain.item": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ · dokun aç, sürükle taşı, ✕ kaldır. %2$@ gider."
+          }
+        }
+      }
+    },
+    "shelf.explain.item.forever": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · dokun aç, sürükle taşı, ✕ kaldır."
+          }
+        }
+      }
+    },
+    "shelf.keep.day": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 gün"
+          }
+        }
+      }
+    },
+    "shelf.keep.days2": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "2 gün"
+          }
+        }
+      }
+    },
+    "shelf.keep.forever": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kaldırılana kadar"
+          }
+        }
+      }
+    },
+    "shelf.keep.hour": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 saat"
+          }
+        }
+      }
+    },
+    "shelf.keep.hours12": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "12 saat"
+          }
+        }
+      }
+    },
+    "shelf.keep.week": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 hafta"
           }
         }
       }

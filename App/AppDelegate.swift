@@ -25,6 +25,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         register(CalendarModule(), in: manager)
         register(PomodoroModule(), in: manager)
         register(BatteryModule(), in: manager)
+        register(ShelfModule(), in: manager)
         // The demo module only exists to exercise the engine, so it never ships in a release build.
         let demo = DemoModule()
         #if DEBUG

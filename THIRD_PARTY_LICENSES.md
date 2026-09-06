@@ -119,6 +119,36 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
+
+## NotchDrop — MIT
+
+- Source: https://github.com/Lakr233/NotchDrop
+- Adapted files: `Core/Window/NotchDropDetector.swift` (the near-transparent drop detector), `Modules/Shelf/ShelfItem.swift` (per-item copy directory, Transferable export of the copy), `Modules/Shelf/ShelfStorage.swift` (copy-on-drop, expiry by age, QuickLook previews — via QLThumbnailGenerator, stored beside the copy in Application Support), `Modules/Shelf/ShelfShare.swift` (AirDrop through NSSharingService)
+
+```
+MIT License
+
+Copyright (c) 2024 Lakr Aream
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
 ## mediaremote-adapter — BSD-3-Clause
 
 - Source: https://github.com/ungive/mediaremote-adapter (commit `3ac3d4bdf862c7b5399b4fba4df5689f5c38609a`)

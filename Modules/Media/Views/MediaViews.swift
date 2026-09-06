@@ -171,6 +171,18 @@ struct MediaControlBar: View {
             HStack {
                 favoriteButton
                 Spacer(minLength: 0)
+                // Six bands of the same meter the compact strip shows with four: real audio when
+                // the visualizer is on, the Core Animation dance otherwise. Nothing renders per frame.
+                EqualizerBars(
+                    isPlaying: state.isPlaying,
+                    color: accent,
+                    barCount: 6,
+                    barWidth: 3,
+                    feed: controller.audioMeter,
+                    mode: AudioMeterRules.mode(state: controller.audioMeter.state, isPlaying: state.isPlaying)
+                )
+                .frame(width: 40, height: 22)
+                .accessibilityHidden(true)
             }
         }
         .frame(height: 30)

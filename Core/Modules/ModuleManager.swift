@@ -51,6 +51,12 @@ final class ModuleManager {
         modules.first { $0.id == id }
     }
 
+    /// The app is quitting: every running module lets go of what it holds (child processes,
+    /// system observers). The enabled flags stay as they are for the next launch.
+    func stopAll() {
+        modules.filter(\.isEnabled).forEach { $0.stop() }
+    }
+
     /// Settings toggle: starts or stops the module and re-resolves the notch owner.
     func setEnabled(_ enabled: Bool, for moduleID: String) {
         guard let module = module(id: moduleID), module.isEnabled != enabled else { return }

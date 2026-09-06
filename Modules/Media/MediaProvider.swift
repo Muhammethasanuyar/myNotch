@@ -10,8 +10,9 @@ protocol MediaProvider: Sendable {
     var id: String { get }
     var displayName: String { get }
     var bundleIdentifier: String { get }
-    /// Distributed notification the app posts when playback changes.
-    var changeNotification: Notification.Name { get }
+    /// Distributed notification the app posts when playback changes; `nil` for a provider that
+    /// pushes its own changes through `changeTicks()`.
+    var changeNotification: Notification.Name? { get }
     /// SF Symbol used as the source badge in the expanded view.
     var symbolName: String { get }
     /// What this player lets us do, taken from its scripting dictionary.
@@ -31,6 +32,9 @@ protocol MediaProvider: Sendable {
     func prepareArtwork(destination: URL) async throws -> Bool
     /// Starts whatever sign-in `favoriteSupport == .needsConnection` refers to.
     func connectFavorites()
+    /// A stream that yields whenever this provider's state changed on its own (a child process
+    /// printed a line, say); the controller refreshes on each tick. `nil` for notification-driven players.
+    func changeTicks() -> AsyncStream<Void>?
 }
 
 extension MediaProvider {
@@ -42,6 +46,7 @@ extension MediaProvider {
     func prepareArtwork(destination: URL) async throws -> Bool { false }
     func connectFavorites() {}
     func precisePosition() async throws -> PlayheadSample? { nil }
+    func changeTicks() -> AsyncStream<Void>? { nil }
 
     var favoriteSupport: MediaFavoriteSupport {
         capabilities.canFavorite ? .available : .unsupported(reason: L("media.favorite.unsupported", "\(displayName) does not let other apps save tracks"))

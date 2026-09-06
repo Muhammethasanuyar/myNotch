@@ -31,6 +31,8 @@ final class MediaController {
     /// The Spotify Web API connection, when the Spotify provider is wired; the settings window
     /// connects, disconnects and shows its state.
     let spotifyLibrary: SpotifyLibraryClient?
+    /// The system-wide source through mediaremote-adapter, when the artefacts are bundled.
+    let genericPlayer: GenericNowPlayingProvider?
 
     private let providers: [any MediaProvider]
     private let cache = ArtworkCache()
@@ -44,19 +46,22 @@ final class MediaController {
     @ObservationIgnored private var refineTask: Task<Void, Never>?
     @ObservationIgnored private var workspaceObservers: [NSObjectProtocol] = []
 
-    init(providers: [any MediaProvider], spotifyLibrary: SpotifyLibraryClient? = nil) {
+    init(providers: [any MediaProvider], spotifyLibrary: SpotifyLibraryClient? = nil, genericPlayer: GenericNowPlayingProvider? = nil) {
         self.providers = providers
         self.spotifyLibrary = spotifyLibrary
+        self.genericPlayer = genericPlayer
     }
 
     convenience init() {
         let runner = AppleScriptRunner()
         let positionRunner = AppleScriptRunner()
         let library = SpotifyLibraryClient()
-        self.init(providers: [
-            SpotifyProvider(runner: runner, library: library, positionRunner: positionRunner),
-            AppleMusicProvider(runner: runner, positionRunner: positionRunner)
-        ], spotifyLibrary: library)
+        let spotify = SpotifyProvider(runner: runner, library: library, positionRunner: positionRunner)
+        let music = AppleMusicProvider(runner: runner, positionRunner: positionRunner)
+        // Last: the scripted players keep their place in the switcher, and the generic source
+        // only speaks for apps neither of them covers.
+        let generic = GenericNowPlayingProvider(scriptOwners: [spotify.bundleIdentifier, music.bundleIdentifier])
+        self.init(providers: [spotify, music, generic], spotifyLibrary: library, genericPlayer: generic)
         // Once Spotify is connected, re-read the track so the heart reflects the library.
         library.onChange = { [weak self] in self?.refresh() }
     }
@@ -89,14 +94,23 @@ final class MediaController {
     func start() {
         guard observerTasks.isEmpty else { return }
         for provider in providers {
-            let name = provider.changeNotification
             let id = provider.id
-            observerTasks.append(Task { [weak self] in
-                for await _ in DistributedNotificationCenter.default().notifications(named: name) {
-                    guard !Task.isCancelled else { return }
-                    self?.refresh(preferring: id)
-                }
-            })
+            if let name = provider.changeNotification {
+                observerTasks.append(Task { [weak self] in
+                    for await _ in DistributedNotificationCenter.default().notifications(named: name) {
+                        guard !Task.isCancelled else { return }
+                        self?.refresh(preferring: id)
+                    }
+                })
+            }
+            if let ticks = provider.changeTicks() {
+                observerTasks.append(Task { [weak self] in
+                    for await _ in ticks {
+                        guard !Task.isCancelled else { return }
+                        self?.refresh(preferring: id)
+                    }
+                })
+            }
         }
         observePlayerApps()
         startPolling()
@@ -107,7 +121,8 @@ final class MediaController {
     /// the next poll would take up to a minute while nothing is playing.
     private func observePlayerApps() {
         let center = NSWorkspace.shared.notificationCenter
-        let bundleIDs = Set(providers.map(\.bundleIdentifier))
+        // The generic source has no fixed app; its own stream says when something appears.
+        let bundleIDs = Set(providers.map(\.bundleIdentifier).filter { !$0.isEmpty })
         for name in [NSWorkspace.didLaunchApplicationNotification, NSWorkspace.didTerminateApplicationNotification] {
             workspaceObservers.append(center.addObserver(forName: name, object: nil, queue: .main) { [weak self] note in
                 let bundleID = (note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication)?.bundleIdentifier
@@ -129,6 +144,7 @@ final class MediaController {
         lyrics.clear()
         workspaceObservers.forEach { NSWorkspace.shared.notificationCenter.removeObserver($0) }
         workspaceObservers.removeAll()
+        genericPlayer?.shutdown()
         runningPlayerIDs = []
         focusedProviderID = nil
         updateState(nil)
@@ -292,6 +308,20 @@ final class MediaController {
     /// The visualizer setting: the tap only ever runs while this is on and something plays.
     func setVisualizer(enabled: Bool) {
         audioMeter.setEnabled(enabled)
+    }
+
+    /// The system-wide player setting: starts or stops the adapter's stream.
+    func setGenericPlayer(enabled: Bool) {
+        genericPlayer?.setEnabled(enabled)
+        refresh()
+    }
+
+    /// Settings' "try again": runs the adapter's health check afresh.
+    func recheckGenericPlayer() {
+        Task { [weak self] in
+            await self?.genericPlayer?.recheckHealth()
+            self?.refresh()
+        }
     }
 
     /// The lyrics toggle moved: drop what is on screen and load again, which is a no-op when off.

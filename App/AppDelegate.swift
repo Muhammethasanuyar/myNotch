@@ -7,12 +7,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let settings = SettingsStore()
     private let launchAtLogin = LaunchAtLogin()
     private var moduleManager: ModuleManager?
+    private var terminationSignal: DispatchSourceSignal?
     private var settingsApplier: SettingsApplier?
     private var notchWindowController: NotchWindowController?
     private var settingsWindowController: SettingsWindowController?
     private var debugPreviewWindowController: DebugPreviewWindowController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        routeTerminationSignalThroughQuit()
         let options = LaunchOptions.read(from: .standard)
 
         let manager = ModuleManager(model: model)
@@ -142,5 +144,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         default:
             assertionFailure("Unknown -debugState value: \(name)")
         }
+    }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        moduleManager?.stopAll()
+    }
+
+    /// `kill`/`pkill` send SIGTERM, whose default is an immediate exit that skips
+    /// `applicationWillTerminate` — and with it the shutdown of child processes. Routing the signal
+    /// through the normal quit path keeps a restart from the shell as clean as Quit from the menu.
+    private func routeTerminationSignalThroughQuit() {
+        signal(SIGTERM, SIG_IGN)
+        let source = DispatchSource.makeSignalSource(signal: SIGTERM, queue: .main)
+        source.setEventHandler { NSApp.terminate(nil) }
+        source.resume()
+        terminationSignal = source
     }
 }

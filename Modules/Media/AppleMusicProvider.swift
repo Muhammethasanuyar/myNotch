@@ -7,7 +7,7 @@ struct AppleMusicProvider: MediaProvider {
     let id = "appleMusic"
     let displayName = "Music"
     let bundleIdentifier = "com.apple.Music"
-    let changeNotification = Notification.Name("com.apple.Music.playerInfo")
+    let changeNotification: Notification.Name? = Notification.Name("com.apple.Music.playerInfo")
     let symbolName = "music.note.list"
     /// Music exposes all three: `shuffle enabled`, `song repeat` (off/one/all) and `favorited`.
     let capabilities = MediaCapabilities(canShuffle: true, canRepeat: true, canFavorite: true, hasRepeatModes: true)

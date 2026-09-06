@@ -7,7 +7,7 @@ private final class StubPlayer: MediaProvider {
     let id: String
     let displayName: String
     let bundleIdentifier: String
-    let changeNotification: Notification.Name
+    let changeNotification: Notification.Name?
     let symbolName = "music.note"
     let capabilities = MediaCapabilities(canShuffle: false, canRepeat: false, canFavorite: false, hasRepeatModes: false)
 

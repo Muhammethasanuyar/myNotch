@@ -8,7 +8,7 @@ struct SpotifyProvider: MediaProvider {
     let id = "spotify"
     let displayName = "Spotify"
     let bundleIdentifier = "com.spotify.client"
-    let changeNotification = Notification.Name("com.spotify.client.PlaybackStateChanged")
+    let changeNotification: Notification.Name? = Notification.Name("com.spotify.client.PlaybackStateChanged")
     let symbolName = "music.note"
     /// Spotify's dictionary advertises `shuffling` and `repeating` as writable, but the app
     /// silently ignores writes to both (measured 2026-09-04), and `starred` errors with -10000.

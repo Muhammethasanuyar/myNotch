@@ -9,6 +9,9 @@ nonisolated struct UsageWindow: Equatable, Sendable {
     let utilization: Double
     /// When the window rolls over; `nil` when the server did not say.
     let resetsAt: Date?
+    /// True when the reading did not come from Anthropic but from a "limit reached" line Claude
+    /// Code wrote to its own log: drawn dashed, never used for threshold alerts.
+    var isEstimate: Bool = false
 
     func remaining(at now: Date) -> TimeInterval? {
         resetsAt.map { max(0, $0.timeIntervalSince(now)) }
@@ -87,6 +90,26 @@ nonisolated enum UsageSubject: Hashable, Sendable {
         switch self {
         case .window(let kind): return kind
         case .scoped(_, let windowKind): return windowKind
+        }
+    }
+}
+
+/// A "limit reached" line in a session log. Claude Code writes `quotaLimits` on the assistant turn
+/// that was refused; it carries no percentage, so all it can say is "exhausted until `resetsAt`".
+nonisolated struct QuotaLimitEvent: Equatable, Sendable {
+    let kind: UsageWindowKind
+    let status: String
+    let resetsAt: Date
+    /// The refused turn's own timestamp.
+    let observedAt: Date
+
+    var isExhausted: Bool { status == "rejected" }
+
+    static func kind(rateLimitType: String?) -> UsageWindowKind? {
+        switch rateLimitType {
+        case "five_hour": return .fiveHour
+        case "seven_day": return .sevenDay
+        default: return nil
         }
     }
 }
@@ -173,9 +196,25 @@ nonisolated enum UsageMerge {
     }
 
     /// A window rolled over: its reset time moved forward and the old reading was not trivial.
+    /// An estimate giving way to a real reading is not a rollover.
     static func didReset(previous: UsageWindow?, current: UsageWindow?) -> Bool {
-        guard let previous, let current, let before = previous.resetsAt, let after = current.resetsAt else { return false }
+        guard let previous, let current, !previous.isEstimate, let before = previous.resetsAt, let after = current.resetsAt else { return false }
         return after > before && previous.utilization >= 0.25 && current.utilization < previous.utilization
+    }
+
+    /// While Anthropic cannot be asked, a limit Claude Code itself reported stands in for the
+    /// missing window: 100 % until it resets, marked as an estimate. A real reading that has not
+    /// reset is never replaced, and a healthy endpoint makes the event irrelevant.
+    static func applyingQuota(_ snapshot: UsageSnapshot?, event: QuotaLimitEvent?, endpointHealthy: Bool, now: Date) -> UsageSnapshot? {
+        guard !endpointHealthy, let event, event.isExhausted, event.resetsAt > now else { return snapshot }
+        if let current = snapshot?[event.kind], !current.isEstimate, !current.hasReset(at: now) { return snapshot }
+        let window = UsageWindow(utilization: 1, resetsAt: event.resetsAt, isEstimate: true)
+        var next = snapshot ?? UsageSnapshot(fiveHour: nil, sevenDay: nil, fetchedAt: event.observedAt)
+        switch event.kind {
+        case .fiveHour: next.fiveHour = window
+        case .sevenDay: next.sevenDay = window
+        }
+        return next
     }
 }
 
@@ -218,7 +257,8 @@ nonisolated struct ThresholdMemory: Equatable, Sendable {
         var crossings: [ThresholdCrossing] = []
 
         for (subject, window) in snapshot.subjects {
-            guard let resetsAt = window.resetsAt else { continue }
+            // An estimate is not a reading: it never trips an alert.
+            guard !window.isEstimate, let resetsAt = window.resetsAt else { continue }
             let id = subject.id
             // Keys from an earlier window of this subject are history now.
             next.announced = next.announced.filter { $0.subjectID != id || $0.resetsAt == resetsAt }
@@ -234,6 +274,13 @@ nonisolated struct ThresholdMemory: Equatable, Sendable {
         }
         next.isWarmedUp = true
         return (crossings, next)
+    }
+
+    /// A "limit reached" popup already said it all: that window's thresholds count as announced.
+    mutating func markAnnounced(subjectID: String, resetsAt: Date, thresholds: UsageThresholds) {
+        for threshold in thresholds.ordered {
+            announced.insert(Key(subjectID: subjectID, threshold: threshold, resetsAt: resetsAt))
+        }
     }
 }
 

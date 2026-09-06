@@ -12,6 +12,8 @@ nonisolated struct LedgerSnapshot: Sendable {
     /// block's start may differ from ccusage's.
     let isAnchored: Bool
     let bytesRead: Int
+    /// The newest "limit reached" line across every file, if any.
+    let quota: QuotaLimitEvent?
 }
 
 /// Keeps the recent entries of every session log in memory and reads only what changed.
@@ -27,6 +29,7 @@ actor UsageLedger {
         var offset: UInt64 = 0
         var entries: [UsageEntry] = []
         var tail = SessionTail()
+        var quota: QuotaLimitEvent?
         var readFromStart = false
         var lastSeen: Date
     }
@@ -97,7 +100,8 @@ actor UsageLedger {
         let tail = files.values.compactMap { state -> (Date, SessionTail)? in
             state.tail.lastTimestamp.map { ($0, state.tail) }
         }.max { $0.0 < $1.0 }?.1
-        return LedgerSnapshot(entries: entries, tail: tail, isAnchored: isAnchored, bytesRead: bytesRead)
+        let quota = files.values.compactMap(\.quota).max { $0.observedAt < $1.observedAt }
+        return LedgerSnapshot(entries: entries, tail: tail, isAnchored: isAnchored, bytesRead: bytesRead, quota: quota)
     }
 
     // MARK: Reading
@@ -119,6 +123,7 @@ actor UsageLedger {
             state.offset += UInt64(chunk.consumed)
             state.entries.append(contentsOf: chunk.entries)
             state.tail = Self.merge(older: state.tail, newer: chunk.tail)
+            state.quota = Self.newer(state.quota, chunk.quota)
         }
         state.size = size
         state.lastSeen = now
@@ -178,6 +183,7 @@ actor UsageLedger {
         for chunk in chunks.reversed() {
             state.entries.append(contentsOf: chunk.entries)
             state.tail = Self.merge(older: state.tail, newer: chunk.tail)
+            state.quota = Self.newer(state.quota, chunk.quota)
         }
         return state
     }
@@ -237,6 +243,13 @@ actor UsageLedger {
 
     nonisolated static func sessionID(for url: URL) -> String {
         url.deletingPathExtension().lastPathComponent
+    }
+
+    /// The more recently observed of two "limit reached" lines.
+    nonisolated static func newer(_ current: QuotaLimitEvent?, _ candidate: QuotaLimitEvent?) -> QuotaLimitEvent? {
+        guard let candidate else { return current }
+        guard let current, current.observedAt > candidate.observedAt else { return candidate }
+        return current
     }
 
     /// Later lines win, but a field the newer stretch lacks keeps its older value.

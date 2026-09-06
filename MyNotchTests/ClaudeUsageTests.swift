@@ -190,6 +190,40 @@ final class UsageMergeTests: XCTestCase {
         XCTAssertNil(UsageMerge.merge(previous: gone, fetched: nil, now: now))
     }
 
+    func testAQuotaEventStandsInOnlyWhileTheEndpointIsAway() {
+        let now = Date(timeIntervalSince1970: 1_800_000_000)
+        let event = QuotaLimitEvent(kind: .fiveHour, status: "rejected", resetsAt: now.addingTimeInterval(3600), observedAt: now.addingTimeInterval(-60))
+        XCTAssertNil(UsageMerge.applyingQuota(nil, event: event, endpointHealthy: true, now: now), "a healthy endpoint makes the event irrelevant")
+        let standIn = UsageMerge.applyingQuota(nil, event: event, endpointHealthy: false, now: now)
+        XCTAssertEqual(standIn?.fiveHour?.utilization, 1)
+        XCTAssertEqual(standIn?.fiveHour?.resetsAt, event.resetsAt)
+        XCTAssertEqual(standIn?.fiveHour?.isEstimate, true)
+        XCTAssertNil(standIn?.sevenDay)
+
+        let real = UsageSnapshot(fiveHour: UsageWindow(utilization: 0.4, resetsAt: now.addingTimeInterval(1800)), sevenDay: nil, fetchedAt: now)
+        XCTAssertEqual(UsageMerge.applyingQuota(real, event: event, endpointHealthy: false, now: now), real, "a real reading that has not reset is never replaced")
+        let stale = UsageSnapshot(fiveHour: UsageWindow(utilization: 0.4, resetsAt: now.addingTimeInterval(-10)), sevenDay: nil, fetchedAt: now.addingTimeInterval(-7200))
+        XCTAssertEqual(UsageMerge.applyingQuota(stale, event: event, endpointHealthy: false, now: now)?.fiveHour?.isEstimate, true, "a reading whose window is gone gives way")
+        let expired = QuotaLimitEvent(kind: .fiveHour, status: "rejected", resetsAt: now.addingTimeInterval(-1), observedAt: now.addingTimeInterval(-7200))
+        XCTAssertNil(UsageMerge.applyingQuota(nil, event: expired, endpointHealthy: false, now: now), "an event that already reset says nothing")
+        let warning = QuotaLimitEvent(kind: .sevenDay, status: "allowed_warning", resetsAt: now.addingTimeInterval(3600), observedAt: now)
+        XCTAssertNil(UsageMerge.applyingQuota(nil, event: warning, endpointHealthy: false, now: now), "only an exhaustion stands in")
+    }
+
+    func testEstimatesNeverTripThresholdsOrCountAsResets() {
+        let now = Date(timeIntervalSince1970: 1_800_000_000)
+        let estimate = UsageWindow(utilization: 1, resetsAt: now.addingTimeInterval(3600), isEstimate: true)
+        var memory = ThresholdMemory.evaluate(snapshot: UsageSnapshot(fiveHour: UsageWindow(utilization: 0.1, resetsAt: now.addingTimeInterval(3600)), sevenDay: nil, fetchedAt: now), thresholds: UsageThresholds(), memory: ThresholdMemory()).memory
+        let result = ThresholdMemory.evaluate(snapshot: UsageSnapshot(fiveHour: estimate, sevenDay: nil, fetchedAt: now), thresholds: UsageThresholds(), memory: memory)
+        XCTAssertTrue(result.crossings.isEmpty, "a warmed-up memory still ignores the estimate")
+        memory = result.memory
+        let real = UsageWindow(utilization: 0.3, resetsAt: now.addingTimeInterval(7200))
+        XCTAssertFalse(UsageMerge.didReset(previous: estimate, current: real), "an estimate giving way to a reading is not a rollover")
+        memory.markAnnounced(subjectID: UsageSubject.window(.fiveHour).id, resetsAt: now.addingTimeInterval(3600), thresholds: UsageThresholds())
+        let after = ThresholdMemory.evaluate(snapshot: UsageSnapshot(fiveHour: UsageWindow(utilization: 0.97, resetsAt: now.addingTimeInterval(3600)), sevenDay: nil, fetchedAt: now), thresholds: UsageThresholds(), memory: memory)
+        XCTAssertTrue(after.crossings.isEmpty, "the limit-reached popup already covered this window's thresholds")
+    }
+
     func testResetDetection() {
         let before = UsageWindow(utilization: 0.8, resetsAt: now)
         let after = UsageWindow(utilization: 0.02, resetsAt: now.addingTimeInterval(18_000))

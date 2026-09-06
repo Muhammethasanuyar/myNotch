@@ -13,6 +13,10 @@ private enum Fixture {
     static let user = #"{"type":"user","cwd":"/Users/x/Projects/dynamic-notch","sessionId":"s1","timestamp":"2026-09-06T09:00:00.000Z","message":{"role":"user","content":"hello"}}"#
     static let snapshot = #"{"type":"file-history-snapshot","messageId":"m0","snapshot":{"trackedFileBackups":{},"timestamp":"2026-09-01T00:00:00.000Z"},"isSnapshotUpdate":false}"#
     static let title = #"{"type":"custom-title","sessionId":"s1","customTitle":"Notch hover"}"#
+    /// The refused turn as Claude Code writes it (observed 2026-09-07): no usage, a `quotaLimits` object at the root.
+    static func quota(at stamp: String, type: String = "assistant", kind: String = "five_hour", status: String = "rejected", resetsAt: Int = 1_800_003_600) -> String {
+        #"{"type":"\#(type)","sessionId":"s1","timestamp":"\#(stamp)","quotaLimits":{"rateLimitType":"\#(kind)","status":"\#(status)","resetsAt":\#(resetsAt),"overageStatus":"rejected","overageDisabledReason":"org_level_disabled","isUsingOverage":false,"unifiedRateLimitFallbackAvailable":false},"message":{"id":"m9","model":"claude-fable-5-1","content":[]}}"#
+    }
 }
 
 final class SessionLogParserTests: XCTestCase {
@@ -39,6 +43,27 @@ final class SessionLogParserTests: XCTestCase {
         XCTAssertEqual(chunk.tail.sessionID, "s1")
         XCTAssertEqual(chunk.tail.lastModel, "claude-fable-5-1")
         XCTAssertNil(chunk.tail.customTitle)
+    }
+
+    func testQuotaLimitLinesBecomeEventsWithoutEntries() {
+        let chunk = SessionLogParser.parse(data([Fixture.quota(at: "2026-09-06T09:00:00.000Z"), Fixture.quota(at: "2026-09-06T09:05:00.000Z", resetsAt: 1_800_007_200)]), fallbackSessionID: "file")
+        XCTAssertTrue(chunk.entries.isEmpty, "a refused turn has no usage")
+        XCTAssertEqual(chunk.quota?.kind, .fiveHour)
+        XCTAssertEqual(chunk.quota?.status, "rejected")
+        XCTAssertEqual(chunk.quota?.resetsAt, Date(timeIntervalSince1970: 1_800_007_200), "the newest line wins")
+        let expected = ISO8601DateFormatter()
+        expected.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        XCTAssertEqual(chunk.quota?.observedAt, expected.date(from: "2026-09-06T09:05:00.000Z"))
+        XCTAssertTrue(chunk.quota?.isExhausted ?? false)
+
+        XCTAssertNil(SessionLogParser.parse(data([Fixture.quota(at: "2026-09-06T09:00:00.000Z", type: "user")]), fallbackSessionID: "f").quota, "only assistant turns count")
+        XCTAssertNil(SessionLogParser.parse(data([Fixture.quota(at: "2026-09-06T09:00:00.000Z", kind: "monthly")]), fallbackSessionID: "f").quota, "unknown window kinds are ignored")
+        let weekly = SessionLogParser.parse(data([Fixture.quota(at: "2026-09-06T09:00:00.000Z", kind: "seven_day", status: "allowed_warning")]), fallbackSessionID: "f").quota
+        XCTAssertEqual(weekly?.kind, .sevenDay)
+        XCTAssertFalse(weekly?.isExhausted ?? true, "a warning is noted but is not an exhaustion")
+        let mixed = SessionLogParser.parse(data([Fixture.assistant(at: "2026-09-06T09:37:12.345Z"), Fixture.quota(at: "2026-09-06T09:40:00.000Z")]), fallbackSessionID: "f")
+        XCTAssertEqual(mixed.entries.count, 1)
+        XCTAssertNotNil(mixed.quota, "usage lines and the quota line live side by side")
     }
 
     func testConsumesOnlyCompleteLines() {

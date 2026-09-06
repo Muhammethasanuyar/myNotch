@@ -45,6 +45,8 @@ nonisolated struct LogChunk: Equatable, Sendable {
     /// Bytes consumed: up to and including the last newline, so a line still being written waits
     /// for the next read instead of being half-parsed.
     var consumed = 0
+    /// The newest "limit reached" line in this stretch, if any.
+    var quota: QuotaLimitEvent?
 }
 
 nonisolated enum SessionLogParser {
@@ -52,6 +54,8 @@ nonisolated enum SessionLogParser {
     static let usageMarker = Data("\"usage\":{".utf8)
     /// `custom-title` lines rename the session; they are rare and small.
     static let titleMarker = Data("custom-title".utf8)
+    /// `quotaLimits` appears on the assistant turn a rate limit refused — a handful of lines a day at most.
+    static let quotaMarker = Data("\"quotaLimits\"".utf8)
 
     /// Parses every complete line of `data`, which must start at a line boundary.
     /// - Parameter fallbackSessionID: used when a line carries no `sessionId` — the file's name.
@@ -70,8 +74,13 @@ nonisolated enum SessionLogParser {
             guard !line.isEmpty else { continue }
             let hasUsage = line.range(of: usageMarker) != nil
             let hasTitle = !hasUsage && line.range(of: titleMarker) != nil
-            guard hasUsage || hasTitle else { continue }
+            let hasQuota = line.range(of: quotaMarker) != nil
+            guard hasUsage || hasTitle || hasQuota else { continue }
             guard let raw = try? decoder.decode(RawEntry.self, from: line) else { continue }
+
+            if hasQuota, let event = quotaEvent(from: raw, fractional: fractional, plain: plain) {
+                chunk.quota = event
+            }
 
             if let cwd = raw.cwd, !cwd.isEmpty { chunk.tail.cwd = cwd }
             if let session = raw.sessionId, !session.isEmpty { chunk.tail.sessionID = session }
@@ -116,6 +125,17 @@ nonisolated enum SessionLogParser {
         )
     }
 
+    /// The "limit reached" event a decoded line describes, or `nil` when it is not one.
+    static func quotaEvent(from raw: RawEntry, fractional: ISO8601DateFormatter, plain: ISO8601DateFormatter) -> QuotaLimitEvent? {
+        guard raw.type == "assistant", let limits = raw.quotaLimits,
+              let kind = QuotaLimitEvent.kind(rateLimitType: limits.rateLimitType),
+              let status = limits.status, !status.isEmpty,
+              let seconds = limits.resetsAt, seconds > 0 else { return nil }
+        let resetsAt = Date(timeIntervalSince1970: seconds)
+        let observedAt = raw.timestamp.flatMap { fractional.date(from: $0) ?? plain.date(from: $0) } ?? resetsAt
+        return QuotaLimitEvent(kind: kind, status: status, resetsAt: resetsAt, observedAt: observedAt)
+    }
+
     // MARK: Raw shape
 
     /// The keys read from a log line; everything is optional so an unexpected line never fails
@@ -131,6 +151,23 @@ nonisolated enum SessionLogParser {
         var cwd: String?
         var customTitle: String?
         var message: RawMessage?
+        var quotaLimits: RawQuotaLimits?
+
+        /// `{rateLimitType, status, resetsAt, overage…}`; only the three that matter are read.
+        struct RawQuotaLimits: Decodable {
+            var rateLimitType: String?
+            var status: String?
+            var resetsAt: Double?
+
+            init(from decoder: Decoder) throws {
+                let c = try decoder.container(keyedBy: CodingKeys.self)
+                rateLimitType = try? c.decodeIfPresent(String.self, forKey: .rateLimitType)
+                status = try? c.decodeIfPresent(String.self, forKey: .status)
+                resetsAt = try? c.decodeIfPresent(Double.self, forKey: .resetsAt)
+            }
+
+            private enum CodingKeys: String, CodingKey { case rateLimitType, status, resetsAt }
+        }
 
         struct RawMessage: Decodable {
             var id: String?
@@ -203,10 +240,11 @@ nonisolated enum SessionLogParser {
             cwd = try? c.decodeIfPresent(String.self, forKey: .cwd)
             customTitle = try? c.decodeIfPresent(String.self, forKey: .customTitle)
             message = try? c.decodeIfPresent(RawMessage.self, forKey: .message)
+            quotaLimits = try? c.decodeIfPresent(RawQuotaLimits.self, forKey: .quotaLimits)
         }
 
         private enum CodingKeys: String, CodingKey {
-            case type, timestamp, sessionId, requestId, version, isSidechain, costUSD, cwd, customTitle, message
+            case type, timestamp, sessionId, requestId, version, isSidechain, costUSD, cwd, customTitle, message, quotaLimits
         }
     }
 }

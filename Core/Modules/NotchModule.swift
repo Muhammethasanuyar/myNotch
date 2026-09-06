@@ -81,10 +81,29 @@ extension NotchModule {
 struct ModuleContext {
     let moduleID: String
     private let bus: EventBus
+    private let offer: (String, [URL]) -> Bool
+    private let canOffer: (String) -> Bool
 
-    init(moduleID: String, bus: EventBus) {
+    /// - Parameters:
+    ///   - offer: hands files from the named module to whichever other module takes drops.
+    ///   - canOffer: whether such a module exists for the named caller.
+    init(moduleID: String, bus: EventBus, offer: @escaping (String, [URL]) -> Bool = { _, _ in false }, canOffer: @escaping (String) -> Bool = { _ in false }) {
         self.moduleID = moduleID
         self.bus = bus
+        self.offer = offer
+        self.canOffer = canOffer
+    }
+
+    /// Hands files to the module that takes file drops (today the shelf), as if they had been
+    /// dropped on its card. Returns whether it took them. A module never sees another module.
+    @discardableResult
+    func offerFiles(_ urls: [URL]) -> Bool {
+        offer(moduleID, urls)
+    }
+
+    /// Whether `offerFiles` has somewhere to go, so a card can hide the button instead of failing.
+    var canOfferFiles: Bool {
+        canOffer(moduleID)
     }
 
     /// Tell the manager that `activity` changed, so it can re-resolve who owns the notch.

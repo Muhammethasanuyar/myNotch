@@ -42,9 +42,23 @@ final class ModuleManager {
         }
         modules.append(module)
         if module.isEnabled {
-            module.start(context: ModuleContext(moduleID: module.id, bus: bus))
+            module.start(context: context(for: module))
         }
         resolveActiveModule()
+    }
+
+    /// What a module is handed: the bus, and a way to pass files on to the drop-taking module.
+    private func context(for module: any NotchModule) -> ModuleContext {
+        ModuleContext(
+            moduleID: module.id,
+            bus: bus,
+            offer: { [weak self] caller, urls in
+                self?.dropTarget(excluding: caller)?.acceptDrop(NotchDrop(urls: urls, unitPoint: nil)) ?? false
+            },
+            canOffer: { [weak self] caller in
+                self?.dropTarget(excluding: caller) != nil
+            }
+        )
     }
 
     func module(id: String) -> (any NotchModule)? {
@@ -62,7 +76,7 @@ final class ModuleManager {
         guard let module = module(id: moduleID), module.isEnabled != enabled else { return }
         module.isEnabled = enabled
         if enabled {
-            module.start(context: ModuleContext(moduleID: module.id, bus: bus))
+            module.start(context: context(for: module))
         } else {
             module.stop()
             if case .expanded(let expandedID) = model.state, expandedID == moduleID {
@@ -97,6 +111,11 @@ final class ModuleManager {
     /// The enabled module that takes file drops, if any; the first registered wins.
     var dropTargetModule: (any NotchModule)? {
         modules.first { $0.isEnabled && $0.acceptsDrops }
+    }
+
+    /// The drop-taking module another module can hand files to — never itself.
+    func dropTarget(excluding moduleID: String) -> (any NotchModule)? {
+        modules.first { $0.isEnabled && $0.acceptsDrops && $0.id != moduleID }
     }
 
     var snapshots: [ModuleSnapshot] {

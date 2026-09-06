@@ -55,6 +55,14 @@ private final class StubModule: NotchModule {
         return true
     }
 
+    func offer(_ urls: [URL]) -> Bool {
+        context?.offerFiles(urls) ?? false
+    }
+
+    var canOffer: Bool {
+        context?.canOfferFiles ?? false
+    }
+
     var screens: [ModuleScreen] {
         [ModuleScreen(id: id, moduleID: id, title: displayName, symbolName: "circle", appBundleIdentifier: "com.example.\(id)", isAvailable: isAvailable)]
     }
@@ -321,5 +329,26 @@ final class ModuleManagerTests: XCTestCase {
         manager.setEnabled(false, for: "other")
         XCTAssertNil(provider.dropTargetModuleID())
         XCTAssertFalse(provider.acceptDrop(NotchDrop(urls: urls, unitPoint: nil)))
+    }
+
+    func testAModuleCanHandFilesToTheDropTargetButNeverToItself() {
+        let (manager, _) = makeManager()
+        let downloads = StubModule(id: "downloads")
+        let shelf = StubModule(id: "shelf")
+        shelf.acceptsDrops = true
+        manager.register(downloads)
+        manager.register(shelf)
+        let urls = [URL(fileURLWithPath: "/tmp/report.pdf")]
+        XCTAssertTrue(downloads.canOffer)
+        XCTAssertTrue(downloads.offer(urls))
+        XCTAssertEqual(shelf.drops.count, 1)
+        XCTAssertEqual(shelf.drops.first?.urls, urls)
+        XCTAssertNil(shelf.drops.first?.unitPoint, "handed files land on the shelf, not the AirDrop zone")
+        XCTAssertFalse(shelf.canOffer, "the shelf has nobody else to hand files to")
+        XCTAssertFalse(shelf.offer(urls))
+        XCTAssertEqual(shelf.drops.count, 1)
+        manager.setEnabled(false, for: "shelf")
+        XCTAssertFalse(downloads.canOffer, "a disabled shelf takes nothing")
+        XCTAssertFalse(downloads.offer(urls))
     }
 }

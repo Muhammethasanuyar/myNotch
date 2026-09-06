@@ -5,9 +5,9 @@ Yol haritası, mimari ve kararlar: `docs/PLAN.md` (Faz 0–5 tamam: iskelet, ref
 
 ## Build & Run
 - Proje dosyası XcodeGen ile üretilir: `xcodegen generate`. `project.yml` tek gerçek kaynaktır; `MyNotch.xcodeproj` ve `Resources/Info.plist` üretilir, git'e girmez.
-- Build: `scripts/build.sh` (= `xcodebuild -project MyNotch.xcodeproj -scheme MyNotch -configuration Debug -derivedDataPath build build`)
+- Build: `scripts/build.sh` (= `xcodebuild -project MyNotch.xcodeproj -scheme MyNotch -configuration Debug -derivedDataPath "$BUILD_DIR" build`; `BUILD_DIR` varsayılanı `~/Library/Developer/Xcode/DerivedData/MyNotch`, `MYNOTCH_BUILD_DIR` ile değişir). Ürünler bilerek `~/Documents` dışında: uygulama kendi test host'u olduğu için test bundle'ını Documents'tan okumak her yeniden imzalamada "Belgeler klasörü" TCC istemi çıkarıyordu (2026-09-06).
 - Test: `scripts/test.sh`
-- Çalıştır: `scripts/run.sh [--args -debugTintNotch YES -openDebugPreview YES]` — önce build alır, çalışan örneği kapatır, `build/Build/Products/Debug/MyNotch.app`'i açar.
+- Çalıştır: `scripts/run.sh [--args -debugTintNotch YES -openDebugPreview YES]` — önce build alır, çalışan örneği kapatır, `$BUILD_DIR/Build/Products/Debug/MyNotch.app`'i açar.
 - Her değişiklikten sonra build al; derleme hatası ve uyarı bırakma.
 - UI değişikliklerini önce Debug Preview penceresinde doğrula.
 

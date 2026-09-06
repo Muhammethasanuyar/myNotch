@@ -18,6 +18,8 @@ nonisolated struct LaunchOptions: Equatable, Sendable {
     /// Posts a long-lived event from the demo module, so the banner strip another module gets
     /// inside the expanded surface can be inspected.
     let debugBanner: Bool
+    /// Opens the settings window on this tab (`general`, `modules`, `media`, `claude`, `setup`, `about`).
+    let openSettings: String?
 
     static func read(from defaults: UserDefaults) -> LaunchOptions {
         LaunchOptions(
@@ -27,7 +29,8 @@ nonisolated struct LaunchOptions: Equatable, Sendable {
             debugState: defaults.string(forKey: Key.debugState),
             debugModule: defaults.string(forKey: Key.debugModule),
             demoLive: defaults.bool(forKey: Key.demoLive),
-            debugBanner: defaults.bool(forKey: Key.debugBanner)
+            debugBanner: defaults.bool(forKey: Key.debugBanner),
+            openSettings: defaults.string(forKey: Key.openSettings)
         )
     }
 
@@ -39,5 +42,6 @@ nonisolated struct LaunchOptions: Equatable, Sendable {
         static let debugModule = "debugModule"
         static let demoLive = "demoLive"
         static let debugBanner = "debugBanner"
+        static let openSettings = "openSettings"
     }
 }

@@ -1,0 +1,191 @@
+#!/usr/bin/env python3
+"""Adds the settings window's strings to App/Localizable.xcstrings.
+
+Scans `L("key", "English default")` calls, merges the Turkish translations below into the catalog
+(existing entries are kept) and lists any key that still lacks a translation, so a new string
+cannot ship half-localized by accident.
+"""
+import json
+import pathlib
+import re
+import sys
+
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+CATALOG = ROOT / "App" / "Localizable.xcstrings"
+SOURCES = list((ROOT / "Settings").rglob("*.swift")) + [ROOT / "App" / "MenuBar.swift"]
+CALL = re.compile(r'L\("([^"]+)",\s*"((?:[^"\\]|\\.)*)"\)')
+
+TR = {
+    "settings.title": "MyNotch Ayarları",
+    "settings.tab.general": "Genel", "settings.tab.modules": "Modüller", "settings.tab.media": "Medya",
+    "settings.tab.claude": "Claude", "settings.tab.setup": "Kurulum", "settings.tab.about": "Hakkında",
+    "settings.nav.back": "Geri", "settings.nav.forward": "İleri", "settings.copy": "Kopyala",
+    # General
+    "settings.general.startup": "Başlangıç",
+    "settings.general.launchAtLogin": "Oturum açılışında başlat",
+    "settings.general.openLoginItems": "Giriş Öğeleri'ni aç…",
+    "settings.general.launchFailed": "Giriş öğesi değiştirilemedi",
+    "settings.general.notch": "Çentik",
+    "settings.general.hoverDelay": "Üzerine gelince açılma süresi",
+    "settings.general.closeDelay": "Ayrıldıktan sonra açık kalma süresi",
+    "settings.general.closeDelay.help": "İmleç kartın yakınındayken geçerlidir; daha uzağa gidince hemen kapanır.",
+    "settings.general.haptics": "Çentik açılırken dokunsal geri bildirim",
+    "settings.general.display": "Ekran",
+    "settings.general.displayPicker": "Çentiği göster",
+    "settings.general.display.automatic": "Otomatik",
+    "settings.general.display.disconnected": "%@ (bağlı değil)",
+    "settings.general.display.help": "Otomatik, çentikli ekranı; yoksa ana ekranı kullanır. Çentiksiz bir ekranda yüzey üst kenarın altında yüzer.",
+    "settings.general.reset": "Varsayılanlara dön",
+    "settings.general.launch.enabled": "MyNotch oturum açtığınızda başlar.",
+    "settings.general.launch.disabled": "Oturum açtığınızda MyNotch'u menü barında başlat.",
+    "settings.general.launch.approval": "Sistem Ayarları → Genel → Giriş Öğeleri'nde onayınız bekleniyor.",
+    "settings.general.launch.notFound": "Sistem MyNotch'un bu kopyasını görmüyor. Uygulamalar klasörüne taşıyıp yeniden deneyin.",
+    # Modules
+    "settings.modules.section": "Modüller",
+    "settings.modules.help": "Kapalı bir modül hiçbir şey yapmaz: script yok, ağ isteği yok, açılır bildirim yok. Ekranı kartın altındaki değiştiriciden kalkar.",
+    "settings.modules.activity.idle": "Boşta", "settings.modules.activity.live": "Canlı", "settings.modules.activity.urgent": "Uyarı",
+    "settings.modules.media.summary": "Spotify ve Müzik'ten çalan parça, eşzamanlı şarkı sözleri, Spotify kitaplığı kalbi.",
+    "settings.modules.claude.summary": "Claude Code limitleri, bugünkü harcama ve çalışırken nabız.",
+    "settings.modules.demo.summary": "Çentik motorunu dener; yalnızca Debug derlemelerinde.",
+    # Media
+    "settings.media.missing": "Medya modülü kayıtlı değil.",
+    "settings.media.lyrics": "Şarkı sözleri",
+    "settings.media.lyrics.enabled": "Eşzamanlı şarkı sözlerini göster",
+    "settings.media.lyrics.lead": "Sözler sesin önünde gitsin",
+    "settings.media.lyrics.lead.help": "Küçük bir öncelik en iyi okunur. Bluetooth kulaklıklar sesi geciktirir; eksi değer sözleri o kadar geri alır. Oynatıcıdaki ± düğmeleri tek şarkıyı ayarlar.",
+    "settings.media.lyrics.forgetShifts": "Şarkı bazlı ayarları unut",
+    "settings.media.lyrics.shiftCount": "%lld şarkı",
+    "settings.media.lyrics.privacy": "Sözler LRCLIB'den (lrclib.net) gelir. Yalnızca çalan parçanın sanatçısı, adı, albümü ve süresi gönderilir; o da sözler açıkken.",
+    "settings.media.spotify": "Spotify kitaplığı",
+    "settings.media.spotify.clientID": "Client ID",
+    "settings.media.spotify.clientID.prompt": "Spotify Developer Dashboard'daki uygulamanızdan",
+    "settings.media.spotify.redirect": "Redirect URI",
+    "settings.media.spotify.connect": "Bağlan…",
+    "settings.media.spotify.disconnect": "Bağlantıyı kes",
+    "settings.media.spotify.dashboard": "Spotify Developer Dashboard",
+    "settings.media.spotify.privacy": "Dashboard'da ücretsiz bir uygulama oluşturun, client ID'sini buraya yapıştırın ve yukarıdaki redirect URI'yi ekleyin. Spotify'a yalnızca çalan parçanın kimliği gönderilir; o da bağlıyken. Token'lar Application Support'ta yalnızca sizin okuyabildiğiniz bir dosyada durur.",
+    "settings.media.spotify.notConfigured": "Kalbi açmak için bir client ID girin",
+    "settings.media.spotify.disconnected": "Bağlı değil",
+    "settings.media.spotify.connecting": "Tarayıcınızda Spotify bekleniyor…",
+    "settings.media.spotify.connected": "Bağlı — kalp kitaplığınızı yansıtır",
+    "settings.media.automation": "Otomasyon izni",
+    "settings.media.automation.open": "Gizlilik Ayarları'nı aç…",
+    "settings.media.automation.check": "Yeniden denetle",
+    "settings.media.automation.help": "MyNotch, Spotify ve Müzik'e ne çaldığını AppleScript ile sorar. macOS izin istemini bir oynatıcı ilk kez çalışırken gösterir.",
+    "settings.media.automation.unknown": "Henüz sorulmadı — Spotify ya da Müzik'i başlatın",
+    "settings.media.automation.granted": "Spotify ve Müzik için izin verildi",
+    "settings.media.automation.denied": "Reddedildi — Otomasyon altında MyNotch'a izin verip yeniden denetleyin",
+    # Claude
+    "settings.claude.missing": "Claude modülü kayıtlı değil.",
+    "settings.claude.account": "Hesap",
+    "settings.claude.lastReading": "Son okuma",
+    "settings.claude.refresh": "Şimdi yenile",
+    "settings.claude.account.help": "Claude Code'un Keychain'de sakladığı token yalnızca okunur — asla yazılmaz, yenilenmez ya da loglanmaz. Giriş ve çıkış `claude` komutuyla yapılır.",
+    "settings.claude.alerts": "Uyarılar",
+    "settings.claude.alerts.enabled": "Bir limit eşiği aşınca açılır bildirim",
+    "settings.claude.alerts.warning": "Uyarı eşiği",
+    "settings.claude.alerts.critical": "Kritik eşik",
+    "settings.claude.alerts.reset": "Eşikleri sıfırla",
+    "settings.claude.alerts.help": "Her pencere her eşiği bir kez duyurur; halkalar aynı noktalarda turuncuya ve kırmızıya döner.",
+    "settings.claude.polling": "Sorgulama",
+    "settings.claude.polling.interval": "Anthropic'e sorma sıklığı",
+    "settings.claude.polling.help": "Limit hesabın tüm Claude Code oturumlarıyla ortaktır; bu yüzden 5 dakikadan sık asla sorulmaz, bir rate limit sorgulamayı 15 dakika durdurur.",
+    "settings.claude.cost": "Maliyet (ccusage)",
+    "settings.claude.cost.path": "ccusage yolu",
+    "settings.claude.cost.path.prompt": "Otomatik bul (Homebrew, npm, bun, npx)",
+    "settings.claude.cost.choose": "Seç…",
+    "settings.claude.cost.help": "ccusage oturum loglarını yerel olarak okur ve her zaman çevrimdışı çalışır; sürüm ccusage@20'ye sabittir. `brew install ccusage` ya da `npm i -g ccusage` ile kurun.",
+    "settings.claude.advanced": "Gelişmiş",
+    "settings.claude.configDir": "Claude yapılandırma dizini",
+    "settings.claude.configDir.prompt": "~/.claude ya da $CLAUDE_CONFIG_DIR",
+    "settings.claude.configDir.help": "Claude Code'un kimlik bilgilerini ve oturum loglarını tuttuğu yer. Değiştirmek modülü yeniden başlatır.",
+    "settings.claude.auth.ok": "Giriş yapılmış",
+    "settings.claude.auth.signedOut": "Giriş yapılmamış",
+    "settings.claude.auth.signedOut.help": "Terminal'de `claude` çalıştırıp giriş yapın; çentik saniyeler içinde algılar.",
+    "settings.claude.auth.expired": "Token süresi dolmuş",
+    "settings.claude.auth.expired.help": "Herhangi bir `claude` komutu yeniler.",
+    "settings.claude.auth.reauth": "Yeniden giriş gerekiyor",
+    "settings.claude.auth.reauth.help": "`claude /login` çalıştırın.",
+    "settings.claude.auth.rateLimited": "Rate limit",
+    "settings.claude.auth.rateLimited.help": "Sorgulama %@ yeniden başlar.",
+    "settings.claude.auth.unreachable": "Anthropic'e ulaşılamıyor",
+    "settings.claude.cost.unknown": "ccusage aranıyor…",
+    "settings.claude.cost.ready": "ccusage bulundu",
+    "settings.claude.cost.notInstalled": "ccusage kurulu değil",
+    "settings.claude.cost.notInstalled.help": "Maliyet gizli kalır; limitler çalışmaya devam eder.",
+    "settings.claude.cost.failed": "ccusage başarısız",
+    "settings.claude.cost.choose.message": "ccusage çalıştırılabilir dosyasını seçin",
+    # Setup
+    "settings.setup.intro": "MyNotch yalnızca diğer uygulamaların zaten bildiğini gösterir. Her satır bir izin ya da giriş; çentik yeşil olanlarla çalışır.",
+    "settings.setup.players": "Oynatıcılar", "settings.setup.claude": "Claude Code", "settings.setup.system": "Sistem",
+    "settings.setup.close": "Kapat", "settings.setup.done": "Bitti",
+    "settings.setup.automation": "Spotify ve Müzik'i denetle",
+    "settings.setup.automation.ok": "İzin verildi. Oynatma, kapak ve şarkı sözleri çalışır.",
+    "settings.setup.automation.todo": "macOS bir oynatıcı ilk kez çalışırken sorar. Reddettiyseniz Otomasyon altında MyNotch'a izin verin.",
+    "settings.setup.spotify": "Spotify kitaplığı (isteğe bağlı)",
+    "settings.setup.spotify.ok": "Bağlı. Kalp kitaplığınızı gösterir ve değiştirir.",
+    "settings.setup.spotify.todo": "Oynatıcıdaki kalbin parça kaydetmesini sağlar. Ücretsiz bir Spotify geliştirici uygulaması gerekir.",
+    "settings.setup.goTo.media": "Medya'da ayarla…",
+    "settings.setup.signIn": "Claude Code girişi",
+    "settings.setup.signIn.ok": "Giriş yapılmış. Limitler birkaç dakikada bir Anthropic'ten okunur.",
+    "settings.setup.signIn.todo": "Terminal'de `claude` çalıştırıp giriş yapın. MyNotch CLI'ın token'ını okur; kendisi asla saklamaz.",
+    "settings.setup.logs": "Oturum logları",
+    "settings.setup.logs.ok": "Bulundu. Nabız ve bugünün blokları buradan gelir.",
+    "settings.setup.logs.todo": "Bu Mac'teki ilk Claude Code oturumundan sonra oluşur.",
+    "settings.setup.ccusage": "Maliyet (isteğe bağlı)",
+    "settings.setup.ccusage.ok": "ccusage bulundu. Bugünkü harcama kartta görünür.",
+    "settings.setup.ccusage.todo": "Bugünkü harcamayı görmek için ccusage kurun (`brew install ccusage`). Çevrimdışı çalışır.",
+    "settings.setup.goTo.claude": "Claude'da ayarla…",
+    "settings.setup.login": "Oturum açılışında başlat (isteğe bağlı)",
+    "settings.setup.login.todo": "Yeniden başlatmadan sonra çentik yerinde olsun diye açın.",
+    "settings.setup.login.enable": "Aç",
+    # About
+    "settings.about.version": "Sürüm %@",
+    "settings.about.tagline": "Çentik canlı bir yüzey: çalan parça, şarkı sözleri ve Claude Code, bir hover uzakta.",
+    "settings.about.network": "Bu Mac'ten dışarı ne gidiyor",
+    "settings.about.network.lrclib": "Şarkı sözleri için çalan parçanın sanatçısı, adı, albümü ve süresi — yalnızca sözler açıkken.",
+    "settings.about.network.spotify": "Kalbi okumak ya da değiştirmek için çalan parçanın kimliği — yalnızca hesabınızı bağladıktan sonra.",
+    "settings.about.network.anthropic": "Her sorgulama aralığında Claude Code token'ıyla tek bir kullanım isteği; token CLI'ın Keychain kaydından okunur — asla yazılmaz, yenilenmez ya da loglanmaz.",
+    "settings.about.network.none": "Başka hiçbir şey: analitik yok, çökme raporu yok, güncelleme denetimi yok.",
+    "settings.about.credits": "Uyarlandığı kaynaklar",
+    "settings.about.credits.help": "Uyarlanan her dosya kaynağını belirtir; lisans metinleri THIRD_PARTY_LICENSES.md içinde.",
+    "settings.about.diagnostics": "Tanılama",
+    "settings.about.logs": "Canlı log",
+    "settings.about.debugPreview": "Debug Preview'ı aç",
+    # Menu bar
+    "menu.settings": "Ayarlar…", "menu.debugPreview": "Debug Preview", "menu.quit": "MyNotch'tan Çık",
+}
+
+
+def main() -> int:
+    keys: dict[str, str] = {}
+    for path in SOURCES:
+        for key, default in CALL.findall(path.read_text()):
+            keys.setdefault(key, default)
+
+    catalog = json.loads(CATALOG.read_text())
+    strings = catalog["strings"]
+    added = 0
+    for key in sorted(keys):
+        translation = TR.get(key)
+        if translation is None:
+            continue
+        entry = strings.setdefault(key, {})
+        localizations = entry.setdefault("localizations", {})
+        if "tr" not in localizations:
+            localizations["tr"] = {"stringUnit": {"state": "translated", "value": translation}}
+            added += 1
+
+    missing = sorted(k for k in keys if k not in TR)
+    unused = sorted(k for k in TR if k not in keys)
+    CATALOG.write_text(json.dumps(catalog, ensure_ascii=False, indent=2, sort_keys=True) + "\n")
+    print(f"{len(keys)} keys in code, {added} translations added, {len(strings)} entries in catalog")
+    if missing:
+        print("MISSING tr:", *missing, sep="\n  ")
+    if unused:
+        print("UNUSED in code:", *unused, sep="\n  ")
+    return 1 if missing else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

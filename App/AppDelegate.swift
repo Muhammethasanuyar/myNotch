@@ -1,13 +1,15 @@
 import AppKit
 
-/// Application lifecycle: owns the notch view model, the module system, the notch panel and the
-/// Debug Preview window.
+/// Application lifecycle: owns the notch view model, the module system, the notch panel, the
+/// settings window and the Debug Preview window.
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private let model = NotchViewModel()
     private let settings = SettingsStore()
+    private let launchAtLogin = LaunchAtLogin()
     private var moduleManager: ModuleManager?
     private var settingsApplier: SettingsApplier?
     private var notchWindowController: NotchWindowController?
+    private var settingsWindowController: SettingsWindowController?
     private var debugPreviewWindowController: DebugPreviewWindowController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -60,6 +62,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if options.openDebugPreview {
             showDebugPreview()
         }
+        if let tabName = options.openSettings {
+            showSettings(tab: SettingsTab(rawValue: tabName) ?? .general)
+        } else if !settings.onboardingCompleted, options.debugState == nil {
+            // First launch: the checklist of permissions and sign-ins, until the user says Done.
+            showSettings(tab: .setup)
+        }
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
@@ -71,6 +79,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func register(_ module: any NotchModule, in manager: ModuleManager) {
         module.isEnabled = settings.isModuleEnabled(module.id)
         manager.register(module)
+    }
+
+    /// Menu bar "Settings…": opens (or brings forward) the settings window where it was left.
+    func showSettings() {
+        showSettings(tab: nil)
+    }
+
+    func showSettings(tab: SettingsTab?) {
+        guard let moduleManager else {
+            assertionFailure("showSettings() called before the modules exist")
+            return
+        }
+        let controller = settingsWindowController ?? SettingsWindowController(context: SettingsContext(
+            store: settings,
+            manager: moduleManager,
+            launchAtLogin: launchAtLogin,
+            openDebugPreview: { [weak self] in self?.showDebugPreview() }
+        ))
+        settingsWindowController = controller
+        controller.show(tab: tab)
     }
 
     /// Opens (or brings forward) the Debug Preview window with the current notch metrics.

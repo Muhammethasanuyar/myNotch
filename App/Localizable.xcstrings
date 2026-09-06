@@ -1,123 +1,32 @@
 {
   "sourceLanguage": "en",
-  "version": "1.0",
   "strings": {
-    "window.fiveHour": {
+    "action.login": {
       "localizations": {
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "5 saatlik"
+            "value": "`claude /login` çalıştır"
           }
         }
       }
     },
-    "window.sevenDay": {
+    "action.refreshToken": {
       "localizations": {
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Haftalık"
+            "value": "Token için `claude` çalıştır"
           }
         }
       }
     },
-    "window.badge.fiveHour": {
+    "action.signIn": {
       "localizations": {
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "5s"
-          }
-        }
-      }
-    },
-    "window.badge.sevenDay": {
-      "localizations": {
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "7g"
-          }
-        }
-      }
-    },
-    "percent": {
-      "localizations": {
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%%%lld"
-          }
-        }
-      }
-    },
-    "time.daysHours": {
-      "localizations": {
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%1$lldg %2$llds"
-          }
-        }
-      }
-    },
-    "time.days": {
-      "localizations": {
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lldg"
-          }
-        }
-      }
-    },
-    "time.hoursMinutes": {
-      "localizations": {
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%1$llds %2$llddk"
-          }
-        }
-      }
-    },
-    "time.hours": {
-      "localizations": {
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%llds"
-          }
-        }
-      }
-    },
-    "time.minutes": {
-      "localizations": {
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%llddk"
-          }
-        }
-      }
-    },
-    "time.underMinute": {
-      "localizations": {
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "<1dk"
-          }
-        }
-      }
-    },
-    "burn.tokensPerMinute": {
-      "localizations": {
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@ tok/dk"
+            "value": "`claude` ile giriş yap"
           }
         }
       }
@@ -142,22 +51,82 @@
         }
       }
     },
-    "event.crossing.title": {
+    "burn.tokensPerMinute": {
       "localizations": {
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ limit %2$@"
+            "value": "%@ tok/dk"
           }
         }
       }
     },
-    "event.crossing.slowDown": {
+    "caption.failed": {
       "localizations": {
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Yavaşla"
+            "value": "hata"
+          }
+        }
+      }
+    },
+    "caption.install": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "kur"
+          }
+        }
+      }
+    },
+    "caption.pace": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "hız"
+          }
+        }
+      }
+    },
+    "caption.spend": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "harcama"
+          }
+        }
+      }
+    },
+    "caption.tokens": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "token"
+          }
+        }
+      }
+    },
+    "chart.blocks": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "bugünün 5 saatlik blokları"
+          }
+        }
+      }
+    },
+    "chart.blocks.none": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "henüz yok"
           }
         }
       }
@@ -182,12 +151,22 @@
         }
       }
     },
-    "event.reset.title": {
+    "event.crossing.slowDown": {
       "localizations": {
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ pencere sıfırlandı"
+            "value": "Yavaşla"
+          }
+        }
+      }
+    },
+    "event.crossing.title": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ limit %2$@"
           }
         }
       }
@@ -202,152 +181,32 @@
         }
       }
     },
-    "explain.ring": {
+    "event.reset.title": {
       "localizations": {
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ limit — kullanılan pay %2$@%3$@. Dış yay: pencerenin geçen kısmı %4$@."
+            "value": "%@ pencere sıfırlandı"
           }
         }
       }
     },
-    "explain.ring.resetsIn": {
+    "explain.block.active": {
       "localizations": {
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": ", %@ sonra sıfırlanır"
+            "value": "Aktif blok %1$@–%2$@: şimdiye kadar %3$@ token; %4$@ kaldı."
           }
         }
       }
     },
-    "explain.ring.noElapsed": {
+    "explain.block.finished": {
       "localizations": {
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ limit — kullanılan pay %2$@%3$@."
-          }
-        }
-      }
-    },
-    "explain.ring.noData": {
-      "localizations": {
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@ limit — Anthropic henüz bildirmedi."
-          }
-        }
-      }
-    },
-    "explain.spend.priced": {
-      "localizations": {
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bugünkü harcama: %@ (ccusage çevrimdışı fiyat tablosuyla)."
-          }
-        }
-      }
-    },
-    "explain.spend.unpricedBase": {
-      "localizations": {
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bugünkü harcama, ccusage'ın fiyatlandırabildiği kadarıyla."
-          }
-        }
-      }
-    },
-    "explain.spend.unpriced": {
-      "localizations": {
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": " %@ için fiyat bilinmiyor; o token'lar 0 $ sayılır."
-          }
-        }
-      }
-    },
-    "explain.tokens": {
-      "localizations": {
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bugünkü token: %1$@ — %2$@ giriş (önbellekten gelmeyen kısım), %3$@ çıkış, %4$@ önbellek (%5$@ okuma + %6$@ yazma). Claude Code istemin büyük kısmını önbellekten okur; giriş bu yüzden küçük görünür."
-          }
-        }
-      }
-    },
-    "explain.pace": {
-      "localizations": {
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aktif 5 saatlik blok: %1$@%2$@. Blok %3$@ sonra biter."
-          }
-        }
-      }
-    },
-    "explain.pace.detail": {
-      "localizations": {
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": ", %@"
-          }
-        }
-      }
-    },
-    "explain.pace.none": {
-      "localizations": {
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aktif 5 saatlik bloğun hızı."
-          }
-        }
-      }
-    },
-    "explain.models.none": {
-      "localizations": {
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bugün hiçbir model çalışmadı."
-          }
-        }
-      }
-    },
-    "explain.models.single": {
-      "localizations": {
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bugünün tüm işi %@ üzerinden geçti."
-          }
-        }
-      }
-    },
-    "explain.models.bySpend": {
-      "localizations": {
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bugünün işi modele göre (harcama payı): %@."
-          }
-        }
-      }
-    },
-    "explain.models.byTokens": {
-      "localizations": {
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bugünün işi modele göre (çıktı token payı; fiyat yok): %@."
+            "value": "%1$@–%2$@ bloğu: %3$@ token; son etkinlik %4$@."
           }
         }
       }
@@ -382,16 +241,6 @@
         }
       }
     },
-    "explain.ccusage.missing": {
-      "localizations": {
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Harcama ve token sayıları ccusage aracından gelir. Kurmak için: `brew install ccusage` (ya da `npm i -g ccusage`)."
-          }
-        }
-      }
-    },
     "explain.ccusage.failed": {
       "localizations": {
         "tr": {
@@ -402,22 +251,72 @@
         }
       }
     },
-    "explain.spend.nothing": {
+    "explain.ccusage.missing": {
       "localizations": {
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Bugün henüz harcama yok."
+            "value": "Harcama ve token sayıları ccusage aracından gelir. Kurmak için: `brew install ccusage` (ya da `npm i -g ccusage`)."
           }
         }
       }
     },
-    "explain.tokens.nothing": {
+    "explain.models.bySpend": {
       "localizations": {
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Bugün henüz token kullanılmadı."
+            "value": "Bugünün işi modele göre (harcama payı): %@."
+          }
+        }
+      }
+    },
+    "explain.models.byTokens": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bugünün işi modele göre (çıktı token payı; fiyat yok): %@."
+          }
+        }
+      }
+    },
+    "explain.models.none": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bugün hiçbir model çalışmadı."
+          }
+        }
+      }
+    },
+    "explain.models.single": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bugünün tüm işi %@ üzerinden geçti."
+          }
+        }
+      }
+    },
+    "explain.pace": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aktif 5 saatlik blok: %1$@%2$@. Blok %3$@ sonra biter."
+          }
+        }
+      }
+    },
+    "explain.pace.detail": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": ", %@"
           }
         }
       }
@@ -428,6 +327,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Aktif 5 saatlik blok yok."
+          }
+        }
+      }
+    },
+    "explain.pace.none": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aktif 5 saatlik bloğun hızı."
           }
         }
       }
@@ -452,52 +361,82 @@
         }
       }
     },
-    "explain.working.active": {
+    "explain.ring": {
       "localizations": {
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Claude Code şu anda bir oturum günlüğüne yazıyor%@."
+            "value": "%1$@ limit — kullanılan pay %2$@%3$@. Dış yay: pencerenin geçen kısmı %4$@."
           }
         }
       }
     },
-    "explain.working.inProject": {
+    "explain.ring.noData": {
       "localizations": {
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": " (%@ projesi)"
+            "value": "%@ limit — Anthropic henüz bildirmedi."
           }
         }
       }
     },
-    "explain.working.quiet": {
+    "explain.ring.noElapsed": {
       "localizations": {
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Claude Code boşta. Son 10 saniyede bir oturum günlüğü değiştiyse çalışıyor sayılır."
+            "value": "%1$@ limit — kullanılan pay %2$@%3$@."
           }
         }
       }
     },
-    "explain.working.noLogs": {
+    "explain.ring.resetsIn": {
       "localizations": {
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Bu Mac'te henüz Claude Code oturum günlüğü bulunamadı."
+            "value": ", %@ sonra sıfırlanır"
           }
         }
       }
     },
-    "explain.status.waiting": {
+    "explain.spend.nothing": {
       "localizations": {
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Anthropic'ten ilk limit okuması bekleniyor."
+            "value": "Bugün henüz harcama yok."
+          }
+        }
+      }
+    },
+    "explain.spend.priced": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bugünkü harcama: %@ (ccusage çevrimdışı fiyat tablosuyla)."
+          }
+        }
+      }
+    },
+    "explain.spend.unpriced": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " %@ için fiyat bilinmiyor; o token'lar 0 $ sayılır."
+          }
+        }
+      }
+    },
+    "explain.spend.unpricedBase": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bugünkü harcama, ccusage'ın fiyatlandırabildiği kadarıyla."
           }
         }
       }
@@ -512,32 +451,12 @@
         }
       }
     },
-    "explain.status.stale": {
+    "explain.status.rateLimited": {
       "localizations": {
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": " Bu okuma on beş dakikadan eski."
-          }
-        }
-      }
-    },
-    "explain.status.signedOut": {
-      "localizations": {
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bu Mac'te Claude Code oturumu bulunamadı. Terminal'de bir kez `claude` çalıştır, limitler görünür."
-          }
-        }
-      }
-    },
-    "explain.status.tokenExpired": {
-      "localizations": {
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Erişim token'ının süresi dolmuş. `claude` çalıştırınca yenilenir; MyNotch hiçbir şey yazmaz."
+            "value": "Anthropic usage ucunu hız sınırına taktı. Sonraki deneme: %@."
           }
         }
       }
@@ -552,12 +471,32 @@
         }
       }
     },
-    "explain.status.rateLimited": {
+    "explain.status.signedOut": {
       "localizations": {
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Anthropic usage ucunu hız sınırına taktı. Sonraki deneme: %@."
+            "value": "Bu Mac'te Claude Code oturumu bulunamadı. Terminal'de bir kez `claude` çalıştır, limitler görünür."
+          }
+        }
+      }
+    },
+    "explain.status.stale": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " Bu okuma on beş dakikadan eski."
+          }
+        }
+      }
+    },
+    "explain.status.tokenExpired": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Erişim token'ının süresi dolmuş. `claude` çalıştırınca yenilenir; MyNotch hiçbir şey yazmaz."
           }
         }
       }
@@ -582,82 +521,82 @@
         }
       }
     },
-    "action.signIn": {
+    "explain.status.waiting": {
       "localizations": {
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "`claude` ile giriş yap"
+            "value": "Anthropic'ten ilk limit okuması bekleniyor."
           }
         }
       }
     },
-    "action.refreshToken": {
+    "explain.tokens": {
       "localizations": {
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Token için `claude` çalıştır"
+            "value": "Bugünkü token: %1$@ — %2$@ giriş (önbellekten gelmeyen kısım), %3$@ çıkış, %4$@ önbellek (%5$@ okuma + %6$@ yazma). Claude Code istemin büyük kısmını önbellekten okur; giriş bu yüzden küçük görünür."
           }
         }
       }
     },
-    "action.login": {
+    "explain.tokens.nothing": {
       "localizations": {
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "`claude /login` çalıştır"
+            "value": "Bugün henüz token kullanılmadı."
           }
         }
       }
     },
-    "caption.spend": {
+    "explain.working.active": {
       "localizations": {
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "harcama"
+            "value": "Claude Code şu anda bir oturum günlüğüne yazıyor%@."
           }
         }
       }
     },
-    "caption.tokens": {
+    "explain.working.inProject": {
       "localizations": {
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "token"
+            "value": " (%@ projesi)"
           }
         }
       }
     },
-    "caption.pace": {
+    "explain.working.noLogs": {
       "localizations": {
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "hız"
+            "value": "Bu Mac'te henüz Claude Code oturum günlüğü bulunamadı."
           }
         }
       }
     },
-    "caption.install": {
+    "explain.working.quiet": {
       "localizations": {
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "kur"
+            "value": "Claude Code boşta. Son 10 saniyede bir oturum günlüğü değiştiyse çalışıyor sayılır."
           }
         }
       }
     },
-    "caption.failed": {
+    "legend.cache": {
       "localizations": {
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "hata"
+            "value": "önbellek"
           }
         }
       }
@@ -682,32 +621,42 @@
         }
       }
     },
-    "legend.cache": {
+    "menu.debugPreview": {
       "localizations": {
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "önbellek"
+            "value": "Debug Preview"
           }
         }
       }
     },
-    "chart.blocks": {
+    "menu.quit": {
       "localizations": {
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "bugünün 5 saatlik blokları"
+            "value": "MyNotch'tan Çık"
           }
         }
       }
     },
-    "unit.minute": {
+    "menu.settings": {
       "localizations": {
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "dk"
+            "value": "Ayarlar…"
+          }
+        }
+      }
+    },
+    "percent": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%%%lld"
           }
         }
       }
@@ -722,35 +671,1526 @@
         }
       }
     },
-    "explain.block.active": {
+    "settings.about.credits": {
       "localizations": {
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Aktif blok %1$@–%2$@: şimdiye kadar %3$@ token; %4$@ kaldı."
+            "value": "Uyarlandığı kaynaklar"
           }
         }
       }
     },
-    "explain.block.finished": {
+    "settings.about.credits.help": {
       "localizations": {
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@–%2$@ bloğu: %3$@ token; son etkinlik %4$@."
+            "value": "Uyarlanan her dosya kaynağını belirtir; lisans metinleri THIRD_PARTY_LICENSES.md içinde."
           }
         }
       }
     },
-    "chart.blocks.none": {
+    "settings.about.debugPreview": {
       "localizations": {
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "henüz yok"
+            "value": "Debug Preview'ı aç"
+          }
+        }
+      }
+    },
+    "settings.about.diagnostics": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tanılama"
+          }
+        }
+      }
+    },
+    "settings.about.logs": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Canlı log"
+          }
+        }
+      }
+    },
+    "settings.about.network": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu Mac'ten dışarı ne gidiyor"
+          }
+        }
+      }
+    },
+    "settings.about.network.anthropic": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Her sorgulama aralığında Claude Code token'ıyla tek bir kullanım isteği; token CLI'ın Keychain kaydından okunur — asla yazılmaz, yenilenmez ya da loglanmaz."
+          }
+        }
+      }
+    },
+    "settings.about.network.lrclib": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Şarkı sözleri için çalan parçanın sanatçısı, adı, albümü ve süresi — yalnızca sözler açıkken."
+          }
+        }
+      }
+    },
+    "settings.about.network.none": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Başka hiçbir şey: analitik yok, çökme raporu yok, güncelleme denetimi yok."
+          }
+        }
+      }
+    },
+    "settings.about.network.spotify": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kalbi okumak ya da değiştirmek için çalan parçanın kimliği — yalnızca hesabınızı bağladıktan sonra."
+          }
+        }
+      }
+    },
+    "settings.about.tagline": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Çentik canlı bir yüzey: çalan parça, şarkı sözleri ve Claude Code, bir hover uzakta."
+          }
+        }
+      }
+    },
+    "settings.about.version": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sürüm %@"
+          }
+        }
+      }
+    },
+    "settings.claude.account": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hesap"
+          }
+        }
+      }
+    },
+    "settings.claude.account.help": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude Code'un Keychain'de sakladığı token yalnızca okunur — asla yazılmaz, yenilenmez ya da loglanmaz. Giriş ve çıkış `claude` komutuyla yapılır."
+          }
+        }
+      }
+    },
+    "settings.claude.advanced": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gelişmiş"
+          }
+        }
+      }
+    },
+    "settings.claude.alerts": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uyarılar"
+          }
+        }
+      }
+    },
+    "settings.claude.alerts.critical": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kritik eşik"
+          }
+        }
+      }
+    },
+    "settings.claude.alerts.enabled": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bir limit eşiği aşınca açılır bildirim"
+          }
+        }
+      }
+    },
+    "settings.claude.alerts.help": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Her pencere her eşiği bir kez duyurur; halkalar aynı noktalarda turuncuya ve kırmızıya döner."
+          }
+        }
+      }
+    },
+    "settings.claude.alerts.reset": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eşikleri sıfırla"
+          }
+        }
+      }
+    },
+    "settings.claude.alerts.warning": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uyarı eşiği"
+          }
+        }
+      }
+    },
+    "settings.claude.auth.expired": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Token süresi dolmuş"
+          }
+        }
+      }
+    },
+    "settings.claude.auth.expired.help": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Herhangi bir `claude` komutu yeniler."
+          }
+        }
+      }
+    },
+    "settings.claude.auth.ok": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Giriş yapılmış"
+          }
+        }
+      }
+    },
+    "settings.claude.auth.rateLimited": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rate limit"
+          }
+        }
+      }
+    },
+    "settings.claude.auth.rateLimited.help": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sorgulama %@ yeniden başlar."
+          }
+        }
+      }
+    },
+    "settings.claude.auth.reauth": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yeniden giriş gerekiyor"
+          }
+        }
+      }
+    },
+    "settings.claude.auth.reauth.help": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "`claude /login` çalıştırın."
+          }
+        }
+      }
+    },
+    "settings.claude.auth.signedOut": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Giriş yapılmamış"
+          }
+        }
+      }
+    },
+    "settings.claude.auth.signedOut.help": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Terminal'de `claude` çalıştırıp giriş yapın; çentik saniyeler içinde algılar."
+          }
+        }
+      }
+    },
+    "settings.claude.auth.unreachable": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anthropic'e ulaşılamıyor"
+          }
+        }
+      }
+    },
+    "settings.claude.configDir": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude yapılandırma dizini"
+          }
+        }
+      }
+    },
+    "settings.claude.configDir.help": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude Code'un kimlik bilgilerini ve oturum loglarını tuttuğu yer. Değiştirmek modülü yeniden başlatır."
+          }
+        }
+      }
+    },
+    "settings.claude.configDir.prompt": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "~/.claude ya da $CLAUDE_CONFIG_DIR"
+          }
+        }
+      }
+    },
+    "settings.claude.cost": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maliyet (ccusage)"
+          }
+        }
+      }
+    },
+    "settings.claude.cost.choose": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seç…"
+          }
+        }
+      }
+    },
+    "settings.claude.cost.choose.message": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ccusage çalıştırılabilir dosyasını seçin"
+          }
+        }
+      }
+    },
+    "settings.claude.cost.failed": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ccusage başarısız"
+          }
+        }
+      }
+    },
+    "settings.claude.cost.help": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ccusage oturum loglarını yerel olarak okur ve her zaman çevrimdışı çalışır; sürüm ccusage@20'ye sabittir. `brew install ccusage` ya da `npm i -g ccusage` ile kurun."
+          }
+        }
+      }
+    },
+    "settings.claude.cost.notInstalled": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ccusage kurulu değil"
+          }
+        }
+      }
+    },
+    "settings.claude.cost.notInstalled.help": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maliyet gizli kalır; limitler çalışmaya devam eder."
+          }
+        }
+      }
+    },
+    "settings.claude.cost.path": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ccusage yolu"
+          }
+        }
+      }
+    },
+    "settings.claude.cost.path.prompt": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Otomatik bul (Homebrew, npm, bun, npx)"
+          }
+        }
+      }
+    },
+    "settings.claude.cost.ready": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ccusage bulundu"
+          }
+        }
+      }
+    },
+    "settings.claude.cost.unknown": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ccusage aranıyor…"
+          }
+        }
+      }
+    },
+    "settings.claude.lastReading": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Son okuma"
+          }
+        }
+      }
+    },
+    "settings.claude.missing": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude modülü kayıtlı değil."
+          }
+        }
+      }
+    },
+    "settings.claude.polling": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sorgulama"
+          }
+        }
+      }
+    },
+    "settings.claude.polling.help": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Limit hesabın tüm Claude Code oturumlarıyla ortaktır; bu yüzden 5 dakikadan sık asla sorulmaz, bir rate limit sorgulamayı 15 dakika durdurur."
+          }
+        }
+      }
+    },
+    "settings.claude.polling.interval": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anthropic'e sorma sıklığı"
+          }
+        }
+      }
+    },
+    "settings.claude.refresh": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Şimdi yenile"
+          }
+        }
+      }
+    },
+    "settings.copy": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kopyala"
+          }
+        }
+      }
+    },
+    "settings.general.closeDelay": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ayrıldıktan sonra açık kalma süresi"
+          }
+        }
+      }
+    },
+    "settings.general.closeDelay.help": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "İmleç kartın yakınındayken geçerlidir; daha uzağa gidince hemen kapanır."
+          }
+        }
+      }
+    },
+    "settings.general.display": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ekran"
+          }
+        }
+      }
+    },
+    "settings.general.display.automatic": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Otomatik"
+          }
+        }
+      }
+    },
+    "settings.general.display.disconnected": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ (bağlı değil)"
+          }
+        }
+      }
+    },
+    "settings.general.display.help": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Otomatik, çentikli ekranı; yoksa ana ekranı kullanır. Çentiksiz bir ekranda yüzey üst kenarın altında yüzer."
+          }
+        }
+      }
+    },
+    "settings.general.displayPicker": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Çentiği göster"
+          }
+        }
+      }
+    },
+    "settings.general.haptics": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Çentik açılırken dokunsal geri bildirim"
+          }
+        }
+      }
+    },
+    "settings.general.hoverDelay": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Üzerine gelince açılma süresi"
+          }
+        }
+      }
+    },
+    "settings.general.launch.approval": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sistem Ayarları → Genel → Giriş Öğeleri'nde onayınız bekleniyor."
+          }
+        }
+      }
+    },
+    "settings.general.launch.disabled": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Oturum açtığınızda MyNotch'u menü barında başlat."
+          }
+        }
+      }
+    },
+    "settings.general.launch.enabled": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MyNotch oturum açtığınızda başlar."
+          }
+        }
+      }
+    },
+    "settings.general.launch.notFound": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sistem MyNotch'un bu kopyasını görmüyor. Uygulamalar klasörüne taşıyıp yeniden deneyin."
+          }
+        }
+      }
+    },
+    "settings.general.launchAtLogin": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Oturum açılışında başlat"
+          }
+        }
+      }
+    },
+    "settings.general.launchFailed": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Giriş öğesi değiştirilemedi"
+          }
+        }
+      }
+    },
+    "settings.general.notch": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Çentik"
+          }
+        }
+      }
+    },
+    "settings.general.openLoginItems": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Giriş Öğeleri'ni aç…"
+          }
+        }
+      }
+    },
+    "settings.general.reset": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Varsayılanlara dön"
+          }
+        }
+      }
+    },
+    "settings.general.startup": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Başlangıç"
+          }
+        }
+      }
+    },
+    "settings.media.automation": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Otomasyon izni"
+          }
+        }
+      }
+    },
+    "settings.media.automation.check": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yeniden denetle"
+          }
+        }
+      }
+    },
+    "settings.media.automation.denied": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reddedildi — Otomasyon altında MyNotch'a izin verip yeniden denetleyin"
+          }
+        }
+      }
+    },
+    "settings.media.automation.granted": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spotify ve Müzik için izin verildi"
+          }
+        }
+      }
+    },
+    "settings.media.automation.help": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MyNotch, Spotify ve Müzik'e ne çaldığını AppleScript ile sorar. macOS izin istemini bir oynatıcı ilk kez çalışırken gösterir."
+          }
+        }
+      }
+    },
+    "settings.media.automation.open": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gizlilik Ayarları'nı aç…"
+          }
+        }
+      }
+    },
+    "settings.media.automation.unknown": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Henüz sorulmadı — Spotify ya da Müzik'i başlatın"
+          }
+        }
+      }
+    },
+    "settings.media.lyrics": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Şarkı sözleri"
+          }
+        }
+      }
+    },
+    "settings.media.lyrics.enabled": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eşzamanlı şarkı sözlerini göster"
+          }
+        }
+      }
+    },
+    "settings.media.lyrics.forgetShifts": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Şarkı bazlı ayarları unut"
+          }
+        }
+      }
+    },
+    "settings.media.lyrics.lead": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sözler sesin önünde gitsin"
+          }
+        }
+      }
+    },
+    "settings.media.lyrics.lead.help": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Küçük bir öncelik en iyi okunur. Bluetooth kulaklıklar sesi geciktirir; eksi değer sözleri o kadar geri alır. Oynatıcıdaki ± düğmeleri tek şarkıyı ayarlar."
+          }
+        }
+      }
+    },
+    "settings.media.lyrics.privacy": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sözler LRCLIB'den (lrclib.net) gelir. Yalnızca çalan parçanın sanatçısı, adı, albümü ve süresi gönderilir; o da sözler açıkken."
+          }
+        }
+      }
+    },
+    "settings.media.lyrics.shiftCount": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld şarkı"
+          }
+        }
+      }
+    },
+    "settings.media.missing": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Medya modülü kayıtlı değil."
+          }
+        }
+      }
+    },
+    "settings.media.spotify": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spotify kitaplığı"
+          }
+        }
+      }
+    },
+    "settings.media.spotify.clientID": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Client ID"
+          }
+        }
+      }
+    },
+    "settings.media.spotify.clientID.prompt": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spotify Developer Dashboard'daki uygulamanızdan"
+          }
+        }
+      }
+    },
+    "settings.media.spotify.connect": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bağlan…"
+          }
+        }
+      }
+    },
+    "settings.media.spotify.connected": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bağlı — kalp kitaplığınızı yansıtır"
+          }
+        }
+      }
+    },
+    "settings.media.spotify.connecting": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tarayıcınızda Spotify bekleniyor…"
+          }
+        }
+      }
+    },
+    "settings.media.spotify.dashboard": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spotify Developer Dashboard"
+          }
+        }
+      }
+    },
+    "settings.media.spotify.disconnect": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bağlantıyı kes"
+          }
+        }
+      }
+    },
+    "settings.media.spotify.disconnected": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bağlı değil"
+          }
+        }
+      }
+    },
+    "settings.media.spotify.notConfigured": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kalbi açmak için bir client ID girin"
+          }
+        }
+      }
+    },
+    "settings.media.spotify.privacy": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dashboard'da ücretsiz bir uygulama oluşturun, client ID'sini buraya yapıştırın ve yukarıdaki redirect URI'yi ekleyin. Spotify'a yalnızca çalan parçanın kimliği gönderilir; o da bağlıyken. Token'lar Application Support'ta yalnızca sizin okuyabildiğiniz bir dosyada durur."
+          }
+        }
+      }
+    },
+    "settings.media.spotify.redirect": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Redirect URI"
+          }
+        }
+      }
+    },
+    "settings.modules.activity.idle": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Boşta"
+          }
+        }
+      }
+    },
+    "settings.modules.activity.live": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Canlı"
+          }
+        }
+      }
+    },
+    "settings.modules.activity.urgent": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uyarı"
+          }
+        }
+      }
+    },
+    "settings.modules.claude.summary": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude Code limitleri, bugünkü harcama ve çalışırken nabız."
+          }
+        }
+      }
+    },
+    "settings.modules.demo.summary": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Çentik motorunu dener; yalnızca Debug derlemelerinde."
+          }
+        }
+      }
+    },
+    "settings.modules.help": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kapalı bir modül hiçbir şey yapmaz: script yok, ağ isteği yok, açılır bildirim yok. Ekranı kartın altındaki değiştiriciden kalkar."
+          }
+        }
+      }
+    },
+    "settings.modules.media.summary": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spotify ve Müzik'ten çalan parça, eşzamanlı şarkı sözleri, Spotify kitaplığı kalbi."
+          }
+        }
+      }
+    },
+    "settings.modules.section": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modüller"
+          }
+        }
+      }
+    },
+    "settings.nav.back": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Geri"
+          }
+        }
+      }
+    },
+    "settings.nav.forward": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "İleri"
+          }
+        }
+      }
+    },
+    "settings.setup.automation": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spotify ve Müzik'i denetle"
+          }
+        }
+      }
+    },
+    "settings.setup.automation.ok": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "İzin verildi. Oynatma, kapak ve şarkı sözleri çalışır."
+          }
+        }
+      }
+    },
+    "settings.setup.automation.todo": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "macOS bir oynatıcı ilk kez çalışırken sorar. Reddettiyseniz Otomasyon altında MyNotch'a izin verin."
+          }
+        }
+      }
+    },
+    "settings.setup.ccusage": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maliyet (isteğe bağlı)"
+          }
+        }
+      }
+    },
+    "settings.setup.ccusage.ok": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ccusage bulundu. Bugünkü harcama kartta görünür."
+          }
+        }
+      }
+    },
+    "settings.setup.ccusage.todo": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bugünkü harcamayı görmek için ccusage kurun (`brew install ccusage`). Çevrimdışı çalışır."
+          }
+        }
+      }
+    },
+    "settings.setup.claude": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude Code"
+          }
+        }
+      }
+    },
+    "settings.setup.close": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kapat"
+          }
+        }
+      }
+    },
+    "settings.setup.done": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bitti"
+          }
+        }
+      }
+    },
+    "settings.setup.goTo.claude": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude'da ayarla…"
+          }
+        }
+      }
+    },
+    "settings.setup.goTo.media": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Medya'da ayarla…"
+          }
+        }
+      }
+    },
+    "settings.setup.intro": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MyNotch yalnızca diğer uygulamaların zaten bildiğini gösterir. Her satır bir izin ya da giriş; çentik yeşil olanlarla çalışır."
+          }
+        }
+      }
+    },
+    "settings.setup.login": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Oturum açılışında başlat (isteğe bağlı)"
+          }
+        }
+      }
+    },
+    "settings.setup.login.enable": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aç"
+          }
+        }
+      }
+    },
+    "settings.setup.login.todo": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yeniden başlatmadan sonra çentik yerinde olsun diye açın."
+          }
+        }
+      }
+    },
+    "settings.setup.logs": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Oturum logları"
+          }
+        }
+      }
+    },
+    "settings.setup.logs.ok": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bulundu. Nabız ve bugünün blokları buradan gelir."
+          }
+        }
+      }
+    },
+    "settings.setup.logs.todo": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu Mac'teki ilk Claude Code oturumundan sonra oluşur."
+          }
+        }
+      }
+    },
+    "settings.setup.players": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Oynatıcılar"
+          }
+        }
+      }
+    },
+    "settings.setup.signIn": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude Code girişi"
+          }
+        }
+      }
+    },
+    "settings.setup.signIn.ok": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Giriş yapılmış. Limitler birkaç dakikada bir Anthropic'ten okunur."
+          }
+        }
+      }
+    },
+    "settings.setup.signIn.todo": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Terminal'de `claude` çalıştırıp giriş yapın. MyNotch CLI'ın token'ını okur; kendisi asla saklamaz."
+          }
+        }
+      }
+    },
+    "settings.setup.spotify": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spotify kitaplığı (isteğe bağlı)"
+          }
+        }
+      }
+    },
+    "settings.setup.spotify.ok": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bağlı. Kalp kitaplığınızı gösterir ve değiştirir."
+          }
+        }
+      }
+    },
+    "settings.setup.spotify.todo": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Oynatıcıdaki kalbin parça kaydetmesini sağlar. Ücretsiz bir Spotify geliştirici uygulaması gerekir."
+          }
+        }
+      }
+    },
+    "settings.setup.system": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sistem"
+          }
+        }
+      }
+    },
+    "settings.tab.about": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hakkında"
+          }
+        }
+      }
+    },
+    "settings.tab.claude": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude"
+          }
+        }
+      }
+    },
+    "settings.tab.general": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Genel"
+          }
+        }
+      }
+    },
+    "settings.tab.media": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Medya"
+          }
+        }
+      }
+    },
+    "settings.tab.modules": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modüller"
+          }
+        }
+      }
+    },
+    "settings.tab.setup": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kurulum"
+          }
+        }
+      }
+    },
+    "settings.title": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MyNotch Ayarları"
+          }
+        }
+      }
+    },
+    "time.days": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lldg"
+          }
+        }
+      }
+    },
+    "time.daysHours": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lldg %2$llds"
+          }
+        }
+      }
+    },
+    "time.hours": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%llds"
+          }
+        }
+      }
+    },
+    "time.hoursMinutes": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$llds %2$llddk"
+          }
+        }
+      }
+    },
+    "time.minutes": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%llddk"
+          }
+        }
+      }
+    },
+    "time.underMinute": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "<1dk"
+          }
+        }
+      }
+    },
+    "unit.minute": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "dk"
+          }
+        }
+      }
+    },
+    "window.badge.fiveHour": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "5s"
+          }
+        }
+      }
+    },
+    "window.badge.sevenDay": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "7g"
+          }
+        }
+      }
+    },
+    "window.fiveHour": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "5 saatlik"
+          }
+        }
+      }
+    },
+    "window.sevenDay": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Haftalık"
           }
         }
       }
     }
-  }
+  },
+  "version": "1.0"
 }

@@ -3,7 +3,7 @@ import Foundation
 /// Which display the notch surface lives on. `automatic` picks the screen with a notch, or the
 /// main screen when no built-in display is attached; a named screen is used while it is connected
 /// and falls back to automatic the moment it is not.
-nonisolated enum ScreenPreference: Equatable, Sendable {
+nonisolated enum ScreenPreference: Hashable, Sendable {
     case automatic
     case named(String)
 

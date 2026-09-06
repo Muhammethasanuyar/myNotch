@@ -20,7 +20,7 @@ MyNotch GitHub Releases üzerinden dağıtılır; güncellemeleri Sparkle 2 okur
 
 1. Çalışma ağacı temiz ve `main`'de olmalı; `xcodegen generate`; tüm testler (`scripts/test.sh`).
 2. `xcodebuild archive -scheme MyNotch -configuration Release` → `build/release/MyNotch.xcarchive`.
-3. İmza, **içten dışa**: `Contents/Frameworks/MediaRemoteAdapter.framework` → `Contents/Frameworks/Sparkle.framework` (XPC servisleri ve Autoupdate dahil) → `Contents/Resources/MediaRemoteAdapterTestClient` → `MyNotch.app`. Ad-hoc modda kimlik `-`; Developer ID modunda `--options runtime --timestamp` ve `App/MyNotch.entitlements`.
+3. İmza, **içten dışa**: `Contents/Frameworks/MediaRemoteAdapter.framework` → `Contents/Frameworks/Sparkle.framework` (XPC servisleri ve Autoupdate dahil) → `Contents/Resources/MediaRemoteAdapterTestClient` → `MyNotch.app`. Ad-hoc modda kimlik `-`; Developer ID modunda `--options runtime --timestamp` ve `Resources/MyNotch.entitlements`.
 4. `codesign --verify --deep --strict` ve `spctl -a -t exec -vv` (ad-hoc'ta `rejected` beklenir ve yalnızca loglanır).
 5. Paketleme: `MyNotch-<v>.zip` (`ditto -c -k --keepParent`; Sparkle bunu indirir) ve `MyNotch-<v>.dmg` (`create-dmg`; insanlar bunu indirir).
 6. Developer ID modunda `xcrun notarytool submit --keychain-profile mynotch-notary --wait` + `xcrun stapler staple` (app, dmg).

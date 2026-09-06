@@ -4,6 +4,11 @@ All notable changes to MyNotch are listed here. The format follows [Keep a Chang
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-09-07
+
+### Changed
+- No functional changes: this release exercises the update channel end to end (appcast, EdDSA signature, in-app install) from 0.1.0.
+
 ## [0.1.0] - 2026-09-07
 
 ### Added

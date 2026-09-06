@@ -59,4 +59,11 @@ final class NotchTransitionTests: XCTestCase {
         XCTAssertNil(NotchTransition.stateOnHoverExit(from: .compact, hasLiveContent: true))
         XCTAssertNil(NotchTransition.stateOnHoverExit(from: .popup(event), hasLiveContent: true))
     }
+
+    func testADragOpensTheDropModuleFromAnyState() {
+        for current in [NotchState.closed, .compact, .popup(event), .expanded(moduleID: "media")] {
+            XCTAssertEqual(NotchTransition.stateOnDragTarget(from: current, moduleID: "shelf"), .expanded(moduleID: "shelf"), "\(current)")
+        }
+        XCTAssertNil(NotchTransition.stateOnDragTarget(from: .expanded(moduleID: "shelf"), moduleID: "shelf"), "already open")
+    }
 }

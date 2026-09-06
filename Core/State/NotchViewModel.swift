@@ -28,6 +28,12 @@ final class NotchViewModel {
     var hapticsEnabled = true
     /// Module shown when hover expands from closed or compact. Phase 2 lets ModuleManager decide.
     var defaultModuleID = "debug"
+    /// A file drag is under way somewhere on screen; the window layer sets it and the root view
+    /// draws the drop detector around the surface while it is on.
+    var isDragSessionActive = false
+    /// How long a card stays after a drop for the module's confirmation, on top of `closeDelay`,
+    /// unless the cursor settles on it.
+    var dropLinger: TimeInterval = 2.5
 
     @ObservationIgnored private var hoverTask: Task<Void, Never>?
     @ObservationIgnored private var popupTask: Task<Void, Never>?
@@ -51,18 +57,43 @@ final class NotchViewModel {
                 setExpanded(target)
             }
         } else {
-            hoverTask = Task { [weak self] in
-                guard let self else { return }
-                // Inside the grace zone the surface lingers until the deadline; beyond it, it closes now.
-                let deadline = ContinuousClock.now + .seconds(closeDelay)
-                while isCursorInGraceZone, ContinuousClock.now < deadline {
-                    try? await Task.sleep(for: Self.graceCheckInterval)
-                    guard !Task.isCancelled, !isHovering else { return }
-                }
-                if let target = NotchTransition.stateOnHoverExit(from: state, hasLiveContent: hasLiveContent) {
-                    banner = nil
-                    state = target
-                }
+            lingerThenClose(for: closeDelay)
+        }
+    }
+
+    /// A file drag entered (`inside`) or left the surface. Entering opens the module that takes
+    /// drops at once — a drag has no hover delay to wait out — and leaving closes the card the way
+    /// a departing cursor does. Hover never fires during a drag, so this is the card's only steer.
+    func dragTargetingChanged(_ inside: Bool, moduleID: String) {
+        hoverTask?.cancel()
+        if inside {
+            if let target = NotchTransition.stateOnDragTarget(from: state, moduleID: moduleID) {
+                setExpanded(target)
+            }
+        } else {
+            lingerThenClose(for: closeDelay)
+        }
+    }
+
+    /// The drop landed: the card stays for the module's confirmation, then leaves — unless the
+    /// cursor settles on it and hover takes over.
+    func dropLanded() {
+        hoverTask?.cancel()
+        lingerThenClose(for: closeDelay + dropLinger)
+    }
+
+    /// Inside the grace zone the surface lingers until the deadline; beyond it, it closes now.
+    private func lingerThenClose(for delay: TimeInterval) {
+        hoverTask = Task { [weak self] in
+            guard let self else { return }
+            let deadline = ContinuousClock.now + .seconds(delay)
+            while isCursorInGraceZone, ContinuousClock.now < deadline {
+                try? await Task.sleep(for: Self.graceCheckInterval)
+                guard !Task.isCancelled, !isHovering else { return }
+            }
+            if let target = NotchTransition.stateOnHoverExit(from: state, hasLiveContent: hasLiveContent) {
+                banner = nil
+                state = target
             }
         }
     }

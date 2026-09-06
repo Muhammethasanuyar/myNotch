@@ -154,4 +154,46 @@ final class NotchViewModelTests: XCTestCase {
         try await Task.sleep(for: .milliseconds(200))
         XCTAssertEqual(model.state, .closed)
     }
+
+    func testAFileDragOpensTheDropModuleAtOnceAndLeavingClosesIt() async throws {
+        let model = makeModel()
+        model.dragTargetingChanged(true, moduleID: "shelf")
+        XCTAssertEqual(model.state, .expanded(moduleID: "shelf"), "no hover delay for a drag")
+        model.dragTargetingChanged(false, moduleID: "shelf")
+        try await Task.sleep(for: .milliseconds(100))
+        XCTAssertEqual(model.state, .closed)
+    }
+
+    func testAFileDragTakesTheCardFromAnotherModule() {
+        let model = makeModel()
+        model.expand(moduleID: "media")
+        model.dragTargetingChanged(true, moduleID: "shelf")
+        XCTAssertEqual(model.state, .expanded(moduleID: "shelf"))
+        model.dragTargetingChanged(true, moduleID: "shelf")
+        XCTAssertEqual(model.state, .expanded(moduleID: "shelf"), "repeated updates change nothing")
+    }
+
+    func testADropKeepsTheCardForTheConfirmationThenCloses() async throws {
+        let model = makeModel()
+        model.dropLinger = 0.08
+        model.dragTargetingChanged(true, moduleID: "shelf")
+        model.dropLanded()
+        try await Task.sleep(for: .milliseconds(40))
+        XCTAssertEqual(model.state, .expanded(moduleID: "shelf"), "still up while the module confirms")
+        try await Task.sleep(for: .milliseconds(120))
+        XCTAssertEqual(model.state, .closed)
+    }
+
+    func testTheCursorSettlingOnTheCardAfterADropKeepsItOpen() async throws {
+        let model = makeModel()
+        model.dropLinger = 0.05
+        model.dragTargetingChanged(true, moduleID: "shelf")
+        model.dropLanded()
+        model.hoverChanged(true)
+        try await Task.sleep(for: .milliseconds(150))
+        XCTAssertEqual(model.state, .expanded(moduleID: "shelf"))
+        model.hoverChanged(false)
+        try await Task.sleep(for: .milliseconds(100))
+        XCTAssertEqual(model.state, .closed)
+    }
 }

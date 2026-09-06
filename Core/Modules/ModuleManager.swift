@@ -94,6 +94,11 @@ final class ModuleManager {
         model.expand(moduleID: module.id)
     }
 
+    /// The enabled module that takes file drops, if any; the first registered wins.
+    var dropTargetModule: (any NotchModule)? {
+        modules.first { $0.isEnabled && $0.acceptsDrops }
+    }
+
     var snapshots: [ModuleSnapshot] {
         modules.map {
             ModuleSnapshot(id: $0.id, priority: $0.priority, activity: $0.activity, isEnabled: $0.isEnabled)
@@ -136,6 +141,15 @@ final class ModuleManager {
             },
             selectScreen: { [weak self] screen in
                 self?.selectScreen(screen)
+            },
+            dropTargetModuleID: { [weak self] in
+                self?.dropTargetModule?.id
+            },
+            dropTargetingChanged: { [weak self] unitPoint in
+                self?.dropTargetModule?.dropTargetingChanged(unitPoint)
+            },
+            acceptDrop: { [weak self] drop in
+                self?.dropTargetModule?.acceptDrop(drop) ?? false
             }
         )
     }

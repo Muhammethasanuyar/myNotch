@@ -44,4 +44,12 @@ nonisolated enum NotchTransition {
     static func stateOnHoverExit(from current: NotchState, hasLiveContent: Bool) -> NotchState? {
         current.isExpanded ? restingState(hasLiveContent: hasLiveContent) : nil
     }
+
+    /// A file drag reached the surface: open the module that takes drops, whatever was showing —
+    /// a drag is an intent to drop, so even another module's card gives way. `nil` when it is
+    /// already open.
+    static func stateOnDragTarget(from current: NotchState, moduleID: String) -> NotchState? {
+        if case .expanded(let open) = current, open == moduleID { return nil }
+        return .expanded(moduleID: moduleID)
+    }
 }

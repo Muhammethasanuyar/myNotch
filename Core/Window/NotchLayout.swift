@@ -85,6 +85,8 @@ nonisolated enum NotchLayout {
     static let switcherHeight: CGFloat = 26
     /// How far beyond the expanded surface the cursor may wander and still count as on it.
     static let graceMargin = CGSize(width: 32, height: 28)
+    /// How far beside and below the surface a file drag still counts as aimed at it.
+    static let dropDetectorMargin: CGFloat = 32
 
     struct CornerRadii: Equatable, Sendable {
         let ear: CGFloat
@@ -199,6 +201,45 @@ nonisolated enum NotchLayout {
             height: size.height + top
         )
         return surface.insetBy(dx: -graceMargin.width, dy: -graceMargin.height)
+    }
+
+    /// Size of the detector drawn behind the surface while a file drag is under way: the surface
+    /// plus the margin on both sides and below (the top is the screen edge). A screen without a
+    /// housing shows nothing when closed, so the detector takes the compact capsule's size there.
+    static func dropDetectorSize(for state: NotchState, metrics: NotchLayoutMetrics) -> CGSize {
+        var base = shapeSize(for: state, metrics: metrics)
+        if base == .zero { base = floatingCompactSize }
+        return CGSize(width: base.width + 2 * dropDetectorMargin, height: base.height + dropDetectorMargin)
+    }
+
+    /// Screen-space zone a file drag must reach to open the drop module, for the state the surface
+    /// is in: the detector's footprint at the panel's top centre.
+    static func dropZoneRect(panelFrame: CGRect, metrics: NotchLayoutMetrics, state: NotchState) -> CGRect {
+        let size = dropDetectorSize(for: state, metrics: metrics)
+        let top = topInset(for: metrics)
+        return CGRect(
+            x: panelFrame.midX - size.width / 2,
+            y: panelFrame.maxY - top - size.height,
+            width: size.width,
+            height: size.height + top
+        )
+    }
+
+    /// Where a point of the hosting view (top-left origin) falls inside the expanded module
+    /// content, 0…1 in both axes and clamped to the edges; `nil` when the content has no area.
+    static func expandedContentUnitPoint(viewPoint: CGPoint, metrics: NotchLayoutMetrics, showsBanner: Bool, showsSwitcher: Bool) -> CGPoint? {
+        let state = NotchState.expanded(moduleID: "")
+        let size = shapeSize(for: state, metrics: metrics, showsBanner: showsBanner, showsSwitcher: showsSwitcher)
+        let inset = cornerRadii(for: state, style: metrics.style).ear + expandedContentInset
+        let contentX = (metrics.panelSize.width - size.width) / 2 + inset
+        let contentWidth = size.width - 2 * inset
+        let contentTop = topInset(for: metrics) + expandedTopInset(for: metrics) + (showsBanner ? bannerHeight : 0)
+        let contentHeight = size.height - expandedTopInset(for: metrics) - (showsBanner ? bannerHeight : 0) - (showsSwitcher ? switcherHeight : 0) - expandedContentInset
+        guard contentWidth > 0, contentHeight > 0 else { return nil }
+        return CGPoint(
+            x: min(max((viewPoint.x - contentX) / contentWidth, 0), 1),
+            y: min(max((viewPoint.y - contentTop) / contentHeight, 0), 1)
+        )
     }
 
     /// Panel frame centred on the housing (or on the screen when there is none), flush with the screen top.

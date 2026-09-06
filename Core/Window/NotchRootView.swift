@@ -28,6 +28,11 @@ struct NotchRootView: View {
             if debugTint {
                 Color.red.opacity(0.25)
             }
+            // Behind the surface, only while a file drag is under way and a module would take it.
+            if model.isDragSessionActive, content.dropTargetModuleID() != nil {
+                NotchDropDetector(size: NotchLayout.dropDetectorSize(for: state, metrics: metrics), cornerRadius: max(radii.bottom, 10))
+                    .padding(.top, NotchLayout.topInset(for: metrics))
+            }
             if size != .zero {
                 surface(state: state, size: size, radii: radii, screens: screens)
                     .frame(width: size.width, height: size.height)

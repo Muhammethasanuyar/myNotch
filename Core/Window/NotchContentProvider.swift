@@ -16,6 +16,12 @@ struct NotchContentProvider {
     var activeScreenID: @MainActor (_ activeModuleID: String) -> String = { $0 }
     /// The user picked a screen; the manager focuses it and puts its module on the card.
     var selectScreen: @MainActor (ModuleScreen) -> Void = { _ in }
+    /// The module a file drag opens, or `nil` when none takes drops; read as a drag begins.
+    var dropTargetModuleID: @MainActor () -> String? = { nil }
+    /// Where over the card the drag is (0…1), or `nil` once it has left.
+    var dropTargetingChanged: @MainActor (CGPoint?) -> Void = { _ in }
+    /// Files landed; returns whether the module took them.
+    var acceptDrop: @MainActor (NotchDrop) -> Bool = { _ in false }
 
     static var empty: NotchContentProvider {
         NotchContentProvider(

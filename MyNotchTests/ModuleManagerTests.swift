@@ -42,6 +42,18 @@ private final class StubModule: NotchModule {
     }
 
     private(set) var selectedScreenID: String?
+    var acceptsDrops = false
+    private(set) var drops: [NotchDrop] = []
+    private(set) var targeting: [CGPoint?] = []
+
+    func dropTargetingChanged(_ unitPoint: CGPoint?) {
+        targeting.append(unitPoint)
+    }
+
+    func acceptDrop(_ drop: NotchDrop) -> Bool {
+        drops.append(drop)
+        return true
+    }
 
     var screens: [ModuleScreen] {
         [ModuleScreen(id: id, moduleID: id, title: displayName, symbolName: "circle", appBundleIdentifier: "com.example.\(id)", isAvailable: isAvailable)]
@@ -280,5 +292,34 @@ final class ModuleManagerTests: XCTestCase {
         second.register(StubModule(id: "media"))
         XCTAssertEqual(second.preferredModuleID, "media")
         XCTAssertEqual(model.defaultModuleID, "media")
+    }
+
+    func testTheFirstEnabledModuleThatTakesDropsIsTheDropTarget() {
+        let (manager, _) = makeManager()
+        let media = StubModule(id: "media", priority: 10)
+        let shelf = StubModule(id: "shelf", priority: 4)
+        shelf.acceptsDrops = true
+        let other = StubModule(id: "other")
+        other.acceptsDrops = true
+        manager.register(media)
+        manager.register(shelf)
+        manager.register(other)
+        let provider = manager.contentProvider()
+        XCTAssertEqual(provider.dropTargetModuleID(), "shelf", "registration order, not priority")
+
+        let urls = [URL(fileURLWithPath: "/tmp/a.txt")]
+        XCTAssertTrue(provider.acceptDrop(NotchDrop(urls: urls, unitPoint: CGPoint(x: 0.1, y: 0.5))))
+        XCTAssertEqual(shelf.drops.first?.urls, urls)
+        XCTAssertEqual(shelf.drops.first?.unitPoint, CGPoint(x: 0.1, y: 0.5))
+        XCTAssertTrue(other.drops.isEmpty)
+        provider.dropTargetingChanged(CGPoint(x: 0.2, y: 0.2))
+        provider.dropTargetingChanged(nil)
+        XCTAssertEqual(shelf.targeting, [CGPoint(x: 0.2, y: 0.2), nil])
+
+        manager.setEnabled(false, for: "shelf")
+        XCTAssertEqual(provider.dropTargetModuleID(), "other", "a disabled module never takes drops")
+        manager.setEnabled(false, for: "other")
+        XCTAssertNil(provider.dropTargetModuleID())
+        XCTAssertFalse(provider.acceptDrop(NotchDrop(urls: urls, unitPoint: nil)))
     }
 }

@@ -10,6 +10,7 @@ final class NotchWindowController: NSWindowController {
     private let debugTint: Bool
     private(set) var metrics: NotchLayoutMetrics = .placeholder
     private var clickOutsideMonitor: Any?
+    private var dragSessionMonitor: NotchDragSessionMonitor?
     /// Which display to sit on; changing it moves the panel at once.
     var screenPreference: ScreenPreference = .automatic {
         didSet { if screenPreference != oldValue { reposition() } }
@@ -42,6 +43,15 @@ final class NotchWindowController: NSWindowController {
         if collapsesOnOutsideClick {
             installClickOutsideMonitor()
         }
+        hostingView.acceptsFileDrops = { [content] in content.dropTargetModuleID() != nil }
+        hostingView.onDragTargeting = { [weak self] point in self?.dragTargeting(point) }
+        hostingView.onFileDrop = { [weak self] urls, point in self?.fileDropped(urls, at: point) ?? false }
+        let dragMonitor = NotchDragSessionMonitor(
+            hasTarget: { [content] in content.dropTargetModuleID() != nil },
+            onChange: { [weak model] active in model?.isDragSessionActive = active }
+        )
+        dragMonitor.install()
+        dragSessionMonitor = dragMonitor
     }
 
     @available(*, unavailable)
@@ -66,6 +76,31 @@ final class NotchWindowController: NSWindowController {
                 self?.model.collapse()
             }
         }
+    }
+
+    // MARK: File drags
+
+    private func dragTargeting(_ point: CGPoint?) {
+        guard let moduleID = content.dropTargetModuleID() else { return }
+        model.dragTargetingChanged(point != nil, moduleID: moduleID)
+        content.dropTargetingChanged(point.flatMap(unitPoint))
+    }
+
+    private func fileDropped(_ urls: [URL], at point: CGPoint) -> Bool {
+        let accepted = content.acceptDrop(NotchDrop(urls: urls, unitPoint: unitPoint(point)))
+        model.dropLanded()
+        return accepted
+    }
+
+    /// Where over the module's card the point is, when the card is showing.
+    private func unitPoint(_ point: CGPoint) -> CGPoint? {
+        guard case .expanded(let moduleID) = model.state else { return nil }
+        return NotchLayout.expandedContentUnitPoint(
+            viewPoint: point,
+            metrics: metrics,
+            showsBanner: model.banner != nil,
+            showsSwitcher: ModuleScreenList.shouldShow(content.screens(moduleID))
+        )
     }
 
     private func reposition() {

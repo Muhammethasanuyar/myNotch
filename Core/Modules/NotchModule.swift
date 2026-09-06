@@ -38,6 +38,23 @@ protocol NotchModule: AnyObject {
     func expandedView(namespace: Namespace.ID) -> AnyView
     /// Popup body; `nil` lets `ModuleManager` fall back to a generic row.
     func popupView(for event: NotchEvent, namespace: Namespace.ID) -> AnyView?
+
+    /// Whether a file dragged onto the notch should open this module and land in it. At most one
+    /// enabled module says yes; the engine opens it as the drag arrives.
+    var acceptsDrops: Bool { get }
+    /// A file drag is over the card at this point of its content (0…1 in both axes), or has left
+    /// (`nil`); the module highlights the zone it would land in.
+    func dropTargetingChanged(_ unitPoint: CGPoint?)
+    /// Files were dropped; returns whether the module took them.
+    func acceptDrop(_ drop: NotchDrop) -> Bool
+}
+
+/// What landed on the notch: the files, and where on the expanded card if it was open.
+nonisolated struct NotchDrop: Equatable, Sendable {
+    let urls: [URL]
+    /// Position inside the module's expanded content, 0…1 in both axes; `nil` when the surface
+    /// was not showing the card (a drop straight onto the housing or the compact strip).
+    let unitPoint: CGPoint?
 }
 
 extension NotchModule {
@@ -52,6 +69,10 @@ extension NotchModule {
     func compactLeading(namespace: Namespace.ID) -> AnyView { AnyView(EmptyView()) }
     func compactTrailing(namespace: Namespace.ID) -> AnyView { AnyView(EmptyView()) }
     func popupView(for event: NotchEvent, namespace: Namespace.ID) -> AnyView? { nil }
+
+    var acceptsDrops: Bool { false }
+    func dropTargetingChanged(_ unitPoint: CGPoint?) {}
+    func acceptDrop(_ drop: NotchDrop) -> Bool { false }
 }
 
 /// What a module is handed at registration: the bus it announces itself on, and its own id so

@@ -169,4 +169,44 @@ final class NotchLayoutTests: XCTestCase {
         XCTAssertEqual(zone.maxY, panel.maxY + NotchLayout.graceMargin.height, accuracy: 0.001)
         XCTAssertEqual(zone.minY, panel.maxY - NotchLayout.topInset(for: metrics) - card.height - NotchLayout.graceMargin.height, accuracy: 0.001)
     }
+
+    func testDropDetectorOutgrowsTheSurfaceSidewaysAndDownwards() {
+        let margin = NotchLayout.dropDetectorMargin
+        XCTAssertEqual(NotchLayout.dropDetectorSize(for: .closed, metrics: notched), CGSize(width: 168 + 2 * margin, height: 37 + margin))
+        let card = NotchLayout.shapeSize(for: .expanded(moduleID: "m"), metrics: notched)
+        XCTAssertEqual(NotchLayout.dropDetectorSize(for: .expanded(moduleID: "m"), metrics: notched), CGSize(width: card.width + 2 * margin, height: card.height + margin))
+        // No housing: the closed surface is nothing, so the detector takes the capsule's footprint.
+        XCTAssertEqual(NotchLayout.dropDetectorSize(for: .closed, metrics: floating), CGSize(width: NotchLayout.floatingCompactSize.width + 2 * margin, height: NotchLayout.floatingCompactSize.height + margin))
+    }
+
+    func testDropZoneHangsFromTheScreenTopAroundTheSurface() {
+        let panel = CGRect(x: 100, y: 800, width: 600, height: 280)
+        let zone = NotchLayout.dropZoneRect(panelFrame: panel, metrics: notched, state: .closed)
+        XCTAssertEqual(zone.midX, panel.midX, accuracy: 0.001)
+        XCTAssertEqual(zone.maxY, panel.maxY, accuracy: 0.001)
+        XCTAssertEqual(zone.width, 168 + 2 * NotchLayout.dropDetectorMargin, accuracy: 0.001)
+        XCTAssertEqual(zone.height, 37 + NotchLayout.dropDetectorMargin, accuracy: 0.001)
+        let floatingZone = NotchLayout.dropZoneRect(panelFrame: panel, metrics: floating, state: .compact)
+        XCTAssertEqual(floatingZone.maxY, panel.maxY, accuracy: 0.001, "reaches the screen edge over the menu bar too")
+        XCTAssertEqual(floatingZone.height, NotchLayout.topInset(for: floating) + 36 + NotchLayout.dropDetectorMargin, accuracy: 0.001)
+    }
+
+    func testExpandedContentUnitPointMapsTheCardCorners() {
+        let state = NotchState.expanded(moduleID: "m")
+        let size = NotchLayout.shapeSize(for: state, metrics: notched, showsBanner: false, showsSwitcher: true)
+        let inset = NotchLayout.cornerRadii(for: state, style: .notch).ear + NotchLayout.expandedContentInset
+        let left = (NotchLayout.expandedPanelSize.width - size.width) / 2 + inset
+        let top = NotchLayout.expandedTopInset(for: notched)
+        let bottom = size.height - NotchLayout.switcherHeight - NotchLayout.expandedContentInset
+        let topLeft = NotchLayout.expandedContentUnitPoint(viewPoint: CGPoint(x: left, y: top), metrics: notched, showsBanner: false, showsSwitcher: true)
+        XCTAssertEqual(topLeft?.x ?? -1, 0, accuracy: 0.001)
+        XCTAssertEqual(topLeft?.y ?? -1, 0, accuracy: 0.001)
+        let bottomRight = NotchLayout.expandedContentUnitPoint(viewPoint: CGPoint(x: left + size.width - 2 * inset, y: bottom), metrics: notched, showsBanner: false, showsSwitcher: true)
+        XCTAssertEqual(bottomRight?.x ?? -1, 1, accuracy: 0.001)
+        XCTAssertEqual(bottomRight?.y ?? -1, 1, accuracy: 0.001)
+        let outside = NotchLayout.expandedContentUnitPoint(viewPoint: CGPoint(x: -50, y: 900), metrics: notched, showsBanner: true, showsSwitcher: false)
+        XCTAssertEqual(outside, CGPoint(x: 0, y: 1), "clamped to the edges")
+        let banner = NotchLayout.expandedContentUnitPoint(viewPoint: CGPoint(x: left, y: top + NotchLayout.bannerHeight), metrics: notched, showsBanner: true, showsSwitcher: false)
+        XCTAssertEqual(banner?.y ?? -1, 0, accuracy: 0.001, "a banner pushes the content down")
+    }
 }

@@ -24,11 +24,14 @@ struct ClaudeCompactLeading: View {
     let namespace: Namespace.ID
 
     var body: some View {
-        Image(systemName: "asterisk")
-            .font(.system(size: 14, weight: .bold))
-            .foregroundStyle(service.isWorking ? ClaudeStyle.accent : .white.opacity(0.5))
-            .symbolEffect(.pulse, options: .repeating, isActive: service.isWorking)
-            .matchedGeometryEffect(id: ClaudeUsageModule.markID, in: namespace)
+        PulsingSymbol(
+            systemName: "asterisk",
+            pointSize: 14,
+            weight: .bold,
+            color: service.isWorking ? ClaudeStyle.accent : .white.opacity(0.5),
+            isActive: service.isWorking
+        )
+        .matchedGeometryEffect(id: ClaudeUsageModule.markID, in: namespace)
     }
 }
 
@@ -63,7 +66,6 @@ struct UsageRing: View {
     var dimmed = false
 
     @State private var appeared = false
-    @State private var glowing = false
 
     private var usage: Double { appeared ? (window?.utilization ?? 0) : 0 }
     private var elapsed: Double { appeared ? (window?.elapsedFraction(kind: windowKind, at: now) ?? 0) : 0 }
@@ -83,12 +85,19 @@ struct UsageRing: View {
                 .stroke(.white.opacity(0.12), lineWidth: 6)
                 .padding(7)
             if window != nil {
+                // The breath while Claude works is a symbol pulse, which Core Animation runs on
+                // its own, on two plain rings. Anything SwiftUI has to redraw per frame here —
+                // a `repeatForever` opacity animation, a blur or shadow under the pulse — cost
+                // 15–25% CPU while the card was open (2026-09-06 measurements).
+                ForEach([(diameter - 14, 0.45), (diameter - 4, 0.18)], id: \.0) { size, alpha in
+                    PulsingSymbol(systemName: "circle", pointSize: size, weight: .black, color: color.opacity(alpha), isActive: isWorking)
+                }
+                .opacity(isWorking ? 1 : 0)
                 Circle()
                     .trim(from: 0, to: max(0.004, usage))
                     .stroke(color, style: StrokeStyle(lineWidth: 6, lineCap: .round))
                     .rotationEffect(.degrees(-90))
                     .padding(7)
-                    .shadow(color: color.opacity(glowing ? 0.65 : 0), radius: glowing ? 7 : 0)
             }
             VStack(spacing: -2) {
                 Text(window.map { ClaudeUsageRules.percent(Int(($0.utilization * 100).rounded())) } ?? "—")
@@ -107,16 +116,8 @@ struct UsageRing: View {
         .animation(.spring(response: 0.9, dampingFraction: 0.85), value: usage)
         .animation(.easeOut(duration: 0.7), value: elapsed)
         .animation(.easeInOut(duration: 0.4), value: color)
+        .animation(.easeInOut(duration: 0.4), value: isWorking)
         .onAppear { appeared = true }
-        .onChange(of: isWorking, initial: true) { _, working in
-            // The consuming window breathes while tokens flow; a repeating animation stops the
-            // moment the flag drops, and with the view when the card closes.
-            if working {
-                withAnimation(.easeInOut(duration: 1.1).repeatForever(autoreverses: true)) { glowing = true }
-            } else {
-                withAnimation(.easeOut(duration: 0.3)) { glowing = false }
-            }
-        }
     }
 }
 
@@ -152,18 +153,22 @@ struct ClaudeDashboardView: View {
     var body: some View {
         // Every half minute, so the thin "time passed" arcs and countdowns keep moving while open.
         TimelineView(.periodic(from: .now, by: 30)) { context in
-            HStack(alignment: .top, spacing: 14) {
-                leftColumn(at: context.date)
-                Rectangle()
-                    .fill(.white.opacity(0.12))
-                    .frame(width: 1)
-                    .padding(.vertical, 6)
-                details(at: context.date)
-            }
+            columns(at: context.date)
         }
         .foregroundStyle(.white)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .onAppear { appeared = true }
+    }
+
+    private func columns(at now: Date) -> some View {
+        HStack(alignment: .top, spacing: 14) {
+            leftColumn(at: now)
+            Rectangle()
+                .fill(.white.opacity(0.12))
+                .frame(width: 1)
+                .padding(.vertical, 6)
+            details(at: now)
+        }
     }
 
     // MARK: Rings and blocks
@@ -279,11 +284,14 @@ struct ClaudeDashboardView: View {
 
     private var header: some View {
         HStack(spacing: 6) {
-            Image(systemName: "asterisk")
-                .font(.system(size: 13, weight: .bold))
-                .foregroundStyle(service.isWorking ? ClaudeStyle.accent : .white.opacity(0.6))
-                .symbolEffect(.pulse, options: .repeating, isActive: service.isWorking)
-                .matchedGeometryEffect(id: ClaudeUsageModule.markID, in: namespace)
+            PulsingSymbol(
+                systemName: "asterisk",
+                pointSize: 13,
+                weight: .bold,
+                color: service.isWorking ? ClaudeStyle.accent : .white.opacity(0.6),
+                isActive: service.isWorking
+            )
+            .matchedGeometryEffect(id: ClaudeUsageModule.markID, in: namespace)
             Text("Claude Code")
                 .font(.headline)
                 .lineLimit(1)
@@ -298,11 +306,15 @@ struct ClaudeDashboardView: View {
                         .truncationMode(.middle)
                         .transition(.opacity.combined(with: .move(edge: .trailing)))
                 }
-                // A ripple that only runs while Claude writes; a still dot when it is quiet.
-                Image(systemName: service.isWorking ? "ellipsis" : "circle.fill")
-                    .font(.system(size: service.isWorking ? 12 : 6, weight: .bold))
-                    .symbolEffect(.variableColor.iterative.reversing, options: .repeating, isActive: service.isWorking)
-                    .contentTransition(.symbolEffect(.replace))
+                // Breathing dots while Claude writes; a still dot when it is quiet.
+                PulsingSymbol(
+                    systemName: service.isWorking ? "ellipsis" : "circle.fill",
+                    pointSize: service.isWorking ? 12 : 6,
+                    weight: .bold,
+                    color: service.isWorking ? ClaudeStyle.accent : .white.opacity(0.35),
+                    isActive: service.isWorking,
+                    period: 0.6
+                )
             }
             .foregroundStyle(service.isWorking ? ClaudeStyle.accent : .white.opacity(0.35))
             .spotlight(.working, focus: $focus)
@@ -330,7 +342,7 @@ struct ClaudeDashboardView: View {
                     statChip(.pace, "flame.fill",
                              value: ClaudeUsageRules.formatTokens(Int(perMinute.rounded())) + "/" + String(localized: "unit.minute", defaultValue: "min"),
                              caption: String(localized: "caption.pace", defaultValue: "pace"),
-                             bounce: perMinute, flicker: service.isWorking)
+                             bounce: perMinute)
                 }
             case .notInstalled:
                 statChip(.spend, "arrow.down.circle", value: "ccusage", caption: String(localized: "caption.install", defaultValue: "install"), bounce: 0)
@@ -342,14 +354,13 @@ struct ClaudeDashboardView: View {
         }
     }
 
-    private func statChip(_ element: DashboardFocus, _ symbol: String, value: String, caption: String, bounce: Double, flicker: Bool = false) -> some View {
+    private func statChip(_ element: DashboardFocus, _ symbol: String, value: String, caption: String, bounce: Double) -> some View {
         VStack(spacing: 2) {
             HStack(spacing: 4) {
                 Image(systemName: symbol)
                     .font(.system(size: 10, weight: .semibold))
                     .foregroundStyle(focus == element ? ClaudeStyle.accent : .secondary)
                     .symbolEffect(.bounce, value: bounce)
-                    .symbolEffect(.pulse, options: .repeating, isActive: flicker)
                 Text(value)
                     .font(.system(size: 11, weight: .semibold, design: .rounded).monospacedDigit())
                     .contentTransition(.numericText())
@@ -395,10 +406,7 @@ struct ClaudeDashboardView: View {
                     .spotlight(.models, focus: $focus)
             } else if let only = shares.first {
                 HStack(spacing: 4) {
-                    Image(systemName: "circle.fill")
-                        .font(.system(size: 6))
-                        .foregroundStyle(ClaudeStyle.accent)
-                        .symbolEffect(.pulse, options: .repeating, isActive: service.isWorking)
+                    PulsingSymbol(systemName: "circle.fill", pointSize: 6, color: ClaudeStyle.accent, isActive: service.isWorking)
                     Text(only.name)
                         .font(.system(size: 9, weight: .medium))
                         .foregroundStyle(focus == .models ? .white : .secondary)
@@ -412,11 +420,12 @@ struct ClaudeDashboardView: View {
     private var footer: some View {
         HStack(spacing: 6) {
             HStack(spacing: 6) {
-                Image(systemName: "circle.fill")
-                    .font(.system(size: 7))
-                    .foregroundStyle(statusColor)
-                    .shadow(color: statusColor.opacity(0.7), radius: 3)
-                    .symbolEffect(.pulse, options: .repeating, isActive: true)
+                ZStack {
+                    Circle()
+                        .fill(statusColor.opacity(0.28))
+                        .frame(width: 13, height: 13)
+                    PulsingSymbol(systemName: "circle.fill", pointSize: 7, color: statusColor, isActive: true, period: 1.2)
+                }
                 if let action = actionText {
                     Text(action)
                         .font(.system(size: 10))

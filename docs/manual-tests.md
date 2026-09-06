@@ -130,3 +130,22 @@ Hazırlık: Claude Code ile en az bir kez giriş yapılmış olmalı (`claude`).
 11. **ccusage yok:** `defaults write com.emre.mynotch ccusagePath /nonexistent` ile bile npx bulunursa çalışır; nvm/npx de yoksa "Cost needs ccusage · brew install ccusage" satırı, halkalar etkilenmez. Geri almak için `defaults delete com.emre.mynotch ccusagePath`.
 12. **Ağ yok:** alt satır "Anthropic unreachable · showing last reading", halkalar soluk; 15 dk'dan eski okuma soluk kalır.
 13. **Uyku/uyanma:** kapağı kapatıp açınca ilk istek en erken 60 sn sonra; log'da (`log stream --predicate 'subsystem == "com.emre.mynotch"'`) tek poll görünmeli, seri istek yok.
+
+## Faz 5 — Ayarlar & cila
+
+Hazırlık: `scripts/run.sh --args -openSettings general` (ya da menü bar → Ayarlar…, ⌘,). Sekmeye doğrudan gitmek için `-openSettings modules|media|claude|setup|about`.
+
+1. **Pencere:** kenar çubuğu saydam (liquid glass), geri/ileri okları sekme geçmişinde gezer; pencere 720×560 açılır, konumu/boyutu yeniden açılışta korunur (`NSWindow Frame SettingsWindow`). Türkçe sistemde tüm metinler Türkçe, İngilizce'de İngilizce.
+2. **Genel → Çentik:** hover süresini 0,5 s yap → çentik ancak yarım saniye durunca açılır; kapanma süresini 0,2 s yap → karttan ayrılınca 0,2 s içinde kapanır. Slider en fazla 1,0 s'ye gider. Haptik kapalıyken açılışta titreşim yok. "Varsayılanlara dön" 0,15 / 0,80 / açık / Otomatik'e döner.
+3. **Genel → Ekran:** harici ekran seçilince notch o ekranın üst ortasında floating stilde çıkar; kablo çekilince otomatiğe (dahili çentik) döner, ekran adı listede "(bağlı değil)" olarak kalır.
+4. **Genel → Açılışta başlat:** açınca durum "MyNotch oturum açtığınızda başlar." (Applications dışından çalışan derlemede "Sistem MyNotch'un bu kopyasını görmüyor" beklenir); onay bekliyorsa "Giriş Öğeleri'ni aç…" düğmesi Sistem Ayarları'nı açar.
+5. **Modüller:** Medya'yı kapat → compact şerit kapanır, değiştiricide Spotify/Müzik pilleri kalkar, popup gelmez; yeniden aç → oynatıcı çalışıyorsa şerit döner. Tercih yeniden açılışta korunur (`disabledModules`).
+6. **Medya → Şarkı sözleri:** kapat → açık karttaki sözler anında kalkar; aç → sözler yeniden yüklenir. Öncelik slider'ı −500…+500 ms; "Şarkı bazlı ayarları unut" sayaç 0 iken pasif.
+7. **Medya → Spotify:** client ID boşken durum "Kalbi açmak için bir client ID girin", Bağlan pasif; ID girilince "Bağlı değil" + Bağlan aktif; Bağlan… tarayıcıyı açar, onaydan sonra "Bağlı"; Bağlantıyı kes → "Bağlı değil" ve kart kalbi boş. ID silinirse bağlantı da düşer.
+8. **Medya → Otomasyon:** izin verilmişse yeşil; `tccutil reset AppleEvents com.emre.mynotch` sonrası "Henüz sorulmadı", "Yeniden denetle" istemi tetikler.
+9. **Claude → Uyarılar:** uyarı eşiğini %95'e çek → kritik otomatik %100'e çıkar; kritik uyarının altına inemez. Uyarılar kapalıyken eşik popup'ı gelmez, halkalar yine renk değiştirir.
+10. **Claude → Sorgulama:** 15 dk seçilince log'da (`log stream --predicate 'subsystem == "com.emre.mynotch"'`) poll'lar 900 sn arayla; 5 dk altı seçenek yok.
+11. **Claude → Maliyet:** yol alanına geçersiz bir yol yaz → durum otomatik bulunanla devam eder (override yalnızca çalıştırılabilirse kullanılır); "Seç…" dosya paneli açar. Yapılandırma dizini değişince modül yeniden başlar (log'da yeni `start`).
+12. **Kurulum (ilk açılış):** `defaults delete com.emre.mynotch onboardingCompleted` + yeniden başlat → pencere Kurulum sekmesiyle açılır; "Bitti" sonrası bir daha açılmaz (`-debugState` ile başlatıldığında hiç açılmaz). Satırlar: Otomasyon, Spotify (isteğe bağlı), Claude girişi, oturum logları, ccusage (isteğe bağlı), açılışta başlat; "Medya'da ayarla…" / "Claude'da ayarla…" ilgili sekmeye geçer.
+13. **Hakkında:** sürüm `MARKETING_VERSION (CURRENT_PROJECT_VERSION)`, dışarı giden veri listesi üç satır, kaynak bağlantıları tarayıcıda açılır, log komutu kopyalanır, "Debug Preview'ı aç" çalışır.
+14. **CPU:** `scripts/measure-idle.sh 30` — kapalı ve compact durumda ≈%0; açık Claude kartı için §16.4'teki değerin altında.

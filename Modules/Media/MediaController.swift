@@ -61,7 +61,7 @@ final class MediaController {
 
     /// How the heart should behave for the active player.
     var favoriteSupport: MediaFavoriteSupport {
-        activeProvider?.favoriteSupport ?? .unsupported(reason: "Nothing is playing")
+        activeProvider?.favoriteSupport ?? .unsupported(reason: L("media.favorite.nothingPlaying", "Nothing is playing"))
     }
 
     var activeProvider: (any MediaProvider)? {

@@ -71,7 +71,7 @@ final class SpotifyLibraryClient {
         guard connection != .connecting else { return }
         guard let clientID else {
             connection = .notConfigured
-            lastError = "Spotify client ID is not set"
+            lastError = L("spotify.error.noClientID", "Spotify client ID is not set")
             return
         }
         connection = .connecting

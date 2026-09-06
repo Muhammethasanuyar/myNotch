@@ -44,7 +44,7 @@ extension MediaProvider {
     func precisePosition() async throws -> PlayheadSample? { nil }
 
     var favoriteSupport: MediaFavoriteSupport {
-        capabilities.canFavorite ? .available : .unsupported(reason: "\(displayName) does not let other apps save tracks")
+        capabilities.canFavorite ? .available : .unsupported(reason: L("media.favorite.unsupported", "\(displayName) does not let other apps save tracks"))
     }
 }
 

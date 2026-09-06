@@ -621,6 +621,136 @@
         }
       }
     },
+    "media.favorite.add": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Favorilere ekle"
+          }
+        }
+      }
+    },
+    "media.favorite.nothingPlaying": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hiçbir şey çalmıyor"
+          }
+        }
+      }
+    },
+    "media.favorite.remove": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Favorilerden çıkar"
+          }
+        }
+      }
+    },
+    "media.favorite.unsupported": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ başka uygulamaların parça kaydetmesine izin vermiyor"
+          }
+        }
+      }
+    },
+    "media.idle.nothing": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bir şey çalmıyor"
+          }
+        }
+      }
+    },
+    "media.idle.nothingIn": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ uygulamasında bir şey çalmıyor"
+          }
+        }
+      }
+    },
+    "media.idle.start": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spotify ya da Müzik'i başlatın"
+          }
+        }
+      }
+    },
+    "media.lyrics.earlier": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sözleri daha erken göster"
+          }
+        }
+      }
+    },
+    "media.lyrics.later": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sözleri daha geç göster"
+          }
+        }
+      }
+    },
+    "media.lyrics.loading": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Şarkı sözleri…"
+          }
+        }
+      }
+    },
+    "media.lyrics.nudge.help": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu şarkının söz zamanlaması — sıfırlamak için tıklayın"
+          }
+        }
+      }
+    },
+    "media.permission.path": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sistem Ayarları → Gizlilik ve Güvenlik → Otomasyon → MyNotch"
+          }
+        }
+      }
+    },
+    "media.permission.title": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Otomasyon izni gerekiyor"
+          }
+        }
+      }
+    },
     "menu.debugPreview": {
       "localizations": {
         "tr": {
@@ -2077,6 +2207,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "MyNotch Ayarları"
+          }
+        }
+      }
+    },
+    "spotify.error.noClientID": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spotify client ID ayarlanmamış"
           }
         }
       }

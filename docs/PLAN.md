@@ -382,7 +382,7 @@ Ada/
 | Proje üretimi | XcodeGen: `project.yml` → `MyNotch.xcodeproj`; üretilen `.xcodeproj` ve `Resources/Info.plist` git dışı |
 | Dil modu | Swift 6, Approachable Concurrency; uygulama hedefinde varsayılan `MainActor` izolasyonu, saf yardımcılar `nonisolated` |
 | İmza | Debug: ad-hoc (`CODE_SIGN_IDENTITY = "-"`, makinede identity yok); dağıtım için Developer ID + notarization sonra |
-| Menü bar | SwiftUI `MenuBarExtra` (.menu) + `SettingsLink`; notch paneli ve Debug Preview AppKit pencereleri |
+| Menü bar | SwiftUI `MenuBarExtra` (.menu); notch paneli, Debug Preview **ve ayarlar penceresi** AppKit pencereleri (Faz 5'te `SettingsLink`/`Settings` sahnesi kaldırıldı: liquid glass için `.fullSizeContentView` pencere oluşturulurken verilmek zorunda, SwiftUI sahnesi bunu sunmuyor) |
 | MVP medya | Spotify + Apple Music (ikisi de) |
 | Visualizer | MVP'de sahte animasyon; gerçek FFT Faz 6 opsiyonel |
 | Test | XCTest (`MyNotchTests/`) |
@@ -400,6 +400,13 @@ Ada/
 | Claude usage endpoint | `GET https://api.anthropic.com/api/oauth/usage`, `anthropic-beta: oauth-2025-04-20`, `User-Agent: claude-code/2.1.121` → 2026-09-04'te 200 (UA'sız varyant denenmedi; UA masrafsız, gönderiliyor). Poll 5 dk (`SuspendingClock`: uyku sayılmaz), 429 → 900 sn cooldown + tek retry, uyanmada 60 sn grace, `>15 dk` bayat = soluk. Başarısız poll son iyi değeri korur (reset geçmiş pencereler düşer) |
 | ccusage | `ccusage` binary'si bulunursa o, yoksa `npx --yes ccusage@20` (nvm/Homebrew/bun/npm-global dizinleri taranır; GUI PATH'i kısıtlı). Ölçüm 2026-09-04: blocks 2,8 sn, daily 0,9 sn (~300 MB log). Her çağrı `--offline`; kadans: aktivite bittikten 20 sn sonra, çalışma sürerken en geç 2 dk'da bir. `Decodable` varsayılan değerleri kaçan anahtarları **kapsamaz** → DTO'lar elle `decodeIfPresent` |
 | EventBus | Combine yerine main-actor callback kaydı (`Core/Modules/EventBus.swift`): Swift 6'da `Sendable` gereksinimleri modül sözleşmesini kirletmesin diye. Abonelik token'ı bırakılınca bir sonraki main-actor turunda iptal olur, `invalidate()` anında iptal eder |
+| Ayar deposu (Faz 5) | `Settings/SettingsStore.swift`: tüm UserDefaults anahtarları `SettingsKey`'de (Faz 1–4 anahtarları aynı kaldı: `spotifyClientID`, `lyricsEnabled`, `lyricsLeadSeconds`, `lyricsShifts`, `ccusagePath`, `claudeConfigDir`); yeniler `hoverDelay`, `closeDelay`, `hapticsEnabled`, `disabledModules`, `displaySelection`, `usageWarningThreshold`, `usageCriticalThreshold`, `usagePollInterval`, `usageAlertsEnabled`, `onboardingCompleted`. Sınırlar `SettingsRules` (closeDelay ≤ 1 s, poll ∈ {300, 600, 900, 1800}, critical ≥ warning + 0,05). Depo motoru tanımaz; `App/SettingsApplier.swift` dağıtır. `preferredModuleID` kullanıcı tercihi olarak `ModuleManager`'da kaldı. |
+| `@Observable` + `didSet` | 2026-09-06'da ölçüldü: `didSet` içinde kendi özelliğine atama (`x = clamp(x)`) macro'lu sınıfta sonsuz özyineleme (SIGSEGV). Sınırlanan değerler `@ObservationIgnored` depo + `access/withMutation` ile açık accessor kullanır; yalnızca kalıcılaştıran `didSet`'ler kalır. |
+| Açılışta başlat | `SMAppService.mainApp` (`Settings/LaunchAtLogin.swift`); durum sistemden okunur, defaults'a yazılmaz. `build/` dizininden çalışan derlemede `status == .notFound` normaldir; UI bunu "Uygulamalar klasörüne taşı" olarak açıklar. |
+| Ekran seçimi | `ScreenPreference` (`automatic` / ekran adı) saf çözüm: adı eşleşen ekran → çentikli → ana → ilk. Ekran çıkarılınca otomatiğe düşer, ad listede "(bağlı değil)" olarak kalır. `NotchWindowController.screenPreference` değişince `reposition()`. |
+| Onboarding | Ayrı pencere yok: ayarlar penceresinin **Kurulum** sekmesi (Otomasyon, Spotify, Claude girişi, loglar, ccusage, açılışta başlat; her satır durum + tek eylem). `onboardingCompleted` false ve `-debugState` yokken açılışta bu sekme gelir; "Bitti" bayrağı yazar. `-onboardingCompleted YES` argümanı ölçüm/ekran görüntüsü çalıştırmalarında bastırır. |
+| Ayar metinleri | `L("anahtar", "English default")` (`Core/Localization.swift`) + `scripts/sync-settings-strings.py` içindeki tr tablosu; script eksik çeviride hata verir. Medya modülünün kalan İngilizce metinleri de bu yolla Türkçeleştirildi. |
+| Boşta CPU | `scripts/measure-idle.sh` (`top`, 2 sn örnek). 2026-09-06 Debug: kapalı %0,00 (25 MB), compact (demo canlı) %0,00; açık Claude kartı ilk ölçümde **%14–18 sürekli**. Bisect (`-mask` başlatma argümanıyla bölümleri/efektleri tek tek açıp `top` ile ölçmek) suçluyu buldu: **tekrarlayan `symbolEffect(.pulse/.variableColor, options: .repeating)`** SwiftUI'yi her karede tüm kartın display list'ini yeniden üretmeye zorluyor (blur/gölge ile ilgisi yok; `sample` yalnızca genel `renderDisplayList` kareleri gösterdi). Çözüm `Core/Window/PulsingSymbol.swift`: `NSImageView` + `CABasicAnimation(opacity)` — nefes render server'da koşar, uygulama %0. Kural: sürekli/ambient animasyon = `PulsingSymbol` (CA); tek seferlik `.bounce`/`.numericText` SwiftUI'de kalır. Ölçümler §16.4. |
 
 ## 16. Faz 5 Planı — Ayarlar & Cila (2026-09-06)
 
@@ -434,6 +441,19 @@ Amaç: Faz 1–4'te `defaults write` ile ayarlanan her şeyin bir yüzü olsun, 
 - Sparkle/auto-update ve notarize: `macos-release` skill'iyle ayrı bir iş.
 - Kısayol tuşları (notch'u klavyeyle aç/kapa): backlog.
 
-### 16.4 Ölçümler
+### 16.4 Ölçümler (2026-09-06, Debug derlemesi, M-serisi MacBook, dahili ekran)
 
-(doldurulacak: `scripts/measure-idle.sh` çıktıları)
+`scripts/measure-idle.sh 30` (`top -l`, 2 sn örnek, ilk örnek atılır; Türkçe yerelde ondalık virgül normalize edilir):
+
+| Durum | Ortalama CPU | Not |
+|---|---|---|
+| Kapalı (Spotify duraklatılmış, Claude boşta) | %0,00 | 25 MB |
+| Compact (demo modülü canlı) | %0,00 | 26 MB |
+| Açık Claude kartı, yerleşmiş | %0,0–0,2 | 37 MB |
+| Açık Claude kartı, Claude çalışıyor (nabızlar aktif) — **önce** | %14–18 sürekli, açılışta %25 | tekrarlayan `symbolEffect` her karede display list yeniliyordu |
+| Açık Claude kartı, Claude çalışıyor — **sonra** (`PulsingSymbol`) | %0,0 (açılış animasyonu 2 sn %23) | 32 MB |
+| Açık medya kartı / demo kartı | %0,0 | ölçüm açılıştan 2 sn sonra |
+
+Ölçülmedi (çalan müzik yok): compact şeritteki seviye ölçeri (`TimelineView(.animation(minimumInterval: 1/24))`, yalnızca çalarken) — 24 fps SwiftUI yenilemesi küçük bir alt ağaçta; ilk fırsatta `scripts/measure-idle.sh` ile ölç.
+
+Yöntem notu: `sample` süreç içi render'ı gösterdi ama hangi görünüm olduğunu değil; `Self._logChanges()` gövde yeniden değerlendirmesi olmadığını kanıtladı (16 değerlendirme / 20 sn); sonucu **maske argümanıyla bisect** verdi. Başlatma argümanları `UserDefaults`'a *string* olarak gelir — `object(forKey:) as? Int` sessizce nil döner, `integer(forKey:)` kullan. zsh'ta `log` bir builtin'dir; `/usr/bin/log show|stream` yaz.

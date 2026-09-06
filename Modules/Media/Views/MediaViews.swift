@@ -186,7 +186,7 @@ struct MediaControlBar: View {
         switch controller.favoriteSupport {
         case .available:
             return (state.isFavorite ? "heart.fill" : "heart",
-                    state.isFavorite ? "Remove from favourites" : "Add to favourites",
+                    state.isFavorite ? L("media.favorite.remove", "Remove from favourites") : L("media.favorite.add", "Add to favourites"),
                     tint(isOn: state.isFavorite, isEnabled: true),
                     true)
         case .needsConnection(let hint), .needsSetup(let hint):
@@ -356,9 +356,9 @@ struct MediaPermissionView: View {
         VStack(spacing: 6) {
             Image(systemName: "lock.shield")
                 .font(.title2)
-            Text("Automation permission needed")
+            Text(L("media.permission.title", "Automation permission needed"))
                 .font(.headline)
-            Text("System Settings → Privacy & Security → Automation → MyNotch")
+            Text(L("media.permission.path", "System Settings → Privacy & Security → Automation → MyNotch"))
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -377,10 +377,10 @@ struct MediaIdleView: View {
         VStack(spacing: 6) {
             Image(systemName: "music.note")
                 .font(.title2)
-            Text(playerName.map { "Nothing playing in \($0)" } ?? "Nothing playing")
+            Text(playerName.map { L("media.idle.nothingIn", "Nothing playing in \($0)") } ?? L("media.idle.nothing", "Nothing playing"))
                 .font(.headline)
             if playerName == nil {
-                Text("Start Spotify or Music")
+                Text(L("media.idle.start", "Start Spotify or Music"))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -461,7 +461,7 @@ struct MediaLyricsView: View {
             .onHover { isHovering = $0 }
             .onAppear { service.refreshOutputLatency() }
         case .loading:
-            Text("Lyrics…")
+            Text(L("media.lyrics.loading", "Lyrics…"))
                 .font(.system(size: 11))
                 .foregroundStyle(.white.opacity(0.25))
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -490,17 +490,17 @@ struct MediaLyricsView: View {
         let shift = service.shift(for: state)
         return HStack(spacing: 3) {
             if isHovering {
-                nudgeButton("minus", help: "Show lyrics earlier") { service.nudge(state, by: -LyricsService.shiftStep) }
+                nudgeButton("minus", help: L("media.lyrics.earlier", "Show lyrics earlier")) { service.nudge(state, by: -LyricsService.shiftStep) }
             }
             if shift != 0 {
                 Text(Self.shiftLabel(shift))
                     .font(.system(size: 9, weight: .semibold).monospacedDigit())
                     .contentShape(Rectangle())
                     .notchTap { service.resetShift(for: state) }
-                    .help("Lyrics timing for this song — click to reset")
+                    .help(L("media.lyrics.nudge.help", "Lyrics timing for this song — click to reset"))
             }
             if isHovering {
-                nudgeButton("plus", help: "Show lyrics later") { service.nudge(state, by: LyricsService.shiftStep) }
+                nudgeButton("plus", help: L("media.lyrics.later", "Show lyrics later")) { service.nudge(state, by: LyricsService.shiftStep) }
             }
         }
         .foregroundStyle(.white.opacity(0.85))

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Adds the settings window's strings to App/Localizable.xcstrings.
+"""Adds the app's `L()` strings to App/Localizable.xcstrings.
 
 Scans `L("key", "English default")` calls, merges the Turkish translations below into the catalog
 (existing entries are kept) and lists any key that still lacks a translation, so a new string
@@ -12,7 +12,7 @@ import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 CATALOG = ROOT / "App" / "Localizable.xcstrings"
-SOURCES = list((ROOT / "Settings").rglob("*.swift")) + [ROOT / "App" / "MenuBar.swift"]
+SOURCES = [path for folder in ("App", "Core", "Modules", "Settings") for path in (ROOT / folder).rglob("*.swift")]
 CALL = re.compile(r'L\("([^"]+)",\s*"((?:[^"\\]|\\.)*)"\)')
 
 TR = {
@@ -154,6 +154,21 @@ TR = {
     "settings.about.debugPreview": "Debug Preview'ı aç",
     # Menu bar
     "menu.settings": "Ayarlar…", "menu.debugPreview": "Debug Preview", "menu.quit": "MyNotch'tan Çık",
+    # Media module
+    "media.favorite.unsupported": "%@ başka uygulamaların parça kaydetmesine izin vermiyor",
+    "media.favorite.nothingPlaying": "Hiçbir şey çalmıyor",
+    "media.permission.title": "Otomasyon izni gerekiyor",
+    "media.permission.path": "Sistem Ayarları → Gizlilik ve Güvenlik → Otomasyon → MyNotch",
+    "media.idle.start": "Spotify ya da Müzik'i başlatın",
+    "media.lyrics.loading": "Şarkı sözleri…",
+    "media.lyrics.nudge.help": "Bu şarkının söz zamanlaması — sıfırlamak için tıklayın",
+    "media.favorite.remove": "Favorilerden çıkar",
+    "media.favorite.add": "Favorilere ekle",
+    "media.idle.nothingIn": "%@ uygulamasında bir şey çalmıyor",
+    "media.idle.nothing": "Bir şey çalmıyor",
+    "media.lyrics.earlier": "Sözleri daha erken göster",
+    "media.lyrics.later": "Sözleri daha geç göster",
+    "spotify.error.noClientID": "Spotify client ID ayarlanmamış",
 }
 
 

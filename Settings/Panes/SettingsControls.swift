@@ -176,6 +176,10 @@ nonisolated enum SystemSettingsLink {
     static let calendars = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Calendars")!
     /// "Screen & System Audio Recording" — system-audio capture lives in the screen-recording pane.
     static let screenAudio = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture")!
+    static let accessibility = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!
+    /// Desktop, Documents and Downloads folder grants.
+    static let filesAndFolders = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_FilesAndFolders")!
+    static let sound = URL(string: "x-apple.systempreferences:com.apple.preference.sound")!
 
     @MainActor
     static func open(_ url: URL) {

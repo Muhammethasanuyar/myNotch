@@ -170,4 +170,25 @@ final class SettingsStoreTests: XCTestCase {
         defaults.set(-4.0, forKey: SettingsKey.shelfKeepInterval.rawValue)
         XCTAssertEqual(SettingsStore(defaults: defaults).shelfKeepInterval, 0, "a hand-edited negative reads as forever")
     }
+
+    func testModulesThatShipOffStayOffOnceTheUserHasNotSpoken() {
+        let suite = "SettingsStoreTests-defaults-\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suite)!
+        addTeardownBlock { UserDefaults(suiteName: suite)?.removePersistentDomain(forName: suite) }
+        // An upgraded install: the user had switched media off before these modules existed.
+        defaults.set(["media"], forKey: SettingsKey.disabledModules.rawValue)
+        let store = SettingsStore(defaults: defaults)
+        XCTAssertFalse(store.isModuleEnabled("downloads"))
+        XCTAssertFalse(store.isModuleEnabled("ci"))
+        XCTAssertFalse(store.isModuleEnabled("media"), "the user's own choice survives")
+        XCTAssertTrue(store.isModuleEnabled("shelf"))
+        XCTAssertEqual(Set(defaults.stringArray(forKey: SettingsKey.moduleDefaultsApplied.rawValue) ?? []), ModuleDefaults.disabledByDefault)
+
+        store.setModule("downloads", enabled: true)
+        let later = SettingsStore(defaults: defaults)
+        XCTAssertTrue(later.isModuleEnabled("downloads"), "once applied, the shipped default never overrides the user again")
+        XCTAssertFalse(later.isModuleEnabled("ci"))
+        XCTAssertEqual(ModuleDefaults.pendingDisables(applied: ["downloads", "ci"]), [])
+        XCTAssertEqual(ModuleDefaults.pendingDisables(applied: ["downloads"]), ["ci"])
+    }
 }

@@ -44,6 +44,21 @@ nonisolated enum SettingsKey: String, CaseIterable, Sendable {
     // App
     case onboardingCompleted
     case updateChecksEnabled
+    /// Module ids whose shipped default has been written into `disabledModules` once.
+    case moduleDefaultsApplied
+}
+
+/// Modules that ship switched off because turning them on has a cost the user should choose:
+/// the downloads watcher raises the Downloads-folder permission prompt, the CI module runs an
+/// external command line tool. Everything else starts on.
+nonisolated enum ModuleDefaults {
+    static let disabledByDefault: Set<String> = ["downloads", "ci"]
+
+    /// The ids to add to the disabled set now: shipped-off modules whose default was never applied.
+    /// Idempotent — a user who turned one on stays on, because its id is already marked applied.
+    static func pendingDisables(applied: Set<String>) -> Set<String> {
+        disabledByDefault.subtracting(applied)
+    }
 }
 
 /// Pure limits for the values the settings window can set: a hand-edited default can never put the
@@ -264,7 +279,16 @@ final class SettingsStore {
         storedHoverDelay = SettingsRules.hoverDelay(defaults.object(forKey: SettingsKey.hoverDelay.rawValue) as? Double ?? Self.defaultHoverDelay)
         storedCloseDelay = SettingsRules.closeDelay(defaults.object(forKey: SettingsKey.closeDelay.rawValue) as? Double ?? Self.defaultCloseDelay)
         hapticsEnabled = defaults.object(forKey: SettingsKey.hapticsEnabled.rawValue) as? Bool ?? true
-        disabledModuleIDs = Set(defaults.stringArray(forKey: SettingsKey.disabledModules.rawValue) ?? [])
+        var disabled = Set(defaults.stringArray(forKey: SettingsKey.disabledModules.rawValue) ?? [])
+        var applied = Set(defaults.stringArray(forKey: SettingsKey.moduleDefaultsApplied.rawValue) ?? [])
+        let pending = ModuleDefaults.pendingDisables(applied: applied)
+        if !pending.isEmpty {
+            disabled.formUnion(pending)
+            applied.formUnion(pending)
+            defaults.set(disabled.sorted(), forKey: SettingsKey.disabledModules.rawValue)
+            defaults.set(applied.sorted(), forKey: SettingsKey.moduleDefaultsApplied.rawValue)
+        }
+        disabledModuleIDs = disabled
         displaySelection = ScreenPreference(storedValue: defaults.string(forKey: SettingsKey.displaySelection.rawValue))
         visualizerEnabled = defaults.object(forKey: SettingsKey.visualizerEnabled.rawValue) as? Bool ?? false
         genericPlayerEnabled = defaults.object(forKey: SettingsKey.genericPlayerEnabled.rawValue) as? Bool ?? false

@@ -74,6 +74,9 @@ struct SettingsApplier {
             shelf?.store.keepInterval = store.shelfKeepInterval
         case .updateChecksEnabled:
             updater?.automaticallyChecksForUpdates = store.updateChecksEnabled
+        case .moduleDefaultsApplied:
+            // Bookkeeping the store does for itself at launch; nothing to push.
+            break
         case .pomodoroWorkMinutes, .pomodoroBreakMinutes, .pomodoroLongBreakMinutes, .pomodoroLongBreakEvery, .pomodoroAutoStart, .pomodoroSoundEnabled:
             pomodoro?.timer.config = store.pomodoroConfig
         case .calendarLeadMinutes:

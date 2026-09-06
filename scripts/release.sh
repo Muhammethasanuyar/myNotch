@@ -148,6 +148,26 @@ SIGNATURE=$("$SIGN_UPDATE" "$ZIP")   # sparkle:edSignature="…" length="…"
 echo "$SIGNATURE"
 NOTES=$(awk -v v="$VERSION" '$0 ~ "^## \\[" v "\\]" {f=1; next} /^## \[/ {f=0} f' CHANGELOG.md | sed -e '1{/^$/d;}')
 PUBDATE=$(LC_ALL=C date "+%a, %d %b %Y %H:%M:%S %z")
+# The changelog section as HTML for Sparkle's notes pane: headings, bullet lists, inline code.
+NOTES_HTML=$(python3 - "$NOTES" <<'PY'
+import html, re, sys
+out, in_list = [], False
+def inline(text):
+    return re.sub(r"\x60([^\x60]+)\x60", r"<code>\1</code>", html.escape(text))  # \x60 = backtick, kept out of bash's way
+for line in sys.argv[1].splitlines():
+    if line.startswith("### "):
+        if in_list: out.append("</ul>"); in_list = False
+        out.append("<h3>" + html.escape(line[4:]) + "</h3>")
+    elif line.startswith("- "):
+        if not in_list: out.append("<ul>"); in_list = True
+        out.append("<li>" + inline(line[2:]) + "</li>")
+    elif line.strip():
+        if in_list: out.append("</ul>"); in_list = False
+        out.append("<p>" + inline(line) + "</p>")
+if in_list: out.append("</ul>")
+print("\n".join(out))
+PY
+)
 ITEM=$(cat <<ITEM
     <item>
       <title>MyNotch $VERSION</title>
@@ -156,7 +176,7 @@ ITEM=$(cat <<ITEM
       <sparkle:shortVersionString>$VERSION</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
       <pubDate>$PUBDATE</pubDate>
-      <description><![CDATA[<pre>$NOTES</pre>]]></description>
+      <description><![CDATA[$NOTES_HTML]]></description>
       <enclosure url="https://github.com/$REPO/releases/download/v$VERSION/MyNotch-$VERSION.zip" type="application/octet-stream" $SIGNATURE/>
     </item>
 ITEM

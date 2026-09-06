@@ -33,6 +33,8 @@ targets:
         buildPhase: resources
       - path: Vendor/mediaremote-adapter/MediaRemoteAdapterTestClient
         buildPhase: resources
+      - path: Resources/AppIcon.icns
+        buildPhase: resources
     dependencies:
       - framework: Vendor/mediaremote-adapter/MediaRemoteAdapter.framework
         embed: true
@@ -55,7 +57,8 @@ targets:
         CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         NSPrincipalClass: NSApplication
         LSMinimumSystemVersion: "$(MACOSX_DEPLOYMENT_TARGET)"
-        NSHumanReadableCopyright: ""
+        NSHumanReadableCopyright: "Copyright © 2026 Muhammet Hasan Uyar. MIT License."
+        CFBundleIconFile: AppIcon
         NSAppleEventsUsageDescription: "MyNotch asks Spotify and Music what is playing so it can show it in the notch."
         NSCalendarsFullAccessUsageDescription: "MyNotch reads your upcoming events to count down to the next meeting in the notch. Nothing leaves this Mac."
         NSAudioCaptureUsageDescription: "MyNotch listens to what the Mac plays so the bars beside the notch can move to the music. The audio is reduced to six levels inside the app and never stored or sent."

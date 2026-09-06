@@ -96,6 +96,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         updater.checkForUpdates()
     }
 
+    /// A version a scheduled check found; the menu bar shows it until the user looks.
+    var pendingUpdateVersion: String? {
+        updater.pendingVersion
+    }
+
     /// Menu bar "Settings…": opens (or brings forward) the settings window where it was left.
     func showSettings() {
         showSettings(tab: nil)

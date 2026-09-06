@@ -11,7 +11,8 @@ struct MyNotchApp: App {
             MenuBarContentView(
                 openSettings: appDelegate.showSettings,
                 openDebugPreview: appDelegate.showDebugPreview,
-                checkForUpdates: appDelegate.checkForUpdates
+                checkForUpdates: appDelegate.checkForUpdates,
+                pendingUpdateVersion: appDelegate.pendingUpdateVersion
             )
         }
         .menuBarExtraStyle(.menu)

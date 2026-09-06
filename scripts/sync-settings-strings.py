@@ -155,6 +155,7 @@ TR = {
     # Menu bar
     "menu.settings": "Ayarlar…", "menu.debugPreview": "Debug Preview", "menu.quit": "MyNotch'tan Çık",
     "menu.checkForUpdates": "Güncellemeleri Denetle…",
+    "menu.updateAvailable": "%@ sürümüne güncelle…",
     "settings.about.releases": "Sürüm notları",
     "settings.about.network.github": "Güncelleme akışı (bu projenin deposundaki appcast.xml), günde bir, yalnızca uygulama ve macOS sürümüyle — Genel'deki anahtarla kapanır.",
     "settings.general.updates": "Güncellemeler",

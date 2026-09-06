@@ -1171,6 +1171,16 @@
         }
       }
     },
+    "menu.updateAvailable": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ sürümüne güncelle…"
+          }
+        }
+      }
+    },
     "module.battery": {
       "localizations": {
         "tr": {

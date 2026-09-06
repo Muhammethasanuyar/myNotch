@@ -55,9 +55,12 @@ nonisolated enum NotchLayout {
     /// points past their frames, and the housing's corners are rounded; without this a ring drawn
     /// flush against the housing reads as tucked underneath it.
     static let expandedTopGap: CGFloat = 8
-    /// Extra width a popup adds around the housing, and how far it drops below it.
+    /// Extra width a popup adds around the housing, and the strip it hangs below it: the popup's
+    /// row lives entirely in that strip, so no part of a title is ever behind the camera.
     static let popupExtraWidth: CGFloat = 240
-    static let popupExtraHeight: CGFloat = 16
+    static let popupExtraHeight: CGFloat = 36
+    /// Inset between the shape's edge (past the ears) and popup content.
+    static let popupContentInset: CGFloat = 12
     /// Vertical breathing room of compact content: icon height = housing height − this.
     static let compactContentInset: CGFloat = 12
     /// Strip reserved above expanded content while another module's banner is showing, so the two
@@ -148,6 +151,12 @@ nonisolated enum NotchLayout {
     /// Distance from the panel's top edge to the surface.
     static func topInset(for metrics: NotchLayoutMetrics) -> CGFloat {
         metrics.style == .notch ? 0 : metrics.menuBarHeight + floatingTopGap
+    }
+
+    /// Where popup content starts below the surface's top edge: under the housing, or at the top of
+    /// a floating capsule, which has nothing to hide behind.
+    static func popupTopInset(for metrics: NotchLayoutMetrics) -> CGFloat {
+        metrics.style == .notch ? metrics.notchSize.height : 0
     }
 
     /// Where expanded content starts below the surface's top edge: under the housing plus a gap.

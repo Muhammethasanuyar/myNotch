@@ -73,9 +73,12 @@ struct NotchRootView: View {
         case .expanded(let moduleID):
             expandedLayer(moduleID: moduleID, size: size, radii: radii, screens: screens)
         case .popup(let event):
+            // The row hangs below the housing across the surface's full width, so a long title is
+            // read rather than hidden behind the camera; a floating capsule centres it.
             content.popup(event, morphNamespace)
-                .padding(.horizontal, radii.ear + 12)
+                .padding(.horizontal, radii.ear + NotchLayout.popupContentInset)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .padding(.top, NotchLayout.popupTopInset(for: metrics))
                 .transition(NotchTransitions.popup)
         }
     }

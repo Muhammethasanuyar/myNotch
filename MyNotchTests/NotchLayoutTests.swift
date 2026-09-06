@@ -32,7 +32,14 @@ final class NotchLayoutTests: XCTestCase {
 
     func testPopupGrowsAroundHousing() {
         let size = NotchLayout.shapeSize(for: .popup(sampleEvent), metrics: notched)
-        XCTAssertEqual(size, CGSize(width: 168 + 240 + 16, height: 37 + 16))
+        XCTAssertEqual(size, CGSize(width: 168 + 240 + 16, height: 37 + NotchLayout.popupExtraHeight))
+    }
+
+    func testPopupContentHangsBelowTheHousing() {
+        // The row must clear the camera over a housing; a floating capsule has nothing to clear.
+        XCTAssertEqual(NotchLayout.popupTopInset(for: notched), 37)
+        XCTAssertEqual(NotchLayout.popupTopInset(for: floating), 0)
+        XCTAssertGreaterThanOrEqual(NotchLayout.popupExtraHeight, 26 + 8, "room for a 26 pt artwork row with breathing space")
     }
 
     func testExpandedIncludesHousingAndEars() {

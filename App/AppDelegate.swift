@@ -125,10 +125,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             // Whoever owns the notch (with a player running, the media module) unless told otherwise.
             model.override(.expanded(moduleID: moduleID ?? model.defaultModuleID))
         case "popup":
+            // `-debugModule <id>` renders the event with that module's popup view (the media
+            // module's, say); the title is long on purpose, so a layout that hides text shows it.
             model.showPopup(
                 NotchEvent(
-                    moduleID: demo.id,
-                    title: "Now playing",
+                    moduleID: moduleID ?? demo.id,
+                    title: "A Rather Long Track Title That Must Stay Readable Beside The Housing",
                     detail: "\(demo.track.artist) — \(demo.track.title)",
                     symbolName: "music.note",
                     duration: 30

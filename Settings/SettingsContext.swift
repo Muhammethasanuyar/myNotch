@@ -60,6 +60,7 @@ struct SettingsContext {
     let manager: ModuleManager
     let launchAtLogin: LaunchAtLogin
     let openDebugPreview: @MainActor () -> Void
+    let checkForUpdates: @MainActor () -> Void
 
     var media: MediaModule? {
         manager.module(id: "media") as? MediaModule

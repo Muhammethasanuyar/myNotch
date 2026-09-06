@@ -5,6 +5,7 @@ import AppKit
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private let model = NotchViewModel()
     private let settings = SettingsStore()
+    private let updater = UpdaterManager()
     private let launchAtLogin = LaunchAtLogin()
     private var moduleManager: ModuleManager?
     private var terminationSignal: DispatchSourceSignal?
@@ -42,10 +43,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         notchController.show()
         notchWindowController = notchController
 
-        let applier = SettingsApplier(store: settings, model: model, manager: manager, notch: notchController)
+        let applier = SettingsApplier(store: settings, model: model, manager: manager, notch: notchController, updater: updater)
         applier.applyAll()
         settings.onChange = { applier.apply($0) }
         settingsApplier = applier
+        // After the settings, so Sparkle starts with the user's answer to "check automatically?"
+        // already in place and never asks it itself. No-op in Debug builds.
+        updater.start()
 
         // `-liveContent YES` / `-demoLive YES`: makes the demo module live so the engine can be
         // exercised without a real player running.
@@ -87,6 +91,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         manager.register(module)
     }
 
+    /// Menu bar "Check for Updates…".
+    func checkForUpdates() {
+        updater.checkForUpdates()
+    }
+
     /// Menu bar "Settings…": opens (or brings forward) the settings window where it was left.
     func showSettings() {
         showSettings(tab: nil)
@@ -101,7 +110,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             store: settings,
             manager: moduleManager,
             launchAtLogin: launchAtLogin,
-            openDebugPreview: { [weak self] in self?.showDebugPreview() }
+            openDebugPreview: { [weak self] in self?.showDebugPreview() },
+            checkForUpdates: { [weak self] in self?.checkForUpdates() }
         ))
         settingsWindowController = controller
         controller.show(tab: tab)

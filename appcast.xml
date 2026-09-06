@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
+  <channel>
+    <title>MyNotch</title>
+    <link>https://github.com/Muhammethasanuyar/myNotch</link>
+    <description>MyNotch releases. Items are appended by scripts/release.sh; newest first.</description>
+    <language>en</language>
+  </channel>
+</rss>

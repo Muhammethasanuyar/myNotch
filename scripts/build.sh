@@ -7,6 +7,9 @@ cd "$(dirname "$0")/.."
 BUILD_DIR="${MYNOTCH_BUILD_DIR:-$HOME/Library/Developer/Xcode/DerivedData/MyNotch}"
 
 xcodegen generate --quiet
+# The one Swift package (Sparkle) is pinned in project.yml; resolving it first keeps a fresh clone
+# from failing with "no such module 'Sparkle'" on the first build.
+xcodebuild -project MyNotch.xcodeproj -scheme MyNotch -derivedDataPath "$BUILD_DIR" -resolvePackageDependencies -quiet
 xcodebuild \
   -project MyNotch.xcodeproj \
   -scheme MyNotch \

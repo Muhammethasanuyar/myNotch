@@ -17,6 +17,13 @@ settings:
     MARKETING_VERSION: "0.1.0"
     CURRENT_PROJECT_VERSION: "1"
 
+# The one Swift package this project takes: the update framework. Pinned to an exact version so every
+# machine builds the same Sparkle; bump it deliberately (docs/RELEASE.md).
+packages:
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    exactVersion: 2.9.6
+
 targets:
   MyNotch:
     type: application
@@ -40,6 +47,7 @@ targets:
         embed: true
         codeSign: true
         link: false
+      - package: Sparkle
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.emre.mynotch
@@ -59,6 +67,13 @@ targets:
         LSMinimumSystemVersion: "$(MACOSX_DEPLOYMENT_TARGET)"
         NSHumanReadableCopyright: "Copyright © 2026 Muhammet Hasan Uyar. MIT License."
         CFBundleIconFile: AppIcon
+        # Sparkle: the appcast lives in this repository; the public key pairs with the EdDSA key
+        # in the release machine's Keychain (docs/RELEASE.md). Updates are offered, never installed
+        # without asking.
+        SUFeedURL: https://raw.githubusercontent.com/Muhammethasanuyar/myNotch/main/appcast.xml
+        SUPublicEDKey: NyKDlpcr+qf81QzCWhQT5d952q0bpZQek/gtEVATV2k=
+        SUAutomaticallyUpdate: false
+        SUScheduledCheckInterval: 86400
         NSAppleEventsUsageDescription: "MyNotch asks Spotify and Music what is playing so it can show it in the notch."
         NSCalendarsFullAccessUsageDescription: "MyNotch reads your upcoming events to count down to the next meeting in the notch. Nothing leaves this Mac."
         NSAudioCaptureUsageDescription: "MyNotch listens to what the Mac plays so the bars beside the notch can move to the music. The audio is reduced to six levels inside the app and never stored or sent."

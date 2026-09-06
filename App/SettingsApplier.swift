@@ -8,6 +8,7 @@ struct SettingsApplier {
     let model: NotchViewModel
     let manager: ModuleManager
     let notch: NotchWindowController
+    var updater: UpdaterManager? = nil
 
     /// Launch: the values the objects do not read for themselves. Module on/off flags are set
     /// before registration, and the path keys would only redo work `start()` has just done.
@@ -15,7 +16,8 @@ struct SettingsApplier {
         .hoverDelay, .closeDelay, .hapticsEnabled, .displaySelection, .visualizerEnabled, .genericPlayerEnabled,
         .usageWarningThreshold, .usagePollInterval, .usageAlertsEnabled,
         .batteryLowThreshold, .batteryAlertsEnabled, .pomodoroWorkMinutes,
-        .calendarLeadMinutes, .calendarSelectedIDs, .calendarAlertsEnabled, .shelfKeepInterval
+        .calendarLeadMinutes, .calendarSelectedIDs, .calendarAlertsEnabled, .shelfKeepInterval,
+        .updateChecksEnabled
     ]
 
     func applyAll() {
@@ -70,6 +72,8 @@ struct SettingsApplier {
             battery?.alertsEnabled = store.batteryAlertsEnabled
         case .shelfKeepInterval:
             shelf?.store.keepInterval = store.shelfKeepInterval
+        case .updateChecksEnabled:
+            updater?.automaticallyChecksForUpdates = store.updateChecksEnabled
         case .pomodoroWorkMinutes, .pomodoroBreakMinutes, .pomodoroLongBreakMinutes, .pomodoroLongBreakEvery, .pomodoroAutoStart, .pomodoroSoundEnabled:
             pomodoro?.timer.config = store.pomodoroConfig
         case .calendarLeadMinutes:

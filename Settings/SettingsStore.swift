@@ -43,6 +43,7 @@ nonisolated enum SettingsKey: String, CaseIterable, Sendable {
     case shelfKeepInterval
     // App
     case onboardingCompleted
+    case updateChecksEnabled
 }
 
 /// Pure limits for the values the settings window can set: a hand-edited default can never put the
@@ -232,6 +233,8 @@ final class SettingsStore {
     // MARK: App
 
     var onboardingCompleted: Bool { didSet { persist(onboardingCompleted, .onboardingCompleted) } }
+    /// Sparkle's daily appcast check; the only thing the app does on the network unasked.
+    var updateChecksEnabled: Bool { didSet { persist(updateChecksEnabled, .updateChecksEnabled) } }
 
     static let defaultHoverDelay: TimeInterval = 0.15
     static let defaultCloseDelay: TimeInterval = 0.8
@@ -299,6 +302,7 @@ final class SettingsStore {
         calendarAlertsEnabled = defaults.object(forKey: SettingsKey.calendarAlertsEnabled.rawValue) as? Bool ?? true
         storedShelfKeep = SettingsRules.shelfKeepInterval(defaults.object(forKey: SettingsKey.shelfKeepInterval.rawValue) as? Double ?? ShelfRules.defaultKeepInterval)
         onboardingCompleted = defaults.bool(forKey: SettingsKey.onboardingCompleted.rawValue)
+        updateChecksEnabled = defaults.object(forKey: SettingsKey.updateChecksEnabled.rawValue) as? Bool ?? true
     }
 
     // MARK: Modules

@@ -49,6 +49,12 @@ struct GeneralPane: View {
                     .toggleStyle(.switch)
             }
 
+            Section(L("settings.general.updates", "Updates")) {
+                Toggle(L("settings.general.updates.enabled", "Check for updates once a day"), isOn: $store.updateChecksEnabled)
+                    .toggleStyle(.switch)
+                SettingsFootnote(L("settings.general.updates.help", "Reads the appcast in the project's GitHub repository; only the app and macOS versions travel. A new version is offered with its notes and installed only when you say so. \"Check for Updates…\" in the menu bar works either way."))
+            }
+
             Section(L("settings.general.display", "Display")) {
                 Picker(L("settings.general.displayPicker", "Show the notch on"), selection: $store.displaySelection) {
                     Text(L("settings.general.display.automatic", "Automatic")).tag(ScreenPreference.automatic)

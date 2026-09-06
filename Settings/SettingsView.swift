@@ -83,7 +83,7 @@ struct SettingsView: View {
         case .setup:
             SetupPane(context: context, navigation: navigation, closeWindow: closeWindow)
         case .about:
-            AboutPane(openDebugPreview: context.openDebugPreview)
+            AboutPane(openDebugPreview: context.openDebugPreview, checkForUpdates: context.checkForUpdates)
         }
     }
 

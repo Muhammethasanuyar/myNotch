@@ -1131,6 +1131,16 @@
         }
       }
     },
+    "menu.checkForUpdates": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Güncellemeleri Denetle…"
+          }
+        }
+      }
+    },
     "menu.debugPreview": {
       "localizations": {
         "tr": {
@@ -1441,6 +1451,16 @@
         }
       }
     },
+    "settings.about.network.github": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Güncelleme akışı (bu projenin deposundaki appcast.xml), günde bir, yalnızca uygulama ve macOS sürümüyle — Genel'deki anahtarla kapanır."
+          }
+        }
+      }
+    },
     "settings.about.network.lrclib": {
       "localizations": {
         "tr": {
@@ -1467,6 +1487,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Kalbi okumak ya da değiştirmek için çalan parçanın kimliği — yalnızca hesabınızı bağladıktan sonra."
+          }
+        }
+      }
+    },
+    "settings.about.releases": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sürüm notları"
           }
         }
       }
@@ -2347,6 +2377,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "Başlangıç"
+          }
+        }
+      }
+    },
+    "settings.general.updates": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Güncellemeler"
+          }
+        }
+      }
+    },
+    "settings.general.updates.enabled": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Güncellemeleri günde bir denetle"
+          }
+        }
+      }
+    },
+    "settings.general.updates.help": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Projenin GitHub deposundaki appcast okunur; yalnızca uygulama ve macOS sürümü gider. Yeni sürüm notlarıyla önerilir ve yalnızca sen onaylayınca kurulur. Menü barındaki \"Güncellemeleri Denetle…\" her durumda çalışır."
           }
         }
       }

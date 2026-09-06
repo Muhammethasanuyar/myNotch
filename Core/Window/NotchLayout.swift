@@ -138,7 +138,9 @@ nonisolated enum NotchLayout {
             case .popup:
                 return CGSize(width: floatingCompactSize.width + 100, height: 48)
             case .expanded:
-                return expandedContentSize
+                // The same content area as over a housing: the card there is 150 high minus the
+                // bottom inset, so the floating card gets one inset added to its 150.
+                return CGSize(width: expandedContentSize.width, height: expandedContentSize.height + expandedContentInset)
             }
         }
     }

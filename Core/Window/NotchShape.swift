@@ -33,11 +33,15 @@ nonisolated struct NotchShape: Shape {
         let ear = top > 0 ? 0 : max(0, min(earRadius, rect.width / 2, rect.height / 2))
         let bottom = max(0, min(bottomRadius, rect.width / 2 - ear, rect.height - max(ear, top)))
 
+        // The path runs clockwise from the top-left corner: down the left side, along the bottom, up
+        // the right side, and `closeSubpath` draws the top edge back to the start.
         var path = Path()
         if top > 0 {
-            // Floating style: rounded top corners.
-            path.move(to: CGPoint(x: rect.minX, y: rect.minY + top))
-            path.addQuadCurve(to: CGPoint(x: rect.minX + top, y: rect.minY), control: CGPoint(x: rect.minX, y: rect.minY))
+            // Floating style: rounded top corners. The arc has to end on the left edge so the next
+            // segment runs straight down it; ending on the top edge instead cut a wedge out of the
+            // corner and slanted the top edge (seen on an external display, 2026-09-06).
+            path.move(to: CGPoint(x: rect.minX + top, y: rect.minY))
+            path.addQuadCurve(to: CGPoint(x: rect.minX, y: rect.minY + top), control: CGPoint(x: rect.minX, y: rect.minY))
         } else {
             // Housing style: the top edge is the screen edge; ears flare outward.
             path.move(to: CGPoint(x: rect.minX, y: rect.minY))

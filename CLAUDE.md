@@ -1,7 +1,7 @@
 # MyNotch — macOS Dynamic Notch App
 
 MacBook notch'unu Dynamic Island benzeri canlı bir yüzeye çeviren menü bar uygulaması.
-Yol haritası, mimari ve kararlar: `docs/PLAN.md` (Faz 0–5 tamam: iskelet, referans madenciliği, notch motoru, modül sistemi, medya modülü, Claude usage modülü, ayarlar & cila; sıradaki: Faz 6 gelişmiş — başlamadan `docs/PLAN.md` §15 kararlarını, §16 Faz 5 planını ve `docs/harvest/README.md` "Öne çıkan bulgular" bölümünü oku).
+Yol haritası, mimari ve kararlar: `docs/PLAN.md` (Faz 0–5 tamam: iskelet, referans madenciliği, notch motoru, modül sistemi, medya modülü, Claude usage modülü, ayarlar & cila; **Faz 6 sürüyor** — plan ve sıra `docs/PLAN.md` §17: visualizer, generic sağlayıcı, native JSONL parser, Battery/Pomodoro/Calendar/Shelf modülleri; başlamadan §15 kararlarını ve `docs/harvest/README.md` "Öne çıkan bulgular" bölümünü oku).
 
 ## Build & Run
 - Proje dosyası XcodeGen ile üretilir: `xcodegen generate`. `project.yml` tek gerçek kaynaktır; `MyNotch.xcodeproj` ve `Resources/Info.plist` üretilir, git'e girmez.

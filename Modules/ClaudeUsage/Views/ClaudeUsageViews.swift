@@ -241,7 +241,7 @@ struct ClaudeDashboardView: View {
             .foregroundStyle(.secondary)
         }
         .frame(width: 54)
-        .spotlight(.ring(subject.id), focus: $focus)
+        .spotlight(.ring(subject.id), focus: $focus, accent: ClaudeStyle.accent)
     }
 
     // MARK: Details
@@ -265,18 +265,8 @@ struct ClaudeDashboardView: View {
             // Floats above the footer and never takes hits, so the indicator under the cursor
             // stays hovered while its explanation is up.
             if let focus {
-                Text(explanation(for: focus, at: now))
-                    .font(.system(size: 9.5, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.92))
-                    .lineLimit(3)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 5)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(.black.opacity(0.92), in: RoundedRectangle(cornerRadius: 7, style: .continuous))
-                    .overlay(RoundedRectangle(cornerRadius: 7, style: .continuous).stroke(ClaudeStyle.accent.opacity(0.55), lineWidth: 1))
+                NotchExplanationBubble(text: explanation(for: focus, at: now), accent: ClaudeStyle.accent)
                     .padding(.bottom, 16)
-                    .allowsHitTesting(false)
                     .transition(.opacity.combined(with: .move(edge: .bottom)))
                     .id(focus)
             }
@@ -319,7 +309,7 @@ struct ClaudeDashboardView: View {
                 )
             }
             .foregroundStyle(service.isWorking ? ClaudeStyle.accent : .white.opacity(0.35))
-            .spotlight(.working, focus: $focus)
+            .spotlight(.working, focus: $focus, accent: ClaudeStyle.accent)
         }
         .animation(Anim.subtle, value: service.isWorking)
     }
@@ -375,7 +365,7 @@ struct ClaudeDashboardView: View {
                 .foregroundStyle(focus == element ? .white : .white.opacity(0.4))
         }
         .lineLimit(1)
-        .spotlight(element, focus: $focus)
+        .spotlight(element, focus: $focus, accent: ClaudeStyle.accent)
     }
 
     /// ccusage prices from an offline table; a model it does not know comes out as $0, which is
@@ -393,7 +383,7 @@ struct ClaudeDashboardView: View {
             let parts = TokenPart.compose(today)
             if !parts.isEmpty {
                 TokenCompositionBar(parts: parts, highlighted: focus == .tokens)
-                    .spotlight(.tokens, focus: $focus)
+                    .spotlight(.tokens, focus: $focus, accent: ClaudeStyle.accent)
             }
         }
     }
@@ -405,7 +395,7 @@ struct ClaudeDashboardView: View {
             let shares = ModelShare.compute(today.modelBreakdowns)
             if shares.count > 1 {
                 ModelShareBar(shares: shares, highlighted: focus == .models)
-                    .spotlight(.models, focus: $focus)
+                    .spotlight(.models, focus: $focus, accent: ClaudeStyle.accent)
             } else if let only = shares.first {
                 HStack(spacing: 4) {
                     PulsingSymbol(systemName: "circle.fill", pointSize: 6, color: ClaudeStyle.accent, isActive: service.isWorking)
@@ -413,7 +403,7 @@ struct ClaudeDashboardView: View {
                         .font(.system(size: 9, weight: .medium))
                         .foregroundStyle(focus == .models ? .white : .secondary)
                 }
-                .spotlight(.models, focus: $focus)
+                .spotlight(.models, focus: $focus, accent: ClaudeStyle.accent)
             }
         }
     }
@@ -435,7 +425,7 @@ struct ClaudeDashboardView: View {
                         .lineLimit(1)
                 }
             }
-            .spotlight(.status, focus: $focus)
+            .spotlight(.status, focus: $focus, accent: ClaudeStyle.accent)
             Spacer(minLength: 4)
             if let plan = service.subscriptionType, !plan.isEmpty {
                 Text(plan.capitalized)
@@ -444,7 +434,7 @@ struct ClaudeDashboardView: View {
                     .padding(.horizontal, 5)
                     .padding(.vertical, 1)
                     .background(.white.opacity(focus == .plan ? 0.22 : 0.12), in: Capsule())
-                    .spotlight(.plan, focus: $focus)
+                    .spotlight(.plan, focus: $focus, accent: ClaudeStyle.accent)
             }
         }
         .animation(Anim.subtle, value: statusColor)
@@ -557,51 +547,6 @@ struct ClaudeDashboardView: View {
 
 // MARK: - Motion helpers
 
-/// Lifts an indicator towards the cursor and tells the card what is being looked at.
-private struct Spotlight: ViewModifier {
-    let element: DashboardFocus
-    @Binding var focus: DashboardFocus?
-
-    func body(content: Content) -> some View {
-        let active = focus == element
-        content
-            .scaleEffect(active ? 1.08 : 1)
-            .shadow(color: ClaudeStyle.accent.opacity(active ? 0.45 : 0), radius: active ? 8 : 0)
-            .contentShape(Rectangle())
-            .onHover { hovering in
-                if hovering {
-                    focus = element
-                } else if focus == element {
-                    focus = nil
-                }
-            }
-            .animation(.spring(response: 0.28, dampingFraction: 0.7), value: active)
-    }
-}
-
-/// Fades and slides an element in when the card opens, each a beat after the last.
-private struct Reveal: ViewModifier {
-    let appeared: Bool
-    let index: Int
-
-    func body(content: Content) -> some View {
-        content
-            .opacity(appeared ? 1 : 0)
-            .offset(y: appeared ? 0 : 10)
-            .animation(.spring(response: 0.55, dampingFraction: 0.8).delay(Double(index) * 0.07), value: appeared)
-    }
-}
-
-private extension View {
-    func spotlight(_ element: DashboardFocus, focus: Binding<DashboardFocus?>) -> some View {
-        modifier(Spotlight(element: element, focus: focus))
-    }
-
-    func reveal(_ appeared: Bool, index: Int) -> some View {
-        modifier(Reveal(appeared: appeared, index: index))
-    }
-}
-
 // MARK: - Charts
 
 /// Today's 5-hour blocks as a row of cards, oldest first: each card names the hour the block
@@ -627,7 +572,7 @@ private struct BlocksRow: View {
                 .font(.system(size: 8, weight: .medium))
                 .foregroundStyle(Color.white.opacity(focus == .blocks ? 0.9 : 0.45))
                 .lineLimit(1)
-                .spotlight(.blocks, focus: $focus)
+                .spotlight(.blocks, focus: $focus, accent: ClaudeStyle.accent)
             HStack(spacing: 4) {
                 if blocks.isEmpty {
                     Text(String(localized: "chart.blocks.none", defaultValue: "none yet"))
@@ -690,7 +635,7 @@ private struct BlocksRow: View {
         .scaleEffect(appeared ? 1 : 0.8)
         .opacity(appeared ? 1 : 0)
         .animation(.spring(response: 0.5, dampingFraction: 0.8).delay(Double(index) * 0.06), value: appeared)
-        .spotlight(.block(block.id), focus: $focus)
+        .spotlight(.block(block.id), focus: $focus, accent: ClaudeStyle.accent)
     }
 }
 

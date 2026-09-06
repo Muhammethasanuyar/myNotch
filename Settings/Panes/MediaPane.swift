@@ -16,6 +16,13 @@ struct MediaPane: View {
 
     private func content(controller: MediaController) -> some View {
         SettingsForm {
+            Section(L("settings.media.visualizer", "Level meter")) {
+                Toggle(L("settings.media.visualizer.enabled", "Move the bars to the music"), isOn: $store.visualizerEnabled)
+                    .toggleStyle(.switch)
+                visualizerStatus(controller.audioMeter.state)
+                SettingsFootnote(L("settings.media.visualizer.help", "Taps what the Mac plays (macOS 14.2 or later) and reduces it to six band levels inside the app; no audio is stored or sent. macOS asks once for system-audio recording permission. Off, the bars keep their own rhythm."))
+            }
+
             Section(L("settings.media.lyrics", "Lyrics")) {
                 Toggle(L("settings.media.lyrics.enabled", "Show synced lyrics"), isOn: $store.lyricsEnabled)
                     .toggleStyle(.switch)
@@ -80,6 +87,18 @@ struct MediaPane: View {
                 SettingsFootnote(L("settings.media.automation.help", "MyNotch asks Spotify and Music what is playing through AppleScript. macOS shows the permission prompt the first time a player is running."))
             }
         }
+    }
+
+    private func visualizerStatus(_ state: AudioMeterState) -> some View {
+        let (tone, title): (StatusTone, String) = switch state {
+        case .off: (.neutral, store.visualizerEnabled ? L("settings.media.visualizer.idle", "Waiting for music") : L("settings.media.visualizer.off", "Off — the bars dance on their own"))
+        case .unsupported: (.attention, L("settings.media.visualizer.unsupported", "Needs macOS 14.2 or later"))
+        case .starting: (.pending, L("settings.media.visualizer.starting", "Starting the tap…"))
+        case .running: (.ok, L("settings.media.visualizer.running", "Following the sound"))
+        case .silent: (.attention, L("settings.media.visualizer.silent", "Hearing nothing — allow MyNotch under Privacy & Security → Screen & System Audio Recording"))
+        case .failed(let status): (.problem, L("settings.media.visualizer.failed", "The tap could not start (\(status))"))
+        }
+        return StatusRow(tone: tone, title: title)
     }
 
     private func spotifyStatus(_ library: SpotifyLibraryClient) -> some View {

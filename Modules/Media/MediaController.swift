@@ -26,6 +26,8 @@ final class MediaController {
 
     /// Timed lyrics for the current track; the expanded player scrolls them.
     let lyrics = LyricsService()
+    /// Real levels for the equalizer while the visualizer setting is on and music plays.
+    let audioMeter = AudioMeter()
     /// The Spotify Web API connection, when the Spotify provider is wired; the settings window
     /// connects, disconnects and shows its state.
     let spotifyLibrary: SpotifyLibraryClient?
@@ -277,6 +279,7 @@ final class MediaController {
         if previous?.isPlaying != newState?.isPlaying {
             startPolling()
             startRefining()
+            audioMeter.setPlaying(newState?.isPlaying ?? false)
         }
         // Lyrics are per track, so only a new item triggers a lookup — play/pause and scrubbing
         // must never hit the network.
@@ -284,6 +287,11 @@ final class MediaController {
             lyrics.load(for: newState)
         }
         onStateChange?(previous, newState)
+    }
+
+    /// The visualizer setting: the tap only ever runs while this is on and something plays.
+    func setVisualizer(enabled: Bool) {
+        audioMeter.setEnabled(enabled)
     }
 
     /// The lyrics toggle moved: drop what is on screen and load again, which is a no-op when off.

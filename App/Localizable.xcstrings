@@ -2601,6 +2601,106 @@
         }
       }
     },
+    "settings.media.visualizer": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seviye ölçer"
+          }
+        }
+      }
+    },
+    "settings.media.visualizer.enabled": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Çubuklar müziğe göre hareket etsin"
+          }
+        }
+      }
+    },
+    "settings.media.visualizer.failed": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap başlatılamadı (%lld)"
+          }
+        }
+      }
+    },
+    "settings.media.visualizer.help": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mac'in çaldığı sesi dinler (macOS 14.2 ve sonrası) ve uygulama içinde altı bant seviyesine indirger; ses saklanmaz, gönderilmez. macOS sistem sesi kaydı iznini bir kez sorar. Kapalıyken çubuklar kendi ritmiyle oynar."
+          }
+        }
+      }
+    },
+    "settings.media.visualizer.idle": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Müzik bekleniyor"
+          }
+        }
+      }
+    },
+    "settings.media.visualizer.off": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kapalı — çubuklar kendi başına oynar"
+          }
+        }
+      }
+    },
+    "settings.media.visualizer.running": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sesi izliyor"
+          }
+        }
+      }
+    },
+    "settings.media.visualizer.silent": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hiçbir şey duyulmuyor — Gizlilik ve Güvenlik → Ekran ve Sistem Sesi Kaydı altında MyNotch'a izin ver"
+          }
+        }
+      }
+    },
+    "settings.media.visualizer.starting": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap başlatılıyor…"
+          }
+        }
+      }
+    },
+    "settings.media.visualizer.unsupported": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "macOS 14.2 ya da sonrası gerekir"
+          }
+        }
+      }
+    },
     "settings.modules.activity.idle": {
       "localizations": {
         "tr": {

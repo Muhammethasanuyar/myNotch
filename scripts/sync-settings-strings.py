@@ -154,6 +154,16 @@ TR = {
     "settings.about.debugPreview": "Debug Preview'ı aç",
     # Menu bar
     "menu.settings": "Ayarlar…", "menu.debugPreview": "Debug Preview", "menu.quit": "MyNotch'tan Çık",
+    "settings.media.visualizer": "Seviye ölçer",
+    "settings.media.visualizer.enabled": "Çubuklar müziğe göre hareket etsin",
+    "settings.media.visualizer.help": "Mac'in çaldığı sesi dinler (macOS 14.2 ve sonrası) ve uygulama içinde altı bant seviyesine indirger; ses saklanmaz, gönderilmez. macOS sistem sesi kaydı iznini bir kez sorar. Kapalıyken çubuklar kendi ritmiyle oynar.",
+    "settings.media.visualizer.idle": "Müzik bekleniyor",
+    "settings.media.visualizer.off": "Kapalı — çubuklar kendi başına oynar",
+    "settings.media.visualizer.unsupported": "macOS 14.2 ya da sonrası gerekir",
+    "settings.media.visualizer.starting": "Tap başlatılıyor…",
+    "settings.media.visualizer.running": "Sesi izliyor",
+    "settings.media.visualizer.silent": "Hiçbir şey duyulmuyor — Gizlilik ve Güvenlik → Ekran ve Sistem Sesi Kaydı altında MyNotch'a izin ver",
+    "settings.media.visualizer.failed": "Tap başlatılamadı (%lld)",
     # Media module
     "media.favorite.unsupported": "%@ başka uygulamaların parça kaydetmesine izin vermiyor",
     "media.favorite.nothingPlaying": "Hiçbir şey çalmıyor",

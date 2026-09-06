@@ -42,10 +42,13 @@ struct MediaCompactTrailing: View {
     @Environment(\.wingContentSize) private var size
 
     var body: some View {
+        let isPlaying = controller.state?.isPlaying ?? false
         EqualizerBars(
-            isPlaying: controller.state?.isPlaying ?? false,
+            isPlaying: isPlaying,
             color: controller.artwork?.accent ?? .white,
-            barWidth: size / 10
+            barWidth: size / 10,
+            feed: controller.audioMeter,
+            mode: AudioMeterRules.mode(state: controller.audioMeter.state, isPlaying: isPlaying)
         )
         .frame(width: size, height: size * 0.7)
     }

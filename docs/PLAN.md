@@ -630,3 +630,4 @@ Toplam ≈ 30 commit; her iş parçası kendi içinde bitmiş ve geri alınabili
 | 2026-09-06 | **Parite** — native vs `npx ccusage@20 claude blocks/daily --json --since bugün --offline` | Blok id'leri ve token sayıları **birebir**: `10:00 → 57 052 319`, `15:00 → 31 372 257 (aktif)`; günlük 88 424 576 token; dolar 16,09 $ (ccusage `daily`'den merge) |
 | 2026-09-06 | Açık Claude kartı CPU, açılıştan sonraki 16 sn (ledger + ccusage + açılış animasyonu dahil) | ort. %3,0, tepe %23,6; yerleşmiş durumda ≈%0 (§16.4 ile aynı) |
 | 2026-09-06 | Battery/Pomodoro kartları | render doğrulandı (pil); pomodoro görsel doğrulaması ekran kilitliyken alınamadı — manuel listede |
+| 2026-09-06 | Visualizer (process tap) | Swift 6 `complete` altında IO block derlendi; saf kurallar testli. Canlı tap **henüz çalıştırılmadı**: Spotify duraklatılmıştı (tap yalnızca çalarken açılır) ve TCC istemi kullanıcı onayı ister — `docs/manual-tests.md` Faz 6 visualizer maddeleri |

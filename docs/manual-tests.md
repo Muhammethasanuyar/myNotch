@@ -172,3 +172,10 @@ Hazırlık: `scripts/run.sh --args -openSettings general` (ya da menü bar → A
 3. Sayaç çalışırken uygulamayı öldür ve yeniden aç → kaldığı yerden devam (kapalıyken bitmiş faz bir kez duyurulur).
 4. 4 odak bloğu sonra uzun mola (15 dk); noktalar dolar.
 5. Ayarlar → Pomodoro: süreler slider/stepper, zil ve otomatik başlat anahtarları anında etkili.
+
+### Medya — gerçek seviye ölçer (visualizer)
+1. Ayarlar → Medya → "Çubuklar müziğe göre hareket etsin" aç; Spotify'da müzik başlat → macOS "MyNotch sistem sesini kaydetmek istiyor" istemini bir kez gösterir; İzin Ver → durum satırı "Sesi izliyor", çubuklar sese uyar (bas bölümlerde sol çubuk, tiz vokalde sağ). Sesi kısınca çubuklar tabana iner.
+2. İzni reddet (`tccutil reset AudioCapture com.emre.mynotch` ile sıfırlanır): 3 sn sonra durum "Hiçbir şey duyulmuyor", çubuklar otonom dansa döner; Gizlilik → Ekran ve Sistem Sesi Kaydı'ndan izin verince tekrar sese uyar.
+3. Duraklatınca 2 sn içinde tap kapanır (`/usr/bin/log show --last 2m --info --predicate 'subsystem == "com.emre.mynotch" AND category == "audio-tap"'` → başlatma satırı yalnızca çalarken); anahtar kapalıyken tap hiç açılmaz.
+4. CPU: `scripts/measure-idle.sh 30` müzik çalarken ve anahtar açıkken ≤ %2 (hedef); `-debugAudioMeter YES` ile seviyeler log'a basılır.
+5. Kulaklık/hoparlör değişimi: varsayılan çıkış değişince çubuklar en geç birkaç saniyede yeni cihazın sesini izler (aggregate cihaz yeniden kurulur — bu sürümde tap yeniden başlatılarak; başarısızlıkta 30 sn sonra tek deneme).

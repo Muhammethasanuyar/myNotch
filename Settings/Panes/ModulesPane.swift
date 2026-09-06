@@ -79,6 +79,7 @@ nonisolated enum ModuleCatalog {
         case "media": "music.note"
         case "claude": "asterisk"
         case "battery": "battery.100percent.bolt"
+        case "pomodoro": "timer"
         case "demo": "wand.and.stars"
         default: "puzzlepiece.extension"
         }
@@ -92,6 +93,8 @@ nonisolated enum ModuleCatalog {
             L("settings.modules.claude.summary", "Claude Code limits, today's cost and a pulse while it works.")
         case "battery":
             L("settings.modules.battery.summary", "Charging and low-battery popups, a gauge while it matters.")
+        case "pomodoro":
+            L("settings.modules.pomodoro.summary", "A focus timer: ring beside the housing, controls on the card, a chime between phases.")
         case "demo":
             L("settings.modules.demo.summary", "Exercises the notch engine; Debug builds only.")
         default:

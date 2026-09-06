@@ -14,7 +14,7 @@ struct SettingsApplier {
     static let appliedAtLaunch: [SettingsKey] = [
         .hoverDelay, .closeDelay, .hapticsEnabled, .displaySelection,
         .usageWarningThreshold, .usagePollInterval, .usageAlertsEnabled,
-        .batteryLowThreshold, .batteryAlertsEnabled
+        .batteryLowThreshold, .batteryAlertsEnabled, .pomodoroWorkMinutes
     ]
 
     func applyAll() {
@@ -63,6 +63,8 @@ struct SettingsApplier {
             battery?.service.thresholds = BatteryThresholds(low: store.batteryLowThreshold, critical: store.batteryCriticalThreshold)
         case .batteryAlertsEnabled:
             battery?.alertsEnabled = store.batteryAlertsEnabled
+        case .pomodoroWorkMinutes, .pomodoroBreakMinutes, .pomodoroLongBreakMinutes, .pomodoroLongBreakEvery, .pomodoroAutoStart, .pomodoroSoundEnabled:
+            pomodoro?.timer.config = store.pomodoroConfig
         case .onboardingCompleted:
             break
         }
@@ -78,5 +80,9 @@ struct SettingsApplier {
 
     private var battery: BatteryModule? {
         manager.module(id: "battery") as? BatteryModule
+    }
+
+    private var pomodoro: PomodoroModule? {
+        manager.module(id: "pomodoro") as? PomodoroModule
     }
 }

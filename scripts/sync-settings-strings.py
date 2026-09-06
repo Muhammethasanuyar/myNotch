@@ -188,6 +188,26 @@ TR = {
     "battery.lowPower.on": "Düşük Güç Modu",
     "battery.lowPower.off": "Tam güç",
     "battery.explain.estimating": "macOS bir tahmine bağlanmak için birkaç dakika düzenli kullanım ister.",
+    # Pomodoro module
+    "module.pomodoro": "Pomodoro",
+    "settings.tab.pomodoro": "Pomodoro",
+    "settings.modules.pomodoro.summary": "Odak zamanlayıcısı: çentiğin yanında halka, kartta denetimler, fazlar arasında zil.",
+    "settings.pomodoro.status": "Şimdi",
+    "settings.pomodoro.status.done": "%lld odak bloğu tamamlandı",
+    "settings.pomodoro.lengths": "Süreler",
+    "settings.pomodoro.work": "Odak",
+    "settings.pomodoro.break": "Kısa mola",
+    "settings.pomodoro.longBreak": "Uzun mola",
+    "settings.pomodoro.every": "Uzun mola sıklığı",
+    "settings.pomodoro.every.value": "%lld blokta bir",
+    "settings.pomodoro.behaviour": "Fazlar arasında",
+    "settings.pomodoro.autoStart": "Sonraki fazı otomatik başlat",
+    "settings.pomodoro.sound": "Faz bitince zil çal",
+    "settings.pomodoro.reset": "25 / 5 / 15'e dön",
+    "settings.pomodoro.help": "Zamanlayıcı çentikte yaşar: halkayı görmek için üzerine gel, başlatmak, duraklatmak, atlamak ya da sıfırlamak için karta dokun. Çalışan döngü yeniden açılışta devam eder.",
+    "pomodoro.cycles.caption": "%lld tamam",
+    "pomodoro.explain.phase": "odak blokları ve molalar sırayla gelir; süreler Ayarlar'da.",
+    "pomodoro.explain.controls": "Başlat ya da duraklat, sonraki faza atla ya da tüm döngüyü sıfırla.",
 }
 
 # Keys used through `String(localized:defaultValue:bundle:)` in the pure rules (interpolated
@@ -213,6 +233,18 @@ EXTRA_TR = {
     "battery.explain.onBattery": "Pille çalışıyor. Kalan süre macOS'un mevcut tüketimden tahmini.",
     "battery.explain.lowPowerOn": "Düşük Güç Modu açık: daha yavaş işlemci, daha loş ekran, daha uzun süre.",
     "battery.explain.lowPowerOff": "Düşük Güç Modu kapalı. Saatlere ihtiyacın olduğunda Sistem Ayarları → Pil'den aç.",
+    "pomodoro.phase.idle": "Odaklanmaya hazır",
+    "pomodoro.phase.work": "Odak",
+    "pomodoro.phase.shortBreak": "Kısa mola",
+    "pomodoro.phase.longBreak": "Uzun mola",
+    "pomodoro.event.workDone": "Odak bitti",
+    "pomodoro.event.breakNext": "%lld dakika mola",
+    "pomodoro.event.breakOver": "Mola bitti",
+    "pomodoro.event.workNext": "%lld dakika odak",
+    "pomodoro.explain.cycle": "%1$lld odak %2$@ tamamlandı. Her %3$lld blokta mola %5$lld yerine %4$lld dakika.",
+    "pomodoro.explain.running": "Halka faz bittikçe boşalır; kendi kendine akar, izlemek gerekmez.",
+    "pomodoro.explain.paused": "Duraklatıldı. Başlat buradan devam eder; Sıfırla döngüyü atar.",
+    "pomodoro.explain.idle": "%1$lld dakika odak, sonra %2$lld dakikalık mola. Başlat ilk bloğu açar.",
 }
 
 

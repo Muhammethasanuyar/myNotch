@@ -26,6 +26,13 @@ nonisolated enum SettingsKey: String, CaseIterable, Sendable {
     case batteryLowThreshold
     case batteryCriticalThreshold
     case batteryAlertsEnabled
+    // Pomodoro
+    case pomodoroWorkMinutes
+    case pomodoroBreakMinutes
+    case pomodoroLongBreakMinutes
+    case pomodoroLongBreakEvery
+    case pomodoroAutoStart
+    case pomodoroSoundEnabled
     // App
     case onboardingCompleted
 }
@@ -47,6 +54,10 @@ nonisolated enum SettingsRules {
     static let batteryCriticalRange: ClosedRange<Double> = 0.05...0.25
     /// Smallest gap kept between the battery's low and critical levels.
     static let batteryThresholdGap = 0.05
+    static let pomodoroWorkRange = 5...90
+    static let pomodoroBreakRange = 1...30
+    static let pomodoroLongBreakRange = 5...60
+    static let pomodoroLongBreakEveryRange = 2...8
 
     static func hoverDelay(_ value: TimeInterval) -> TimeInterval { clamp(value, to: hoverDelayRange) }
     static func closeDelay(_ value: TimeInterval) -> TimeInterval { clamp(value, to: closeDelayRange) }
@@ -64,6 +75,16 @@ nonisolated enum SettingsRules {
         let low = clamp(low, to: batteryLowRange)
         let critical = min(clamp(critical, to: batteryCriticalRange), max(low - batteryThresholdGap, batteryCriticalRange.lowerBound))
         return (low, critical)
+    }
+
+    /// Every pomodoro length inside its range.
+    static func pomodoroConfig(work: Int, breakMinutes: Int, longBreak: Int, every: Int) -> PomodoroConfig {
+        PomodoroConfig(
+            workMinutes: clamp(work, to: pomodoroWorkRange),
+            breakMinutes: clamp(breakMinutes, to: pomodoroBreakRange),
+            longBreakMinutes: clamp(longBreak, to: pomodoroLongBreakRange),
+            longBreakEvery: clamp(every, to: pomodoroLongBreakEveryRange)
+        )
     }
 
     /// The offered interval closest to `value`, never below the floor.
@@ -144,6 +165,35 @@ final class SettingsStore {
     }
     var batteryAlertsEnabled: Bool { didSet { persist(batteryAlertsEnabled, .batteryAlertsEnabled) } }
 
+    // MARK: Pomodoro
+
+    var pomodoroWorkMinutes: Int {
+        get { access(keyPath: \.pomodoroWorkMinutes); return storedPomodoro.workMinutes }
+        set { setPomodoro(work: newValue, changed: .pomodoroWorkMinutes) }
+    }
+    var pomodoroBreakMinutes: Int {
+        get { access(keyPath: \.pomodoroBreakMinutes); return storedPomodoro.breakMinutes }
+        set { setPomodoro(breakMinutes: newValue, changed: .pomodoroBreakMinutes) }
+    }
+    var pomodoroLongBreakMinutes: Int {
+        get { access(keyPath: \.pomodoroLongBreakMinutes); return storedPomodoro.longBreakMinutes }
+        set { setPomodoro(longBreak: newValue, changed: .pomodoroLongBreakMinutes) }
+    }
+    var pomodoroLongBreakEvery: Int {
+        get { access(keyPath: \.pomodoroLongBreakEvery); return storedPomodoro.longBreakEvery }
+        set { setPomodoro(every: newValue, changed: .pomodoroLongBreakEvery) }
+    }
+    var pomodoroAutoStart: Bool { didSet { persist(pomodoroAutoStart, .pomodoroAutoStart) } }
+    var pomodoroSoundEnabled: Bool { didSet { persist(pomodoroSoundEnabled, .pomodoroSoundEnabled) } }
+
+    /// The timer's configuration as the store holds it.
+    var pomodoroConfig: PomodoroConfig {
+        var config = storedPomodoro
+        config.autoStart = pomodoroAutoStart
+        config.soundEnabled = pomodoroSoundEnabled
+        return config
+    }
+
     // MARK: App
 
     var onboardingCompleted: Bool { didSet { persist(onboardingCompleted, .onboardingCompleted) } }
@@ -165,6 +215,8 @@ final class SettingsStore {
     @ObservationIgnored private var storedPollInterval: TimeInterval
     @ObservationIgnored private var storedBatteryLow: Double
     @ObservationIgnored private var storedBatteryCritical: Double
+    /// Lengths only; the two switches are ordinary stored properties.
+    @ObservationIgnored private var storedPomodoro: PomodoroConfig
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -193,6 +245,15 @@ final class SettingsStore {
         storedBatteryLow = battery.low
         storedBatteryCritical = battery.critical
         batteryAlertsEnabled = defaults.object(forKey: SettingsKey.batteryAlertsEnabled.rawValue) as? Bool ?? true
+        let shipped = PomodoroConfig()
+        storedPomodoro = SettingsRules.pomodoroConfig(
+            work: defaults.object(forKey: SettingsKey.pomodoroWorkMinutes.rawValue) as? Int ?? shipped.workMinutes,
+            breakMinutes: defaults.object(forKey: SettingsKey.pomodoroBreakMinutes.rawValue) as? Int ?? shipped.breakMinutes,
+            longBreak: defaults.object(forKey: SettingsKey.pomodoroLongBreakMinutes.rawValue) as? Int ?? shipped.longBreakMinutes,
+            every: defaults.object(forKey: SettingsKey.pomodoroLongBreakEvery.rawValue) as? Int ?? shipped.longBreakEvery
+        )
+        pomodoroAutoStart = defaults.object(forKey: SettingsKey.pomodoroAutoStart.rawValue) as? Bool ?? shipped.autoStart
+        pomodoroSoundEnabled = defaults.object(forKey: SettingsKey.pomodoroSoundEnabled.rawValue) as? Bool ?? shipped.soundEnabled
         onboardingCompleted = defaults.bool(forKey: SettingsKey.onboardingCompleted.rawValue)
     }
 
@@ -233,6 +294,14 @@ final class SettingsStore {
         batteryCriticalThreshold = Self.defaultBatteryCritical
     }
 
+    /// The timer's lengths and switches back to how the app ships.
+    func resetPomodoro() {
+        let shipped = PomodoroConfig()
+        setPomodoro(work: shipped.workMinutes, breakMinutes: shipped.breakMinutes, longBreak: shipped.longBreakMinutes, every: shipped.longBreakEvery, changed: .pomodoroWorkMinutes)
+        pomodoroAutoStart = shipped.autoStart
+        pomodoroSoundEnabled = shipped.soundEnabled
+    }
+
     // MARK: Persistence
 
     private func persist(_ value: Any?, _ key: SettingsKey) {
@@ -248,6 +317,29 @@ final class SettingsStore {
     private func trimmed(_ text: String) -> String? {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         return trimmed.isEmpty ? nil : trimmed
+    }
+
+    private func setPomodoro(work: Int? = nil, breakMinutes: Int? = nil, longBreak: Int? = nil, every: Int? = nil, changed key: SettingsKey) {
+        let fixed = SettingsRules.pomodoroConfig(
+            work: work ?? storedPomodoro.workMinutes,
+            breakMinutes: breakMinutes ?? storedPomodoro.breakMinutes,
+            longBreak: longBreak ?? storedPomodoro.longBreakMinutes,
+            every: every ?? storedPomodoro.longBreakEvery
+        )
+        withMutation(keyPath: \.pomodoroWorkMinutes) {
+            withMutation(keyPath: \.pomodoroBreakMinutes) {
+                withMutation(keyPath: \.pomodoroLongBreakMinutes) {
+                    withMutation(keyPath: \.pomodoroLongBreakEvery) {
+                        storedPomodoro = fixed
+                    }
+                }
+            }
+        }
+        defaults.set(fixed.workMinutes, forKey: SettingsKey.pomodoroWorkMinutes.rawValue)
+        defaults.set(fixed.breakMinutes, forKey: SettingsKey.pomodoroBreakMinutes.rawValue)
+        defaults.set(fixed.longBreakMinutes, forKey: SettingsKey.pomodoroLongBreakMinutes.rawValue)
+        defaults.set(fixed.longBreakEvery, forKey: SettingsKey.pomodoroLongBreakEvery.rawValue)
+        onChange?(key)
     }
 
     private func setBatteryThresholds(low: Double, critical: Double, changed key: SettingsKey) {

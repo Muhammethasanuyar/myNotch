@@ -1041,12 +1041,172 @@
         }
       }
     },
+    "module.pomodoro": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pomodoro"
+          }
+        }
+      }
+    },
     "percent": {
       "localizations": {
         "tr": {
           "stringUnit": {
             "state": "translated",
             "value": "%%%lld"
+          }
+        }
+      }
+    },
+    "pomodoro.cycles.caption": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld tamam"
+          }
+        }
+      }
+    },
+    "pomodoro.event.breakNext": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld dakika mola"
+          }
+        }
+      }
+    },
+    "pomodoro.event.breakOver": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mola bitti"
+          }
+        }
+      }
+    },
+    "pomodoro.event.workDone": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Odak bitti"
+          }
+        }
+      }
+    },
+    "pomodoro.event.workNext": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld dakika odak"
+          }
+        }
+      }
+    },
+    "pomodoro.explain.controls": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Başlat ya da duraklat, sonraki faza atla ya da tüm döngüyü sıfırla."
+          }
+        }
+      }
+    },
+    "pomodoro.explain.cycle": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld odak %2$@ tamamlandı. Her %3$lld blokta mola %5$lld yerine %4$lld dakika."
+          }
+        }
+      }
+    },
+    "pomodoro.explain.idle": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld dakika odak, sonra %2$lld dakikalık mola. Başlat ilk bloğu açar."
+          }
+        }
+      }
+    },
+    "pomodoro.explain.paused": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Duraklatıldı. Başlat buradan devam eder; Sıfırla döngüyü atar."
+          }
+        }
+      }
+    },
+    "pomodoro.explain.phase": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "odak blokları ve molalar sırayla gelir; süreler Ayarlar'da."
+          }
+        }
+      }
+    },
+    "pomodoro.explain.running": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Halka faz bittikçe boşalır; kendi kendine akar, izlemek gerekmez."
+          }
+        }
+      }
+    },
+    "pomodoro.phase.idle": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Odaklanmaya hazır"
+          }
+        }
+      }
+    },
+    "pomodoro.phase.longBreak": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uzun mola"
+          }
+        }
+      }
+    },
+    "pomodoro.phase.shortBreak": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kısa mola"
+          }
+        }
+      }
+    },
+    "pomodoro.phase.work": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Odak"
           }
         }
       }
@@ -2221,6 +2381,16 @@
         }
       }
     },
+    "settings.modules.pomodoro.summary": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Odak zamanlayıcısı: çentiğin yanında halka, kartta denetimler, fazlar arasında zil."
+          }
+        }
+      }
+    },
     "settings.modules.section": {
       "localizations": {
         "tr": {
@@ -2247,6 +2417,136 @@
           "stringUnit": {
             "state": "translated",
             "value": "İleri"
+          }
+        }
+      }
+    },
+    "settings.pomodoro.autoStart": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sonraki fazı otomatik başlat"
+          }
+        }
+      }
+    },
+    "settings.pomodoro.behaviour": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fazlar arasında"
+          }
+        }
+      }
+    },
+    "settings.pomodoro.break": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kısa mola"
+          }
+        }
+      }
+    },
+    "settings.pomodoro.every": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uzun mola sıklığı"
+          }
+        }
+      }
+    },
+    "settings.pomodoro.every.value": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld blokta bir"
+          }
+        }
+      }
+    },
+    "settings.pomodoro.help": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zamanlayıcı çentikte yaşar: halkayı görmek için üzerine gel, başlatmak, duraklatmak, atlamak ya da sıfırlamak için karta dokun. Çalışan döngü yeniden açılışta devam eder."
+          }
+        }
+      }
+    },
+    "settings.pomodoro.lengths": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Süreler"
+          }
+        }
+      }
+    },
+    "settings.pomodoro.longBreak": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uzun mola"
+          }
+        }
+      }
+    },
+    "settings.pomodoro.reset": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "25 / 5 / 15'e dön"
+          }
+        }
+      }
+    },
+    "settings.pomodoro.sound": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Faz bitince zil çal"
+          }
+        }
+      }
+    },
+    "settings.pomodoro.status": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Şimdi"
+          }
+        }
+      }
+    },
+    "settings.pomodoro.status.done": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld odak bloğu tamamlandı"
+          }
+        }
+      }
+    },
+    "settings.pomodoro.work": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Odak"
           }
         }
       }
@@ -2567,6 +2867,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Modüller"
+          }
+        }
+      }
+    },
+    "settings.tab.pomodoro": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pomodoro"
           }
         }
       }

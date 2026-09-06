@@ -74,6 +74,8 @@ struct SettingsView: View {
             ClaudePane(store: context.store, module: context.claude)
         case .battery:
             BatteryPane(store: context.store, module: context.battery)
+        case .pomodoro:
+            PomodoroPane(store: context.store, module: context.pomodoro)
         case .setup:
             SetupPane(context: context, navigation: navigation, closeWindow: closeWindow)
         case .about:

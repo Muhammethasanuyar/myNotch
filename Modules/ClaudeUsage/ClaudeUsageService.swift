@@ -55,7 +55,8 @@ final class ClaudeUsageService {
 
     private let urlSession: URLSession
     private let environment: [String: String]
-    private let watcher = ProjectsWatcher()
+    /// Session logs under Claude Code's `projects/` directories; only `.jsonl` changes get through.
+    private let watcher = DirectoryWatcher(filter: { $0.hasSuffix(".jsonl") })
     private static let log = Logger(subsystem: "com.emre.mynotch", category: "claude-usage")
 
     @ObservationIgnored private var pollTask: Task<Void, Never>?

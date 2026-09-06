@@ -64,7 +64,7 @@ SOFTWARE.
 ## claude-notch-tracker — MIT
 
 - Source: https://github.com/stevemcqueenz/claude-notch-tracker
-- Adapted files: `Modules/ClaudeUsage/ProjectsWatcher.swift` (FSEvents watcher with debounce), `Modules/ClaudeUsage/UsageLedger.swift` (byte-offset incremental reads, truncation reset), `Modules/ClaudeUsage/UsageFetcher.swift` (per-model weekly window parsing), `Modules/ClaudeUsage/Views/ClaudeUsageViews.swift` (progress ring)
+- Adapted files: `Core/System/DirectoryWatcher.swift` (FSEvents watcher with debounce, generalised from the session-log watcher), `Modules/ClaudeUsage/UsageLedger.swift` (byte-offset incremental reads, truncation reset), `Modules/ClaudeUsage/UsageFetcher.swift` (per-model weekly window parsing), `Modules/ClaudeUsage/Views/ClaudeUsageViews.swift` (progress ring)
 
 ```
 MIT License

@@ -614,9 +614,9 @@ final class ClaudeUsageRulesTests: XCTestCase {
 // MARK: - Watcher
 
 @MainActor
-final class ProjectsWatcherTests: XCTestCase {
+final class DirectoryWatcherTests: XCTestCase {
     func testBatchesChangesIntoOneCallback() async throws {
-        let watcher = ProjectsWatcher()
+        let watcher = DirectoryWatcher(filter: { $0.hasSuffix(".jsonl") })
         var batches: [[String]] = []
         watcher.onChange = { batches.append($0.map(\.lastPathComponent)) }
         watcher.simulateChange(["/a/x.jsonl"])
@@ -632,7 +632,7 @@ final class ProjectsWatcherTests: XCTestCase {
         try FileManager.default.createDirectory(at: project, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: base) }
 
-        let watcher = ProjectsWatcher()
+        let watcher = DirectoryWatcher(filter: { $0.hasSuffix(".jsonl") })
         let changed = expectation(description: "a .jsonl changed")
         var received: [String] = []
         watcher.onChange = { urls in

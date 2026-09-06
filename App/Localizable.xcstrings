@@ -506,7 +506,7 @@
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Harcama ve token sayıları ccusage aracından gelir. Kurmak için: `brew install ccusage` (ya da `npm i -g ccusage`)."
+            "value": "Token, blok ve hız oturum loglarından okunur; yalnızca dolar tutarı ccusage aracını ister — `brew install ccusage` (ya da `npm i -g ccusage`)."
           }
         }
       }
@@ -1706,7 +1706,7 @@
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "ccusage oturum loglarını yerel olarak okur ve her zaman çevrimdışı çalışır; sürüm ccusage@20'ye sabittir. `brew install ccusage` ya da `npm i -g ccusage` ile kurun."
+            "value": "Token, blok ve hızı uygulama oturum loglarından kendisi sayar. ccusage yalnızca günü fiyatlar: çevrimdışı çalışır, sürüm ccusage@20'ye sabittir. `brew install ccusage` ya da `npm i -g ccusage` ile kurun."
           }
         }
       }
@@ -1726,7 +1726,7 @@
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Maliyet gizli kalır; limitler çalışmaya devam eder."
+            "value": "Yalnızca dolar tutarı gizli kalır; token, blok ve hız loglardan okunur."
           }
         }
       }
@@ -2606,7 +2606,7 @@
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Bugünkü harcamayı görmek için ccusage kurun (`brew install ccusage`). Çevrimdışı çalışır."
+            "value": "Token ve bloklar onsuz da çalışır; bugünkü harcamayı görmek için ccusage kurun (`brew install ccusage`). Çevrimdışı çalışır."
           }
         }
       }

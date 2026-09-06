@@ -64,7 +64,7 @@ SOFTWARE.
 ## claude-notch-tracker — MIT
 
 - Source: https://github.com/stevemcqueenz/claude-notch-tracker
-- Adapted files: `Modules/ClaudeUsage/ProjectsWatcher.swift` (FSEvents watcher with debounce), `Modules/ClaudeUsage/UsageFetcher.swift` (per-model weekly window parsing), `Modules/ClaudeUsage/Views/ClaudeUsageViews.swift` (progress ring)
+- Adapted files: `Modules/ClaudeUsage/ProjectsWatcher.swift` (FSEvents watcher with debounce), `Modules/ClaudeUsage/UsageLedger.swift` (byte-offset incremental reads, truncation reset), `Modules/ClaudeUsage/UsageFetcher.swift` (per-model weekly window parsing), `Modules/ClaudeUsage/Views/ClaudeUsageViews.swift` (progress ring)
 
 ```
 MIT License
@@ -93,7 +93,7 @@ SOFTWARE.
 ## ccusage — MIT
 
 - Source: https://github.com/ccusage/ccusage
-- Adapted files: `Modules/ClaudeUsage/ClaudePaths.swift` (Claude data directory discovery); the tool itself is invoked as an external command, not bundled
+- Adapted files: `Modules/ClaudeUsage/ClaudePaths.swift` (Claude data directory discovery), `Modules/ClaudeUsage/SessionLogParser.swift` (which log lines count, cache and model rules, validity filters), `Modules/ClaudeUsage/BlockCalculator.swift` (five-hour blocks, gaps, burn rate, projection), `Modules/ClaudeUsage/UsageAggregator.swift` (dedupe winner rule, daily and block totals); the tool itself is invoked as an external command for the day's dollars only, not bundled
 
 ```
 MIT License

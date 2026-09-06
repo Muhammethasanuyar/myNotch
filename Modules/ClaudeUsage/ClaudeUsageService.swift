@@ -18,7 +18,9 @@ final class ClaudeUsageService {
     private(set) var isRefreshing = false
     private(set) var lastPollAt: Date?
 
+    /// Tokens, blocks and pace from the session logs; dollars merged in from ccusage when present.
     private(set) var cost: CCUsageReport?
+    /// Whether ccusage is around to price the day; the report itself no longer depends on it.
     private(set) var costState: CCUsageState = .unknown
     private(set) var isCostRefreshing = false
 
@@ -61,6 +63,12 @@ final class ClaudeUsageService {
     @ObservationIgnored private var cooldownUntil: Date?
     @ObservationIgnored private var launcher: CCUsageLauncher?
     @ObservationIgnored private var lastCostRefresh: Date?
+    @ObservationIgnored private let ledger = UsageLedger()
+    @ObservationIgnored private var latestEntries: [UsageEntry] = []
+    @ObservationIgnored private var costTable = CostTable.unknown
+    @ObservationIgnored private var ledgerTask: Task<Void, Never>?
+    @ObservationIgnored private var boundaryTask: Task<Void, Never>?
+    @ObservationIgnored private var roots: [URL] = []
     @ObservationIgnored private var storeFingerprint: Date?
 
     init(urlSession: URLSession = .shared, environment: [String: String] = ProcessInfo.processInfo.environment) {
@@ -81,10 +89,12 @@ final class ClaudeUsageService {
     func start() {
         guard pollTask == nil else { return }
         let roots = ClaudePaths.projectsDirectories(environment: overriddenEnvironment)
+        self.roots = roots
         hasLogs = !roots.isEmpty
         watcher.onChange = { [weak self] urls in self?.logsChanged(urls) }
         watcher.start(roots: roots)
         observeSleep()
+        readLogs { ledger, now in await ledger.warmStart(roots: roots, now: now) }
 
         launcher = CCUsageRunner.locate()
         costState = launcher.map(CCUsageState.ready) ?? .notInstalled
@@ -102,9 +112,11 @@ final class ClaudeUsageService {
     }
 
     func stop() {
-        for task in [pollTask, refreshTask, cooldownTask, wakeTask, signInWatchTask, workingTask, costTask, costDebounceTask] {
+        for task in [pollTask, refreshTask, cooldownTask, wakeTask, signInWatchTask, workingTask, costTask, costDebounceTask, ledgerTask, boundaryTask] {
             task?.cancel()
         }
+        ledgerTask = nil
+        boundaryTask = nil
         pollTask = nil
         refreshTask = nil
         cooldownTask = nil
@@ -253,6 +265,7 @@ final class ClaudeUsageService {
         wakeTask = Task { [weak self] in
             try? await Task.sleep(for: .seconds(UsagePolling.wakeGrace))
             guard !Task.isCancelled, let self else { return }
+            readLogs { [roots] ledger, now in await ledger.resync(roots: roots, now: now) }
             if UsagePolling.shouldRefreshAfterWake(lastPoll: lastPollAt, now: Date()) {
                 await pollOnce(force: true)
             }
@@ -278,16 +291,7 @@ final class ClaudeUsageService {
             onWorkingChanged?(false)
         }
 
-        if let newest = urls.last {
-            Task { [weak self] in
-                let tail = await Task.detached(priority: .utility) {
-                    SessionTailParser.readTail(of: newest).map(SessionTailParser.parse)
-                }.value
-                guard let self, let tail else { return }
-                session = tail
-                onDataChanged?()
-            }
-        }
+        readLogs { ledger, now in await ledger.ingest(urls, now: now) }
 
         if let lastCostRefresh, now.timeIntervalSince(lastCostRefresh) > Self.costMaxAge {
             refreshCost()
@@ -303,6 +307,7 @@ final class ClaudeUsageService {
 
     // MARK: Cost
 
+    /// Asks ccusage for today's dollars — the one thing the logs cannot say — and re-prices the report.
     func refreshCost() {
         guard let launcher, !isCostRefreshing else { return }
         isCostRefreshing = true
@@ -311,16 +316,67 @@ final class ClaudeUsageService {
         costTask = Task { [weak self] in
             defer { self?.isCostRefreshing = false }
             do {
-                let report = try await CCUsageRunner.report(using: launcher, configDirectory: configDirectory)
+                let day = try await CCUsageRunner.daily(using: launcher, configDirectory: configDirectory)
                 guard let self, !Task.isCancelled else { return }
-                cost = report
+                costTable = day.map { CostTable(day: $0, asOf: Date()) } ?? CostTable(day: CCUsageDay(date: ""), asOf: Date())
                 costState = .ready(launcher)
             } catch {
                 guard let self else { return }
                 costState = .failed(String(describing: error))
                 Self.log.error("ccusage failed: \(String(describing: error), privacy: .public)")
             }
-            self?.onDataChanged?()
+            self?.rebuildReport()
+        }
+    }
+
+    // MARK: Native report
+
+    /// Runs one ledger pass off the main actor and rebuilds the report from what it returns.
+    private func readLogs(_ pass: @escaping @Sendable (UsageLedger, Date) async -> LedgerSnapshot) {
+        let ledger = self.ledger
+        let previous = ledgerTask
+        ledgerTask = Task { [weak self] in
+            // Passes are serialised by the actor; waiting keeps their results in order too.
+            _ = await previous?.value
+            let started = ContinuousClock.now
+            let snapshot = await pass(ledger, Date())
+            guard let self, !Task.isCancelled else { return }
+            if UserDefaults.standard.bool(forKey: "debugUsageDump") {
+                let elapsed = ContinuousClock.now - started
+                Self.log.info("ledger pass: \(snapshot.entries.count) entries, \(snapshot.bytesRead) bytes read so far, anchored \(snapshot.isAnchored), \(String(describing: elapsed), privacy: .public)")
+            }
+            if !snapshot.isAnchored {
+                Self.log.info("block chain is not anchored; the first block may start later than ccusage says")
+            }
+            latestEntries = snapshot.entries
+            if let tail = snapshot.tail { session = tail }
+            rebuildReport()
+        }
+    }
+
+    /// Today's report from the entries on hand and whatever dollars ccusage last reported.
+    private func rebuildReport() {
+        let now = Date()
+        let report = UsageAggregator.report(entries: latestEntries, now: now, cost: costTable)
+        cost = report
+        if UserDefaults.standard.bool(forKey: "debugUsageDump") {
+            let blocks = report.todayBlocks.map { "\($0.id) \($0.totalTokens)\($0.isActive ? "*" : "")" }.joined(separator: ", ")
+            Self.log.info("usage today: \(report.today?.totalTokens ?? 0) tokens, $\(report.today?.totalCost ?? 0) (\(String(describing: report.costSource), privacy: .public)); blocks: \(blocks, privacy: .public)")
+        }
+        scheduleBoundary(after: report, now: now)
+        onDataChanged?()
+    }
+
+    /// The report changes on its own when the running block's window closes or the day rolls over.
+    private func scheduleBoundary(after report: CCUsageReport, now: Date) {
+        boundaryTask?.cancel()
+        var next = Calendar.current.startOfDay(for: now).addingTimeInterval(86_400)
+        if let end = report.activeBlock?.endTime, end > now { next = min(next, end) }
+        let delay = min(max(1, next.timeIntervalSince(now) + 1), 15 * 60)
+        boundaryTask = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(delay), clock: SuspendingClock())
+            guard !Task.isCancelled else { return }
+            self?.rebuildReport()
         }
     }
 }

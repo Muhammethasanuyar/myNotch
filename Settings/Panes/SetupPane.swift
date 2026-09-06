@@ -119,7 +119,7 @@ struct SetupPane: View {
             title: L("settings.setup.ccusage", "Cost (optional)"),
             detail: ready
                 ? L("settings.setup.ccusage.ok", "ccusage found. Today's spend appears on the card.")
-                : L("settings.setup.ccusage.todo", "Install ccusage (`brew install ccusage`) to see today's spend. Runs offline."),
+                : L("settings.setup.ccusage.todo", "Tokens and blocks work without it; install ccusage (`brew install ccusage`) to see today's spend. Runs offline."),
             actionTitle: ready ? nil : L("settings.setup.goTo.claude", "Set up in Claude…")
         ) {
             navigation.selectedTab = .claude

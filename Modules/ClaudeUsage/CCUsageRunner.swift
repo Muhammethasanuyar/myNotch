@@ -103,39 +103,18 @@ nonisolated enum CCUsageRunner {
         }
     }
 
-    /// Every block since the start of today — the active one is picked out client-side, and the
-    /// rest draw the day's chart.
-    static func blocksCommand(now: Date) -> [String] {
-        ["claude", "blocks", "--json", "--since", CCUsageParser.sinceArgument(for: now), "--offline"]
-    }
-
     static func dailyCommand(now: Date) -> [String] {
         ["claude", "daily", "--json", "--since", CCUsageParser.sinceArgument(for: now), "--offline"]
     }
 
-    /// Runs both reports. One failing report does not hide the other; both failing throws.
-    static func report(using launcher: CCUsageLauncher, home: String = NSHomeDirectory(), configDirectory: String?, now: Date = Date()) async throws -> CCUsageReport {
-        var report = CCUsageReport(generatedAt: now)
-        var firstError: Error?
-        do {
-            let data = try await run(invocation(launcher, command: blocksCommand(now: now), home: home, configDirectory: configDirectory))
-            let blocks = try CCUsageParser.blocks(from: data)
-            report.todayBlocks = blocks.blocks.filter { !$0.isGap }.sorted { $0.startTime < $1.startTime }
-            report.activeBlock = blocks.activeBlock
-        } catch {
-            firstError = error
+    /// Today's row of `ccusage claude daily`, or `nil` when ccusage has nothing for today. Tokens
+    /// and blocks are counted natively; this call only supplies the dollars.
+    static func daily(using launcher: CCUsageLauncher, home: String = NSHomeDirectory(), configDirectory: String?, now: Date = Date()) async throws -> CCUsageDay? {
+        let data = try await run(invocation(launcher, command: dailyCommand(now: now), home: home, configDirectory: configDirectory))
+        let today = CCUsageParser.sinceArgument(for: now)
+        return try CCUsageParser.daily(from: data).daily.last {
+            $0.date.replacingOccurrences(of: "-", with: "") == today
         }
-        do {
-            let data = try await run(invocation(launcher, command: dailyCommand(now: now), home: home, configDirectory: configDirectory))
-            let today = CCUsageParser.sinceArgument(for: now)
-            report.today = try CCUsageParser.daily(from: data).daily.last {
-                $0.date.replacingOccurrences(of: "-", with: "") == today
-            }
-        } catch {
-            if report.todayBlocks.isEmpty, let firstError { throw firstError }
-            if report.todayBlocks.isEmpty, report.activeBlock == nil { throw error }
-        }
-        return report
     }
 
     private static func run(_ invocation: Invocation) async throws -> Data {

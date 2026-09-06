@@ -150,3 +150,25 @@ Hazırlık: `scripts/run.sh --args -openSettings general` (ya da menü bar → A
 13. **Hakkında:** sürüm `MARKETING_VERSION (CURRENT_PROJECT_VERSION)`, dışarı giden veri listesi üç satır, kaynak bağlantıları tarayıcıda açılır, log komutu kopyalanır, "Debug Preview'ı aç" çalışır.
 14. **CPU:** `scripts/measure-idle.sh 30` — kapalı ve compact durumda ≈%0; açık Claude kartı için §16.4'teki değerin altında.
 15. **Parça değişimi popup'ı:** şarkı değişince compact satırı yerinde kalır — solda kapak, sağda seviye ölçer yüzeyin dış kenarlarına kayar ve yüzeyle birlikte büyür (≈21 pt'den 57 pt'ye; kapak popup'ın neredeyse tüm yüksekliğini kaplar) — ve çentiğin **altındaki** şeritte "Başlık — Sanatçı" tek satır ortalı görünür; uzun başlık kameranın arkasına girmez, sonu üç nokta ile kısalır; boş köşe kalmaz. Kontrol: `scripts/run.sh --args -debugState popup -debugModule media`. Harici (çentiksiz) ekranda aynı düzen 72 pt'lik kapsülde.
+
+## Faz 6 — Gelişmiş
+
+### Claude — native parser (hibrit maliyet)
+1. **Parite:** `scripts/run.sh --args -debugState expanded -debugModule claude -onboardingCompleted YES -debugUsageDump YES`; `/usr/bin/log show --last 2m --info --predicate 'subsystem == "com.emre.mynotch" AND category == "claude-usage"'` içindeki `usage today` satırındaki blok id/token'ları `npx --yes ccusage@20 claude blocks --json --since $(date +%Y%m%d) --offline` ile karşılaştır — birebir olmalı; dolar `daily` ile aynı.
+2. **ccusage yokken:** Ayarlar → Claude → ccusage yolu alanına geçersiz bir yol yaz ve npx'i PATH dışına al → `$` çipi "—" (caption `ccusage`), token/hız çipleri ve bloklar çalışır; açıklama metni ccusage'ın yalnızca dolar için gerektiğini söyler.
+3. **Artımlı okuma:** Claude Code'da bir mesaj gönder → 1–2 sn içinde token çipi ve aktif blok güncellenir (log'da `ledger pass` satırı, bayt sayısı yalnızca yeni satırlar kadar artar).
+4. **Soğuk başlangıç:** `ledger pass` ilk satırı < 60 MB ve `anchored true`.
+
+### Battery
+1. Adaptörü tak/çıkar → 2,5 s popup ("Şarj oluyor · %62 — 1s 20dk sonra dolar" / "Pilde"); compact şeritte şarjda nefes alan şimşek + yüzde.
+2. Eşik popup'ı: `defaults write com.emre.mynotch batteryLowThreshold 0.95` → pil %95'in altına inince bir kez "Pil azaldı"; şarja takıp çıkarınca yeniden silahlanır (`defaults delete com.emre.mynotch batteryLowThreshold`).
+3. Kart (`-debugState expanded -debugModule battery`): büyük gösterge dolgusu yüzdeyi izler, tahmin satırı yalnızca şarjda/pilde görünür, hover açıklamaları Türkçe.
+4. `sudo pmset -a lowpowermode 1` → "Düşük Güç Modu açık" popup'ı ve kartta yaprak; `0` ile geri.
+5. Pil olmayan Mac: modül boşta, şeritte hap yok, Modüller sekmesi özeti bunu söyler.
+
+### Pomodoro
+1. Kart (`-debugState expanded -debugModule pomodoro`): halka + `25:00`, Başlat/Atla/Sıfırla ilk tıklamada çalışır; Başlat → halka boşalmaya başlar, compact şeritte halka + kalan dakika; compact'ta CPU ≈%0 (`scripts/measure-idle.sh 20`).
+2. `defaults write com.emre.mynotch pomodoroWorkMinutes 5` → 5 dk sonra "Odak bitti — 5 dakika mola" popup'ı + zil; Ayarlar'da otomatik başlat kapalıysa mola Başlat'ı bekler.
+3. Sayaç çalışırken uygulamayı öldür ve yeniden aç → kaldığı yerden devam (kapalıyken bitmiş faz bir kez duyurulur).
+4. 4 odak bloğu sonra uzun mola (15 dk); noktalar dolar.
+5. Ayarlar → Pomodoro: süreler slider/stepper, zil ve otomatik başlat anahtarları anında etkili.

@@ -373,9 +373,9 @@ final class CCUsageRunnerTests: XCTestCase {
     func testNPXInvocationPinsThePackageAndBuildsAPath() {
         let launcher = CCUsageLauncher.npx(URL(fileURLWithPath: "/Users/x/.nvm/versions/node/v24.13.0/bin/npx"))
         let now = Calendar(identifier: .gregorian).date(from: DateComponents(timeZone: .current, year: 2026, month: 9, day: 4, hour: 12))!
-        let invocation = CCUsageRunner.invocation(launcher, command: CCUsageRunner.blocksCommand(now: now), home: "/Users/x", configDirectory: "/tmp/cfg")
-        XCTAssertEqual(invocation.arguments, ["--yes", "ccusage@20", "claude", "blocks", "--json", "--since", "20260904", "--offline"],
-                       "every block of the day, so the chart has bars and the active one is picked client-side")
+        let invocation = CCUsageRunner.invocation(launcher, command: CCUsageRunner.dailyCommand(now: now), home: "/Users/x", configDirectory: "/tmp/cfg")
+        XCTAssertEqual(invocation.arguments, ["--yes", "ccusage@20", "claude", "daily", "--json", "--since", "20260904", "--offline"],
+                       "only today's dollars; tokens and blocks are counted natively")
         XCTAssertEqual(invocation.environment["PATH"], "/Users/x/.nvm/versions/node/v24.13.0/bin:/usr/bin:/bin:/usr/sbin:/sbin")
         XCTAssertEqual(invocation.environment["CLAUDE_CONFIG_DIR"], "/tmp/cfg")
         XCTAssertEqual(invocation.environment["HOME"], "/Users/x")

@@ -317,31 +317,37 @@ struct ClaudeDashboardView: View {
     /// Today's numbers as icon chips: spend, tokens, and the pace of the current block. Each chip
     /// carries a one-word caption; the digits roll over as the numbers change.
     @ViewBuilder
+    /// Tokens and pace come from the logs and are always drawn; only the dollar chip depends on ccusage.
     private var statChips: some View {
         HStack(alignment: .top, spacing: 6) {
-            switch service.costState {
-            case .ready:
-                if let today = service.cost?.today {
-                    statChip(.spend, "dollarsign.circle", value: costValue(for: today),
-                             caption: String(localized: "caption.spend", defaultValue: "spend"), bounce: today.totalCost)
-                    statChip(.tokens, "number", value: ClaudeUsageRules.formatTokens(today.totalTokens),
-                             caption: String(localized: "caption.tokens", defaultValue: "tokens"), bounce: Double(today.totalTokens))
-                } else {
-                    statChip(.spend, "dollarsign.circle", value: "0", caption: String(localized: "caption.spend", defaultValue: "spend"), bounce: 0)
-                }
-                if let block = service.cost?.activeBlock, let rate = block.burnRate,
-                   let perMinute = rate.tokensPerMinuteForIndicator ?? rate.tokensPerMinute, perMinute > 0 {
-                    statChip(.pace, "flame.fill",
-                             value: ClaudeUsageRules.formatTokens(Int(perMinute.rounded())) + "/" + String(localized: "unit.minute", defaultValue: "min"),
-                             caption: String(localized: "caption.pace", defaultValue: "pace"),
-                             bounce: perMinute)
-                }
-            case .notInstalled:
-                statChip(.spend, "arrow.down.circle", value: "ccusage", caption: String(localized: "caption.install", defaultValue: "install"), bounce: 0)
-            case .failed:
-                statChip(.spend, "exclamationmark.circle", value: "ccusage", caption: String(localized: "caption.failed", defaultValue: "failed"), bounce: 0)
-            case .unknown:
-                EmptyView()
+            spendChip
+            if let today = service.cost?.today {
+                statChip(.tokens, "number", value: ClaudeUsageRules.formatTokens(today.totalTokens),
+                         caption: String(localized: "caption.tokens", defaultValue: "tokens"), bounce: Double(today.totalTokens))
+            }
+            if let block = service.cost?.activeBlock, let rate = block.burnRate,
+               let perMinute = rate.tokensPerMinuteForIndicator ?? rate.tokensPerMinute, perMinute > 0 {
+                statChip(.pace, "flame.fill",
+                         value: ClaudeUsageRules.formatTokens(Int(perMinute.rounded())) + "/" + String(localized: "unit.minute", defaultValue: "min"),
+                         caption: String(localized: "caption.pace", defaultValue: "pace"),
+                         bounce: perMinute)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var spendChip: some View {
+        switch service.costState {
+        case .notInstalled:
+            statChip(.spend, "dollarsign.circle", value: "—", caption: "ccusage", bounce: 0)
+        case .failed:
+            statChip(.spend, "exclamationmark.circle", value: "—", caption: String(localized: "caption.failed", defaultValue: "failed"), bounce: 0)
+        case .unknown, .ready:
+            if let today = service.cost?.today, case .ccusage = service.cost?.costSource ?? .unavailable {
+                statChip(.spend, "dollarsign.circle", value: costValue(for: today),
+                         caption: String(localized: "caption.spend", defaultValue: "spend"), bounce: today.totalCost)
+            } else {
+                statChip(.spend, "dollarsign.circle", value: "…", caption: String(localized: "caption.spend", defaultValue: "spend"), bounce: 0)
             }
         }
     }
@@ -478,7 +484,7 @@ struct ClaudeDashboardView: View {
         case .spend:
             switch service.costState {
             case .notInstalled:
-                return String(localized: "explain.ccusage.missing", defaultValue: "Spend and tokens come from the ccusage tool. Install it with `brew install ccusage` (or `npm i -g ccusage`).")
+                return String(localized: "explain.ccusage.missing", defaultValue: "Tokens, blocks and pace are read from the session logs; only the dollar amount needs the ccusage tool — `brew install ccusage` (or `npm i -g ccusage`).")
             case .failed:
                 return String(localized: "explain.ccusage.failed", defaultValue: "ccusage could not produce a report; the log (subsystem com.emre.mynotch) has the error.")
             default:

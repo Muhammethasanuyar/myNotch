@@ -75,7 +75,7 @@ struct ClaudePane: View {
                         chooseCCUsage()
                     }
                 }
-                SettingsFootnote(L("settings.claude.cost.help", "ccusage reads the session logs locally and always runs offline; the version is pinned to ccusage@20. Install with `brew install ccusage` or `npm i -g ccusage`."))
+                SettingsFootnote(L("settings.claude.cost.help", "Tokens, blocks and pace are counted from the session logs by the app itself. ccusage only prices the day: it runs offline, pinned to ccusage@20. Install with `brew install ccusage` or `npm i -g ccusage`."))
             }
 
             Section(L("settings.claude.advanced", "Advanced")) {
@@ -112,7 +112,7 @@ struct ClaudePane: View {
         case .ready(let launcher):
             (.ok, L("settings.claude.cost.ready", "ccusage found"), launcher.description)
         case .notInstalled:
-            (.attention, L("settings.claude.cost.notInstalled", "ccusage not installed"), L("settings.claude.cost.notInstalled.help", "Cost stays hidden; the limits still work."))
+            (.attention, L("settings.claude.cost.notInstalled", "ccusage not installed"), L("settings.claude.cost.notInstalled.help", "Only the dollar amount stays hidden; tokens, blocks and pace are read from the logs."))
         case .failed(let message):
             (.problem, L("settings.claude.cost.failed", "ccusage failed"), message)
         }

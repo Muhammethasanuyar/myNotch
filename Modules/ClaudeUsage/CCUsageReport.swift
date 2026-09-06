@@ -53,6 +53,23 @@ nonisolated struct CCUsageBlock: Decodable, Equatable, Sendable {
     var burnRate: BurnRate?
     var projection: Projection?
 
+    init(id: String, startTime: Date, endTime: Date, actualEndTime: Date? = nil, isActive: Bool = false, isGap: Bool = false,
+         tokenCounts: TokenCounts = TokenCounts(), totalTokens: Int = 0, costUSD: Double = 0, models: [String] = [],
+         burnRate: BurnRate? = nil, projection: Projection? = nil) {
+        self.id = id
+        self.startTime = startTime
+        self.endTime = endTime
+        self.actualEndTime = actualEndTime
+        self.isActive = isActive
+        self.isGap = isGap
+        self.tokenCounts = tokenCounts
+        self.totalTokens = totalTokens
+        self.costUSD = costUSD
+        self.models = models
+        self.burnRate = burnRate
+        self.projection = projection
+    }
+
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         id = try c.decode(String.self, forKey: .id)
@@ -131,6 +148,10 @@ nonisolated struct CCUsageDay: Decodable, Equatable, Sendable {
     var modelsUsed: [String] = []
     var modelBreakdowns: [ModelBreakdown] = []
 
+    init(date: String) {
+        self.date = date
+    }
+
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         date = try c.decode(String.self, forKey: .date)
@@ -160,13 +181,15 @@ nonisolated struct CCUsageDailyReport: Decodable, Equatable, Sendable {
     private enum CodingKeys: String, CodingKey { case daily }
 }
 
-/// What the module keeps from the two ccusage calls.
+/// What the dashboard shows of the session logs: today's totals, today's blocks and the running
+/// block. Tokens come from the native parser; dollars from ccusage when it is installed.
 nonisolated struct CCUsageReport: Equatable, Sendable {
     var today: CCUsageDay?
     /// Today's 5-hour blocks in order, gaps left out; the chart draws one bar per block.
     var todayBlocks: [CCUsageBlock] = []
     var activeBlock: CCUsageBlock?
     let generatedAt: Date
+    var costSource: CostSource = .unavailable
 }
 
 nonisolated enum CCUsageParser {

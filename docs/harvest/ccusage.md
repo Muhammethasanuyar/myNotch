@@ -257,3 +257,6 @@ Kaynak: `references/ccusage/rust/crates/ccusage-core/src/types.rs:28-39` (MIT)
 5. **S5 — `usageLimitResetTime` resmi endpoint'e iyi bir yedek mi?** JSONL'de yalnızca kullanıcı limite **çarptığında** yazılıyor (`adapters/claude/src/lib.rs:583-615`). Normal akışta gelmez; yani `docs/PLAN.md` §6.1'deki resmi endpoint yolunun yerini tutmaz, sadece "limite çarpıldı" olayını yakalar. Popup senaryosu olarak değerlendirilebilir mi?
 6. **S6 — Sürüm sabitleme ve şema kayması nasıl izlenir?** ccusage 20.x içinde JSON şeması değişirse sessizce alanları kaybederiz. `CCUsageRunner` decode'unda "beklenen anahtar yok" durumunu loglayıp modülü "veri okunamadı" durumuna düşüren bir kontrol + `ccusage --version` kaydı tutulmalı mı?
 7. **S7 — v2'de artımlı okuma + dedupe nasıl birlikte çalışacak?** (§3.8 Dikkat) Offset tabanlı okuma ile dedupe durumunun kalıcılaştırılması Faz 6'nın tasarım kararı; ccusage bunu hiç çözmüyor (her seferinde baştan okuyor), yani burada kendi yolumuzu çizeceğiz.
+
+
+> S7 cevabı (2026-09-06): dedupe kalıcılaştırılmaz — `UsageLedger` dosya başına offset + entry dizisi tutar, `UsageAggregator.dedupe` her raporda tüm kümeyi birleştirir. Parite birebir, bkz. `docs/PLAN.md` §17.7.

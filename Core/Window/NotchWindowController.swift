@@ -6,7 +6,7 @@ import SwiftUI
 final class NotchWindowController: NSWindowController {
     let model: NotchViewModel
     private let content: NotchContentProvider
-    private let hostingView: NotchHostingView<NotchRootView>
+    private let hostingView: NotchHostingView
     private let debugTint: Bool
     private(set) var metrics: NotchLayoutMetrics = .placeholder
     private var clickOutsideMonitor: Any?

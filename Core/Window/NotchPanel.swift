@@ -47,7 +47,10 @@ final class NotchPanel: NSPanel {
 /// files is not rendered until the drag has opened it. The window server decides which window a
 /// drag reaches by pixel alpha, exactly as for clicks, so the housing catches drags on its own and
 /// `NotchDropDetector` widens the target during a drag.
-final class NotchHostingView<Content: View>: NSHostingView<Content> {
+///
+/// Concrete over `NotchRootView` rather than generic: the Swift 6.3 optimizer crashes (EarlyPerfInliner
+/// on the deallocating deinit) when a generic `NSHostingView` subclass carries stored closures.
+final class NotchHostingView: NSHostingView<NotchRootView> {
     /// Whether any module takes file drops right now; read as a drag arrives.
     var acceptsFileDrops: () -> Bool = { false }
     /// A file drag is over the panel at this point (view coordinates, top-left origin), or left (`nil`).
@@ -55,7 +58,7 @@ final class NotchHostingView<Content: View>: NSHostingView<Content> {
     /// Files were dropped at the point; returns whether a module took them.
     var onFileDrop: ([URL], CGPoint) -> Bool = { _, _ in false }
 
-    required init(rootView: Content) {
+    required init(rootView: NotchRootView) {
         super.init(rootView: rootView)
         registerForDraggedTypes([.fileURL])
     }

@@ -70,8 +70,8 @@ defaults write com.emre.mynotch spotifyClientID <client-id>
 4. **Zaten beğenilmiş** bir parçaya geç → kalp dolu gelir (URI başına tek `contains` sorgusu; 60 sn önbellek). Spotify'ın kendi içinde beğen/kaldır → notch en geç ~1 dk içinde yakalar.
 5. Onayı **reddet** (tarayıcıda Cancel) → kalp soluk kalır, uygulama takılmaz, tekrar tıklanabilir. Tarayıcıyı hiç dönmeden kapatırsan dinleyici 5 dk sonra zaman aşımına uğrar.
 6. **Ağ yokken** kalbe tıkla → iyimser dolar, ~0,4 sn sonra eski haline döner (yazma başarısız, log'da görünür); okuma 30 sn boyunca tekrar denenmez.
-7. **Yeniden başlatma:** token dosyası (`~/Library/Application Support/MyNotch/spotify-oauth.json`, 0600) sayesinde bağlantı kalır; süresi dolan access token refresh token ile sessizce yenilenir.
-8. **Bağlantıyı kesmek:** dosyayı sil ve uygulamayı yeniden başlat (Faz 5'te Ayarlar'a düğme olarak gelecek). Spotify hesabındaki yetkiyi geri alırsan (401) uygulama da bağlantısız duruma düşer ve kalp yeniden "bağlan" moduna geçer.
+7. **Yeniden başlatma:** token dosyası (`~/Library/Application Support/MyNotch/spotify-oauth.json`, 0600; Keychain'e taşıma Developer ID imzasıyla birlikte — `docs/PLAN.md` §18) sayesinde bağlantı kalır; Ayarlar → Medya → Spotify satırı "Bağlı" der; süresi dolan access token refresh token ile sessizce yenilenir. Dosyayı elle bozarsan (`echo x > …/spotify-oauth.json`) uygulama bağlantısız açılır ve durum satırı hatayı gösterir, çökmez.
+8. **Bağlantıyı kesmek:** Ayarlar → Medya → **Bağlantıyı Kes** (dosya silinir, yeniden başlatma gerekmez; `Connect…` yeniden etkinleşir). Spotify hesabındaki yetkiyi geri alırsan (401) uygulama da bağlantısız duruma düşer ve kalp yeniden "bağlan" moduna geçer.
 9. **Bölüm/yerel dosya:** podcast bölümlerinde ve yerel dosyalarda kalp etkisizdir (kütüphane girdisi yok).
 
 ### Şarkı sözleri
@@ -133,7 +133,7 @@ Hazırlık: Claude Code ile en az bir kez giriş yapılmış olmalı (`claude`).
 
 ## Faz 5 — Ayarlar & cila
 
-Hazırlık: `scripts/run.sh --args -openSettings general` (ya da menü bar → Ayarlar…, ⌘,). Sekmeye doğrudan gitmek için `-openSettings modules|media|claude|setup|about`.
+Hazırlık: `scripts/run.sh --args -openSettings general` (ya da menü bar → Ayarlar…, ⌘,). Sekmeye doğrudan gitmek için `-openSettings modules|media|claude|calendar|battery|pomodoro|shelf|setup|about`.
 
 1. **Pencere:** kenar çubuğu saydam (liquid glass), geri/ileri okları sekme geçmişinde gezer; pencere 720×560 açılır, konumu/boyutu yeniden açılışta korunur (`NSWindow Frame SettingsWindow`). Türkçe sistemde tüm metinler Türkçe, İngilizce'de İngilizce.
 2. **Genel → Çentik:** hover süresini 0,5 s yap → çentik ancak yarım saniye durunca açılır; kapanma süresini 0,2 s yap → karttan ayrılınca 0,2 s içinde kapanır. Slider en fazla 1,0 s'ye gider. Haptik kapalıyken açılışta titreşim yok. "Varsayılanlara dön" 0,15 / 0,80 / açık / Otomatik'e döner.
@@ -172,6 +172,15 @@ Hazırlık: `scripts/run.sh --args -openSettings general` (ya da menü bar → A
 3. Sayaç çalışırken uygulamayı öldür ve yeniden aç → kaldığı yerden devam (kapalıyken bitmiş faz bir kez duyurulur).
 4. 4 odak bloğu sonra uzun mola (15 dk); noktalar dolar.
 5. Ayarlar → Pomodoro: süreler slider/stepper, zil ve otomatik başlat anahtarları anında etkili.
+
+### Takvim
+Hazırlık: izin durumunu sıfırlamak için `tccutil reset Calendar com.emre.mynotch`; Calendar.app'te **6 dk sonrasına** başlığında Zoom linki (`https://zoom.us/j/123`) olan bir etkinlik oluştur.
+1. Ayarlar → Kurulum → "Takvim (isteğe bağlı)" satırı nötr; "Erişim ver…" → macOS izin istemi `NSCalendarsFullAccessUsageDescription` metnini gösterir. İzin ver → satır "İzin verildi", Takvim paneli takvim listesini ve sıradaki etkinliği gösterir. Reddet → satır problem tonunda "Gizlilik Ayarlarını Aç…" (`…?Privacy_Calendars`).
+2. `scripts/run.sh --args -debugState expanded -debugModule calendar -onboardingCompleted YES`: kartta yatay zaman şeridi (takvim renginde bloklar), ilk etkinliğin başlığı büyük, saat aralığı + takvim adı, "Katıl" düğmesi (link varsa); etkinlik yoksa "Bugün toplantı kalmadı". Hover açıklamaları kart içinde.
+3. Etkinliğe 15 dk kala (`calendarLeadMinutes`) compact: solda sağlayıcı glifi (`video.fill` Zoom/Meet/Teams için), sağda geri sayım (`12dk`, `4dk`, `şimdi`) dakika sınırında güncellenir. 5 dk kala popup 4 s, başlangıçta popup 6 s; ikisi de bir kez.
+4. Karttan "Katıl" → Zoom linki açılır (`NSWorkspace.open`), kart kapanır. Tüm gün etkinlikler ve reddedilen davetler listede yer almaz.
+5. Ayarlar → Takvim'de tek takvim seç → yalnızca o takvimin etkinlikleri; `calendarAlertsEnabled` kapalı → popup yok, compact geri sayım kalır. Calendar.app'te etkinliği taşı → `EKEventStoreChanged` ile kart birkaç saniyede güncellenir (poll yok). Uyku/uyanma sonrası sayaç doğru.
+6. CPU: `scripts/measure-idle.sh 30` etkinlik yaklaşırken (compact) ≈ %0 — dakika sınırında tek uyanma.
 
 ### Medya — gerçek seviye ölçer (visualizer)
 1. Ayarlar → Medya → "Çubuklar müziğe göre hareket etsin" aç; Spotify'da müzik başlat → macOS "MyNotch sistem sesini kaydetmek istiyor" istemini bir kez gösterir; İzin Ver → durum satırı "Sesi izliyor", çubuklar sese uyar (bas bölümlerde sol çubuk, tiz vokalde sağ). Sesi kısınca çubuklar tabana iner.

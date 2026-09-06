@@ -18,7 +18,8 @@ nonisolated struct LaunchOptions: Equatable, Sendable {
     /// Posts a long-lived event from the demo module, so the banner strip another module gets
     /// inside the expanded surface can be inspected.
     let debugBanner: Bool
-    /// Opens the settings window on this tab (`general`, `modules`, `media`, `claude`, `setup`, `about`).
+    /// Opens the settings window on this tab (`general`, `modules`, `media`, `claude`, `calendar`, `battery`,
+    /// `pomodoro`, `shelf`, `setup`, `about`).
     let openSettings: String?
 
     static func read(from defaults: UserDefaults) -> LaunchOptions {

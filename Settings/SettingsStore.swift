@@ -41,6 +41,10 @@ nonisolated enum SettingsKey: String, CaseIterable, Sendable {
     case calendarAlertsEnabled
     // Shelf
     case shelfKeepInterval
+    // Downloads
+    case downloadsFolder
+    case downloadsCompletionPopups
+    case downloadsKeepRecent
     // Sound
     case volumePopupsEnabled
     case volumeHUDReplacement
@@ -89,6 +93,7 @@ nonisolated enum SettingsRules {
     static let pomodoroLongBreakRange = 5...60
     static let pomodoroLongBreakEveryRange = 2...8
     static let calendarLeadRange = 1...60
+    static let downloadsKeepRange = 0...20
 
     static func hoverDelay(_ value: TimeInterval) -> TimeInterval { clamp(value, to: hoverDelayRange) }
     static func closeDelay(_ value: TimeInterval) -> TimeInterval { clamp(value, to: closeDelayRange) }
@@ -111,6 +116,7 @@ nonisolated enum SettingsRules {
     static func calendarLead(_ minutes: Int) -> Int { clamp(minutes, to: calendarLeadRange) }
     /// One of the shelf's offered retention periods; zero is "until removed".
     static func shelfKeepInterval(_ seconds: TimeInterval) -> TimeInterval { ShelfRules.snappedKeepInterval(seconds) }
+    static func downloadsKeepRecent(_ count: Int) -> Int { clamp(count, to: downloadsKeepRange) }
 
     /// Every pomodoro length inside its range.
     static func pomodoroConfig(work: Int, breakMinutes: Int, longBreak: Int, every: Int) -> PomodoroConfig {
@@ -251,6 +257,16 @@ final class SettingsStore {
         set { withMutation(keyPath: \.shelfKeepInterval) { storedShelfKeep = SettingsRules.shelfKeepInterval(newValue) }; persist(storedShelfKeep, .shelfKeepInterval) }
     }
 
+    // MARK: Downloads
+
+    /// Empty means the user's Downloads folder.
+    var downloadsFolder: String { didSet { persist(trimmed(downloadsFolder), .downloadsFolder) } }
+    var downloadsCompletionPopups: Bool { didSet { persist(downloadsCompletionPopups, .downloadsCompletionPopups) } }
+    var downloadsKeepRecent: Int {
+        get { access(keyPath: \.downloadsKeepRecent); return storedDownloadsKeep }
+        set { withMutation(keyPath: \.downloadsKeepRecent) { storedDownloadsKeep = SettingsRules.downloadsKeepRecent(newValue) }; persist(storedDownloadsKeep, .downloadsKeepRecent) }
+    }
+
     // MARK: Sound
 
     var volumePopupsEnabled: Bool { didSet { persist(volumePopupsEnabled, .volumePopupsEnabled) } }
@@ -288,6 +304,7 @@ final class SettingsStore {
     @ObservationIgnored private var storedPomodoro: PomodoroConfig
     @ObservationIgnored private var storedCalendarLead: Int
     @ObservationIgnored private var storedShelfKeep: TimeInterval
+    @ObservationIgnored private var storedDownloadsKeep: Int
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -340,6 +357,9 @@ final class SettingsStore {
         calendarSelectedIDs = defaults.stringArray(forKey: SettingsKey.calendarSelectedIDs.rawValue) ?? []
         calendarAlertsEnabled = defaults.object(forKey: SettingsKey.calendarAlertsEnabled.rawValue) as? Bool ?? true
         storedShelfKeep = SettingsRules.shelfKeepInterval(defaults.object(forKey: SettingsKey.shelfKeepInterval.rawValue) as? Double ?? ShelfRules.defaultKeepInterval)
+        downloadsFolder = defaults.string(forKey: SettingsKey.downloadsFolder.rawValue) ?? ""
+        downloadsCompletionPopups = defaults.object(forKey: SettingsKey.downloadsCompletionPopups.rawValue) as? Bool ?? true
+        storedDownloadsKeep = SettingsRules.downloadsKeepRecent(defaults.object(forKey: SettingsKey.downloadsKeepRecent.rawValue) as? Int ?? 5)
         volumePopupsEnabled = defaults.object(forKey: SettingsKey.volumePopupsEnabled.rawValue) as? Bool ?? true
         volumeHUDReplacement = defaults.object(forKey: SettingsKey.volumeHUDReplacement.rawValue) as? Bool ?? false
         audioDeviceConnectPopups = defaults.object(forKey: SettingsKey.audioDeviceConnectPopups.rawValue) as? Bool ?? true

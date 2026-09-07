@@ -43,6 +43,9 @@ struct SetupPane: View {
                 if let volume = context.volume, context.store.volumeHUDReplacement {
                     volumeRow(volume.service)
                 }
+                if let downloads = context.downloads {
+                    downloadsRow(downloads)
+                }
             }
 
             Section {
@@ -185,6 +188,28 @@ struct SetupPane: View {
                 service.requestAccessibility()
             } else {
                 service.syncTap()
+            }
+        }
+    }
+
+    private func downloadsRow(_ module: DownloadsModule) -> some View {
+        let enabled = context.store.isModuleEnabled(module.id)
+        let (tone, detail, actionTitle): (StatusTone, String, String?) = if !enabled {
+            (.neutral, L("settings.setup.downloads.off", "Optional. Shows browser downloads in the notch; needs permission to read the Downloads folder."), L("settings.setup.downloads.enable", "Turn on"))
+        } else {
+            switch module.service.access {
+            case .granted: (.ok, L("settings.setup.downloads.ok", "Allowed. Downloads show up in the notch while they run."), nil)
+            case .unknown: (.pending, L("settings.setup.downloads.checking", "Checking the folder…"), L("settings.downloads.retry", "Try again"))
+            case .denied: (.problem, L("settings.setup.downloads.denied", "Denied. Allow MyNotch under Privacy & Security → Files and Folders → Downloads."), L("settings.downloads.openPrivacy", "Open Privacy Settings…"))
+            }
+        }
+        return SetupRow(tone: tone, title: L("settings.setup.downloads", "Downloads (optional)"), detail: detail, actionTitle: actionTitle) {
+            if !enabled {
+                context.store.setModule(module.id, enabled: true)
+            } else if module.service.access == .denied {
+                SystemSettingsLink.open(SystemSettingsLink.filesAndFolders)
+            } else {
+                module.service.requestAccess()
             }
         }
     }

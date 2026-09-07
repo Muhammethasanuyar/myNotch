@@ -28,6 +28,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         register(CalendarModule(), in: manager)
         register(PomodoroModule(), in: manager)
         register(BatteryModule(), in: manager)
+        register(DownloadsModule(), in: manager)
         register(ShelfModule(), in: manager)
         register(AudioDeviceModule(service: AudioDeviceService(watcher: audioOutput)), in: manager)
         register(VolumeModule(service: VolumeService(watcher: audioOutput)), in: manager)

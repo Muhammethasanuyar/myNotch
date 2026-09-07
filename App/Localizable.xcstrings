@@ -681,6 +681,106 @@
         }
       }
     },
+    "downloads.denied": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "İndirmeler klasörüne izin verilmedi"
+          }
+        }
+      }
+    },
+    "downloads.denied.help": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gizlilik ve Güvenlik → Dosyalar ve Klasörler → İndirmeler altında MyNotch'a izin ver."
+          }
+        }
+      }
+    },
+    "downloads.empty": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "İndirme yok"
+          }
+        }
+      }
+    },
+    "downloads.empty.help": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Safari, Chrome ve benzerleri indirirken ve bir süre sonrasında burada görünür."
+          }
+        }
+      }
+    },
+    "downloads.event.finished": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "İndirildi: %@"
+          }
+        }
+      }
+    },
+    "downloads.explain.empty": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "İndirmeler klasörü yalnızca bu modül açıkken izlenir; tarama bir tarayıcı yazınca çalışır, zamanlayıcıyla asla."
+          }
+        }
+      }
+    },
+    "downloads.explain.finished": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · aç için dokun; tepsi bir kopyayı rafa koyar."
+          }
+        }
+      }
+    },
+    "downloads.explain.indeterminate": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Şimdiye kadar %@. Bu tarayıcı dosyanın ne kadar olacağını söylemiyor, çubuk yalnızca hareket eder."
+          }
+        }
+      }
+    },
+    "downloads.explain.progress": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ · %2$@. Safari toplamı bildirir, çubuk kesin."
+          }
+        }
+      }
+    },
+    "downloads.percent": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%%%lld"
+          }
+        }
+      }
+    },
     "event.crossing.nearlyExhausted": {
       "localizations": {
         "tr": {
@@ -1417,6 +1517,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Takvim"
+          }
+        }
+      }
+    },
+    "module.downloads": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "İndirmeler"
           }
         }
       }
@@ -2441,6 +2551,156 @@
         }
       }
     },
+    "settings.downloads.access": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Klasör"
+          }
+        }
+      }
+    },
+    "settings.downloads.behaviour": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Davranış"
+          }
+        }
+      }
+    },
+    "settings.downloads.behaviour.help": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Safari dosyanın ne kadar olacağını söyler, çubuğu kesindir; Chrome, Edge ve Brave söylemez, çubukları yalnızca hareket eder. Biten dosya karttan rafa gidebilir."
+          }
+        }
+      }
+    },
+    "settings.downloads.checking": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Klasör denetleniyor…"
+          }
+        }
+      }
+    },
+    "settings.downloads.denied": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "macOS bu klasörün okunmasına izin vermedi"
+          }
+        }
+      }
+    },
+    "settings.downloads.folder": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Klasör"
+          }
+        }
+      }
+    },
+    "settings.downloads.folder.help": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Boş bırakılırsa İndirmeler klasörün. macOS izni bunu okumak için ister; izin uygulamanın imzasına bağlıdır, yeniden derlenen uygulama yeniden sorar. Yalnızca dosya adları ve boyutları okunur, bu Mac'ten hiçbir şey çıkmaz."
+          }
+        }
+      }
+    },
+    "settings.downloads.granted": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "İzleniyor"
+          }
+        }
+      }
+    },
+    "settings.downloads.keep": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kartta kalan son indirmeler"
+          }
+        }
+      }
+    },
+    "settings.downloads.missing": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "İndirmeler modülü kayıtlı değil."
+          }
+        }
+      }
+    },
+    "settings.downloads.off": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kapalı"
+          }
+        }
+      }
+    },
+    "settings.downloads.off.help": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modüller'den modülü aç; o zamana kadar klasöre dokunulmaz."
+          }
+        }
+      }
+    },
+    "settings.downloads.openPrivacy": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gizlilik Ayarlarını Aç…"
+          }
+        }
+      }
+    },
+    "settings.downloads.popups": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "İndirme bitince popup"
+          }
+        }
+      }
+    },
+    "settings.downloads.retry": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yeniden dene"
+          }
+        }
+      }
+    },
     "settings.general.closeDelay": {
       "localizations": {
         "tr": {
@@ -3261,6 +3521,16 @@
         }
       }
     },
+    "settings.modules.downloads.summary": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tarayıcı indirmeleri: housing yanında ilerleme, bitince popup, dosyayı rafa koyabilen kart. İndirmeler klasörü izni gerekir."
+          }
+        }
+      }
+    },
     "settings.modules.help": {
       "localizations": {
         "tr": {
@@ -3607,6 +3877,66 @@
           "stringUnit": {
             "state": "translated",
             "value": "Bitti"
+          }
+        }
+      }
+    },
+    "settings.setup.downloads": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "İndirmeler (isteğe bağlı)"
+          }
+        }
+      }
+    },
+    "settings.setup.downloads.checking": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Klasör denetleniyor…"
+          }
+        }
+      }
+    },
+    "settings.setup.downloads.denied": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reddedildi. Gizlilik ve Güvenlik → Dosyalar ve Klasörler → İndirmeler altında MyNotch'a izin ver."
+          }
+        }
+      }
+    },
+    "settings.setup.downloads.enable": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aç"
+          }
+        }
+      }
+    },
+    "settings.setup.downloads.off": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "İsteğe bağlı. Tarayıcı indirmelerini çentikte gösterir; İndirmeler klasörünü okuma izni gerekir."
+          }
+        }
+      }
+    },
+    "settings.setup.downloads.ok": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "İzin verildi. İndirmeler sürerken çentikte görünür."
           }
         }
       }
@@ -4227,6 +4557,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Claude"
+          }
+        }
+      }
+    },
+    "settings.tab.downloads": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "İndirmeler"
           }
         }
       }

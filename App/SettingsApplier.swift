@@ -17,6 +17,7 @@ struct SettingsApplier {
         .usageWarningThreshold, .usagePollInterval, .usageAlertsEnabled,
         .batteryLowThreshold, .batteryAlertsEnabled, .pomodoroWorkMinutes,
         .calendarLeadMinutes, .calendarSelectedIDs, .calendarAlertsEnabled, .shelfKeepInterval,
+        .downloadsFolder, .downloadsCompletionPopups, .downloadsKeepRecent,
         .volumePopupsEnabled, .volumeHUDReplacement, .audioDeviceConnectPopups, .audioDeviceDisconnectPopups,
         .audioDeviceBatteryEnabled, .updateChecksEnabled
     ]
@@ -73,6 +74,12 @@ struct SettingsApplier {
             battery?.alertsEnabled = store.batteryAlertsEnabled
         case .shelfKeepInterval:
             shelf?.store.keepInterval = store.shelfKeepInterval
+        case .downloadsFolder:
+            downloads?.service.setFolder(store.downloadsFolder)
+        case .downloadsCompletionPopups:
+            downloads?.completionPopups = store.downloadsCompletionPopups
+        case .downloadsKeepRecent:
+            downloads?.service.keepRecent = store.downloadsKeepRecent
         case .volumePopupsEnabled:
             volume?.service.popupsEnabled = store.volumePopupsEnabled
         case .volumeHUDReplacement:
@@ -131,5 +138,9 @@ struct SettingsApplier {
 
     private var audioDevice: AudioDeviceModule? {
         manager.module(id: "audioDevice") as? AudioDeviceModule
+    }
+
+    private var downloads: DownloadsModule? {
+        manager.module(id: "downloads") as? DownloadsModule
     }
 }

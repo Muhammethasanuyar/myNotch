@@ -84,6 +84,7 @@ nonisolated enum ModuleCatalog {
         case "shelf": "tray.full.fill"
         case "volume": "speaker.wave.2.fill"
         case "audioDevice": "airpods.pro"
+        case "downloads": "arrow.down.circle.fill"
         case "demo": "wand.and.stars"
         default: "puzzlepiece.extension"
         }
@@ -107,6 +108,8 @@ nonisolated enum ModuleCatalog {
             L("settings.modules.volume.summary", "The output level as a popup when it changes; optionally the volume keys themselves, so the system HUD stays away.")
         case "audioDevice":
             L("settings.modules.audioDevice.summary", "A popup when AirPods, headphones or a display take over the sound, with the AirPods battery when it is known.")
+        case "downloads":
+            L("settings.modules.downloads.summary", "Browser downloads: progress beside the housing, a popup when done, a card that can put the file on the shelf. Needs the Downloads folder permission.")
         case "demo":
             L("settings.modules.demo.summary", "Exercises the notch engine; Debug builds only.")
         default:

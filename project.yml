@@ -76,6 +76,7 @@ targets:
         SUScheduledCheckInterval: 86400
         NSAppleEventsUsageDescription: "MyNotch asks Spotify and Music what is playing so it can show it in the notch."
         NSCalendarsFullAccessUsageDescription: "MyNotch reads your upcoming events to count down to the next meeting in the notch. Nothing leaves this Mac."
+        NSDownloadsFolderUsageDescription: "MyNotch watches your Downloads folder so it can show download progress in the notch and tell you when a file has finished. Only names and sizes are read, and nothing leaves this Mac."
         NSAudioCaptureUsageDescription: "MyNotch listens to what the Mac plays so the bars beside the notch can move to the music. The audio is reduced to six levels inside the app and never stored or sent."
     scheme:
       testTargets:

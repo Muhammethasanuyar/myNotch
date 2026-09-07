@@ -6,6 +6,31 @@
     <description>MyNotch releases. Items are appended by scripts/release.sh; newest first.</description>
     <language>en</language>
     <item>
+      <title>MyNotch 0.2.0</title>
+      <link>https://github.com/Muhammethasanuyar/myNotch/releases/tag/v0.2.0</link>
+      <sparkle:version>3</sparkle:version>
+      <sparkle:shortVersionString>0.2.0</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <pubDate>Mon, 07 Sep 2026 03:27:16 +0300</pubDate>
+      <description><![CDATA[<h3>Added</h3>
+<ul>
+<li>Volume: a short popup whenever the output level or mute changes, and an optional mode (Settings → Sound) that takes the volume keys before macOS does so the system HUD stays away — needs the Accessibility permission; brightness keys are never touched.</li>
+<li>Output device: a popup when AirPods, headphones or a display take over the sound, with the AirPods battery when the system reports it; a card with transport and latency.</li>
+<li>Downloads (off by default): Safari and Chromium downloads as a progress ring beside the housing, a popup when a file lands, and a card that can put the file on the shelf. Asks for the Downloads folder permission only when turned on.</li>
+<li>Builds (off by default): finished Xcode builds from DerivedData and GitHub Actions runs through your own <code>gh</code> — no token stored — as popups, with the last few on the card.</li>
+<li>Now playing: shuffle and repeat for players followed through the system-wide source; a six-band level meter on the player card.</li>
+<li>Claude Code: when Anthropic cannot be reached, a limit Claude Code itself hit stands in on the ring (dashed) until it resets, and hitting a limit posts one popup.</li>
+<li>Settings → Media links straight to the Screen &amp; System Audio Recording privacy pane when the level meter hears nothing.</li>
+</ul>
+<h3>Changed</h3>
+<ul>
+<li>A scheduled update check that finds a new version now turns the menu bar item into &quot;Update to x.y.z available…&quot; instead of waiting for a window the app never shows; the standard Sparkle window opens when you ask.</li>
+<li>The adapter health check reruns only when macOS or the bundled adapter changes, not on every version bump.</li>
+<li>The Spotify token file is created owner-only and swapped into place; a corrupt file shows as an error in Settings instead of a silent disconnect.</li>
+</ul>]]></description>
+      <enclosure url="https://github.com/Muhammethasanuyar/myNotch/releases/download/v0.2.0/MyNotch-0.2.0.zip" type="application/octet-stream" sparkle:edSignature="haYfKoNFyb5suR+ETwjHGaU7Px+QSRT2BwlzVzLWrbBA/zChV16Z+4Tq4s03uerXD7xMhcGXLb69Uvpro9yqCA==" length="4357725"/>
+    </item>
+    <item>
       <title>MyNotch 0.1.1</title>
       <link>https://github.com/Muhammethasanuyar/myNotch/releases/tag/v0.1.1</link>
       <sparkle:version>2</sparkle:version>

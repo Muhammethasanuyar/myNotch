@@ -4,6 +4,22 @@ All notable changes to MyNotch are listed here. The format follows [Keep a Chang
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-09-07
+
+### Added
+- Volume: a short popup whenever the output level or mute changes, and an optional mode (Settings → Sound) that takes the volume keys before macOS does so the system HUD stays away — needs the Accessibility permission; brightness keys are never touched.
+- Output device: a popup when AirPods, headphones or a display take over the sound, with the AirPods battery when the system reports it; a card with transport and latency.
+- Downloads (off by default): Safari and Chromium downloads as a progress ring beside the housing, a popup when a file lands, and a card that can put the file on the shelf. Asks for the Downloads folder permission only when turned on.
+- Builds (off by default): finished Xcode builds from DerivedData and GitHub Actions runs through your own `gh` — no token stored — as popups, with the last few on the card.
+- Now playing: shuffle and repeat for players followed through the system-wide source; a six-band level meter on the player card.
+- Claude Code: when Anthropic cannot be reached, a limit Claude Code itself hit stands in on the ring (dashed) until it resets, and hitting a limit posts one popup.
+- Settings → Media links straight to the Screen & System Audio Recording privacy pane when the level meter hears nothing.
+
+### Changed
+- A scheduled update check that finds a new version now turns the menu bar item into "Update to x.y.z available…" instead of waiting for a window the app never shows; the standard Sparkle window opens when you ask.
+- The adapter health check reruns only when macOS or the bundled adapter changes, not on every version bump.
+- The Spotify token file is created owner-only and swapped into place; a corrupt file shows as an error in Settings instead of a silent disconnect.
+
 ## [0.1.1] - 2026-09-07
 
 ### Changed

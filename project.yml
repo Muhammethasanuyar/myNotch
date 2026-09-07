@@ -14,8 +14,8 @@ settings:
     # No signing identity on this machine: ad-hoc "Sign to Run Locally" for Debug builds.
     CODE_SIGN_STYLE: Manual
     CODE_SIGN_IDENTITY: "-"
-    MARKETING_VERSION: "0.1.1"
-    CURRENT_PROJECT_VERSION: "2"
+    MARKETING_VERSION: "0.2.0"
+    CURRENT_PROJECT_VERSION: "3"
 
 # The one Swift package this project takes: the update framework. Pinned to an exact version so every
 # machine builds the same Sparkle; bump it deliberately (docs/RELEASE.md).

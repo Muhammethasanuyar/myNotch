@@ -12,6 +12,7 @@ nonisolated enum SettingsTab: String, CaseIterable, Identifiable, Sendable {
     case pomodoro
     case shelf
     case downloads
+    case ci
     case sound
     case setup
     case about
@@ -29,6 +30,7 @@ nonisolated enum SettingsTab: String, CaseIterable, Identifiable, Sendable {
         case .pomodoro: L("settings.tab.pomodoro", "Pomodoro")
         case .shelf: L("settings.tab.shelf", "Shelf")
         case .downloads: L("settings.tab.downloads", "Downloads")
+        case .ci: L("settings.tab.ci", "Builds")
         case .sound: L("settings.tab.sound", "Sound")
         case .setup: L("settings.tab.setup", "Setup")
         case .about: L("settings.tab.about", "About")
@@ -46,6 +48,7 @@ nonisolated enum SettingsTab: String, CaseIterable, Identifiable, Sendable {
         case .pomodoro: "timer"
         case .shelf: "tray.full.fill"
         case .downloads: "arrow.down.circle"
+        case .ci: "hammer"
         case .sound: "speaker.wave.2"
         case .setup: "checklist"
         case .about: "info.circle"
@@ -102,5 +105,9 @@ struct SettingsContext {
 
     var downloads: DownloadsModule? {
         manager.module(id: "downloads") as? DownloadsModule
+    }
+
+    var ci: CIModule? {
+        manager.module(id: "ci") as? CIModule
     }
 }

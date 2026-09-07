@@ -82,6 +82,8 @@ struct SettingsView: View {
             ShelfPane(store: context.store, module: context.shelf)
         case .downloads:
             DownloadsPane(store: context.store, module: context.downloads)
+        case .ci:
+            CIPane(store: context.store, module: context.ci)
         case .sound:
             SoundPane(store: context.store, volume: context.volume, audioDevice: context.audioDevice)
         case .setup:

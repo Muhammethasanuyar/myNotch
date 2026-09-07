@@ -45,6 +45,11 @@ nonisolated enum SettingsKey: String, CaseIterable, Sendable {
     case downloadsFolder
     case downloadsCompletionPopups
     case downloadsKeepRecent
+    // Builds
+    case ciXcodeEnabled
+    case ciRepos
+    case ciPollInterval
+    case ciGHPath
     // Sound
     case volumePopupsEnabled
     case volumeHUDReplacement
@@ -117,6 +122,9 @@ nonisolated enum SettingsRules {
     /// One of the shelf's offered retention periods; zero is "until removed".
     static func shelfKeepInterval(_ seconds: TimeInterval) -> TimeInterval { ShelfRules.snappedKeepInterval(seconds) }
     static func downloadsKeepRecent(_ count: Int) -> Int { clamp(count, to: downloadsKeepRange) }
+    /// Valid `owner/repo` entries only, at most five, joined back for the text field.
+    static func ciRepos(_ text: String) -> String { CIRules.parseRepos(text).joined(separator: ", ") }
+    static func ciPollInterval(_ seconds: TimeInterval) -> TimeInterval { CIRules.snappedPollInterval(seconds) }
 
     /// Every pomodoro length inside its range.
     static func pomodoroConfig(work: Int, breakMinutes: Int, longBreak: Int, every: Int) -> PomodoroConfig {
@@ -267,6 +275,18 @@ final class SettingsStore {
         set { withMutation(keyPath: \.downloadsKeepRecent) { storedDownloadsKeep = SettingsRules.downloadsKeepRecent(newValue) }; persist(storedDownloadsKeep, .downloadsKeepRecent) }
     }
 
+    // MARK: Builds
+
+    var ciXcodeEnabled: Bool { didSet { persist(ciXcodeEnabled, .ciXcodeEnabled) } }
+    /// Free text as typed; `ciRepoList` is the cleaned form the module uses.
+    var ciRepos: String { didSet { persist(trimmed(ciRepos), .ciRepos) } }
+    var ciRepoList: [String] { CIRules.parseRepos(ciRepos) }
+    var ciPollInterval: TimeInterval {
+        get { access(keyPath: \.ciPollInterval); return storedCIPoll }
+        set { withMutation(keyPath: \.ciPollInterval) { storedCIPoll = SettingsRules.ciPollInterval(newValue) }; persist(storedCIPoll, .ciPollInterval) }
+    }
+    var ciGHPath: String { didSet { persist(trimmed(ciGHPath), .ciGHPath) } }
+
     // MARK: Sound
 
     var volumePopupsEnabled: Bool { didSet { persist(volumePopupsEnabled, .volumePopupsEnabled) } }
@@ -305,6 +325,7 @@ final class SettingsStore {
     @ObservationIgnored private var storedCalendarLead: Int
     @ObservationIgnored private var storedShelfKeep: TimeInterval
     @ObservationIgnored private var storedDownloadsKeep: Int
+    @ObservationIgnored private var storedCIPoll: TimeInterval
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -360,6 +381,10 @@ final class SettingsStore {
         downloadsFolder = defaults.string(forKey: SettingsKey.downloadsFolder.rawValue) ?? ""
         downloadsCompletionPopups = defaults.object(forKey: SettingsKey.downloadsCompletionPopups.rawValue) as? Bool ?? true
         storedDownloadsKeep = SettingsRules.downloadsKeepRecent(defaults.object(forKey: SettingsKey.downloadsKeepRecent.rawValue) as? Int ?? 5)
+        ciXcodeEnabled = defaults.object(forKey: SettingsKey.ciXcodeEnabled.rawValue) as? Bool ?? true
+        ciRepos = defaults.string(forKey: SettingsKey.ciRepos.rawValue) ?? ""
+        storedCIPoll = SettingsRules.ciPollInterval(defaults.object(forKey: SettingsKey.ciPollInterval.rawValue) as? Double ?? CIRules.activeInterval)
+        ciGHPath = defaults.string(forKey: SettingsKey.ciGHPath.rawValue) ?? ""
         volumePopupsEnabled = defaults.object(forKey: SettingsKey.volumePopupsEnabled.rawValue) as? Bool ?? true
         volumeHUDReplacement = defaults.object(forKey: SettingsKey.volumeHUDReplacement.rawValue) as? Bool ?? false
         audioDeviceConnectPopups = defaults.object(forKey: SettingsKey.audioDeviceConnectPopups.rawValue) as? Bool ?? true

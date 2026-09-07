@@ -681,6 +681,196 @@
         }
       }
     },
+    "ci.counts.errors": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld hata"
+          }
+        }
+      }
+    },
+    "ci.counts.warnings": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld uyarı"
+          }
+        }
+      }
+    },
+    "ci.empty": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Henüz derleme yok"
+          }
+        }
+      }
+    },
+    "ci.empty.auth": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GitHub Actions için Terminal'de gh auth login çalıştır."
+          }
+        }
+      }
+    },
+    "ci.empty.failed": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GitHub: %@"
+          }
+        }
+      }
+    },
+    "ci.empty.missing": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GitHub CLI bulunamadı — brew install gh."
+          }
+        }
+      }
+    },
+    "ci.empty.off": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Xcode derlemeleri bitince görünür; GitHub Actions için Ayarlar → Derlemeler'e owner/repo ekle."
+          }
+        }
+      }
+    },
+    "ci.empty.ready": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "İzleniyor; henüz bir şey çalışmadı."
+          }
+        }
+      }
+    },
+    "ci.event.title": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ — %2$@"
+          }
+        }
+      }
+    },
+    "ci.explain.clean": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hata ya da uyarı sayılmadı."
+          }
+        }
+      }
+    },
+    "ci.explain.github": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@: %2$@%3$@. Koşuyu GitHub'da açmak için dokun."
+          }
+        }
+      }
+    },
+    "ci.explain.sources": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Xcode derlemeleri DerivedData'daki derleme günlüğü manifestlerinden gelir; GitHub Actions kendi gh aracın üzerinden, bir koşu sürerken en çok dakikada bir."
+          }
+        }
+      }
+    },
+    "ci.explain.xcode": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@: %2$@%3$@. %4$@"
+          }
+        }
+      }
+    },
+    "ci.status.cancelled": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "İptal edildi"
+          }
+        }
+      }
+    },
+    "ci.status.failure": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Başarısız"
+          }
+        }
+      }
+    },
+    "ci.status.running": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Çalışıyor"
+          }
+        }
+      }
+    },
+    "ci.status.success": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Başarılı"
+          }
+        }
+      }
+    },
+    "ci.status.unknown": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bilinmiyor"
+          }
+        }
+      }
+    },
+    "ci.status.warning": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uyarılar"
+          }
+        }
+      }
+    },
     "downloads.denied": {
       "localizations": {
         "tr": {
@@ -1521,6 +1711,16 @@
         }
       }
     },
+    "module.ci": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Derlemeler"
+          }
+        }
+      }
+    },
     "module.downloads": {
       "localizations": {
         "tr": {
@@ -2137,6 +2337,216 @@
           "stringUnit": {
             "state": "translated",
             "value": "Zamanlama"
+          }
+        }
+      }
+    },
+    "settings.ci.ghPath": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "gh yolu (isteğe bağlı)"
+          }
+        }
+      }
+    },
+    "settings.ci.github": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GitHub Actions"
+          }
+        }
+      }
+    },
+    "settings.ci.github.auth": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "gh oturum açmamış"
+          }
+        }
+      }
+    },
+    "settings.ci.github.auth.help": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Terminal'de gh auth login çalıştır, sonra yeniden dene."
+          }
+        }
+      }
+    },
+    "settings.ci.github.failed": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "gh koşuları listeleyemedi"
+          }
+        }
+      }
+    },
+    "settings.ci.github.help": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En çok beş owner/repo girdisi. MyNotch kendi gh komut satırı aracını çalıştırır ve token saklamaz: gh kendi kimliğini gönderir, yalnızca koşu listesi geri gelir. Bir koşu sürerken ya da kart açıkken seçilen sıklıkta, aksi halde on dakikada bir sorulur; depo yoksa hiç."
+          }
+        }
+      }
+    },
+    "settings.ci.github.missing": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GitHub CLI bulunamadı"
+          }
+        }
+      }
+    },
+    "settings.ci.github.missing.help": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Homebrew ile kur ya da yol alanını ona yönelt."
+          }
+        }
+      }
+    },
+    "settings.ci.github.off": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Depo yok"
+          }
+        }
+      }
+    },
+    "settings.ci.github.off.help": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Actions koşularını izlemek için aşağıya owner/repo ekle."
+          }
+        }
+      }
+    },
+    "settings.ci.github.ready": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld depo izleniyor"
+          }
+        }
+      }
+    },
+    "settings.ci.install": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kur"
+          }
+        }
+      }
+    },
+    "settings.ci.missing": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Derlemeler modülü kayıtlı değil."
+          }
+        }
+      }
+    },
+    "settings.ci.off": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kapalı"
+          }
+        }
+      }
+    },
+    "settings.ci.off.help": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modüller'den modülü aç; o zamana kadar hiçbir şey izlenmez ya da çalıştırılmaz."
+          }
+        }
+      }
+    },
+    "settings.ci.poll": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GitHub'a sorma sıklığı"
+          }
+        }
+      }
+    },
+    "settings.ci.repos": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Depolar"
+          }
+        }
+      }
+    },
+    "settings.ci.retry": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yeniden dene"
+          }
+        }
+      }
+    },
+    "settings.ci.xcode": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Xcode"
+          }
+        }
+      }
+    },
+    "settings.ci.xcode.enabled": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Biten Xcode derlemelerini bildir"
+          }
+        }
+      }
+    },
+    "settings.ci.xcode.help": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Xcode'un DerivedData altında tuttuğu derleme günlüğü manifestlerinden okunur; biten derleme sonucunu popup olarak verir."
           }
         }
       }
@@ -3501,6 +3911,16 @@
         }
       }
     },
+    "settings.modules.ci.summary": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Biten Xcode derlemeleri ve GitHub Actions koşuları (kendi gh aracın üzerinden) popup olarak, son birkaçı kartta."
+          }
+        }
+      }
+    },
     "settings.modules.claude.summary": {
       "localizations": {
         "tr": {
@@ -3847,6 +4267,96 @@
           "stringUnit": {
             "state": "translated",
             "value": "Token ve bloklar onsuz da çalışır; bugünkü harcamayı görmek için ccusage kurun (`brew install ccusage`). Çevrimdışı çalışır."
+          }
+        }
+      }
+    },
+    "settings.setup.ci": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Derlemeler (isteğe bağlı)"
+          }
+        }
+      }
+    },
+    "settings.setup.ci.auth": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "gh oturum açmamış: gh auth login çalıştır."
+          }
+        }
+      }
+    },
+    "settings.setup.ci.enable": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aç"
+          }
+        }
+      }
+    },
+    "settings.setup.ci.failed": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "gh koşuları listeleyemedi; ayrıntılar Ayarlar → Derlemeler'de."
+          }
+        }
+      }
+    },
+    "settings.setup.ci.missing": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GitHub CLI bulunamadı: brew install gh."
+          }
+        }
+      }
+    },
+    "settings.setup.ci.off": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "İsteğe bağlı. Biten Xcode derlemeleri ve GitHub Actions koşuları (kendi gh aracın üzerinden) için popup."
+          }
+        }
+      }
+    },
+    "settings.setup.ci.ok": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Xcode derlemeleri ve GitHub Actions koşuları bildiriliyor."
+          }
+        }
+      }
+    },
+    "settings.setup.ci.open": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Derleme ayarları…"
+          }
+        }
+      }
+    },
+    "settings.setup.ci.xcodeOnly": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Xcode derlemeleri bildiriliyor. GitHub Actions için Ayarlar → Derlemeler'e depo ekle."
           }
         }
       }
@@ -4547,6 +5057,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Takvim"
+          }
+        }
+      }
+    },
+    "settings.tab.ci": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Derlemeler"
           }
         }
       }

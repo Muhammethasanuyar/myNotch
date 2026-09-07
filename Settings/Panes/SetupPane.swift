@@ -46,6 +46,9 @@ struct SetupPane: View {
                 if let downloads = context.downloads {
                     downloadsRow(downloads)
                 }
+                if let ci = context.ci {
+                    ciRow(ci)
+                }
             }
 
             Section {
@@ -210,6 +213,28 @@ struct SetupPane: View {
                 SystemSettingsLink.open(SystemSettingsLink.filesAndFolders)
             } else {
                 module.service.requestAccess()
+            }
+        }
+    }
+
+    private func ciRow(_ module: CIModule) -> some View {
+        let enabled = context.store.isModuleEnabled(module.id)
+        let (tone, detail, actionTitle): (StatusTone, String, String?) = if !enabled {
+            (.neutral, L("settings.setup.ci.off", "Optional. Popups for finished Xcode builds and GitHub Actions runs (through your own gh tool)."), L("settings.setup.ci.enable", "Turn on"))
+        } else {
+            switch module.service.github.state {
+            case .off: (.ok, L("settings.setup.ci.xcodeOnly", "Xcode builds are reported. Add repositories in Settings → Builds for GitHub Actions."), L("settings.setup.ci.open", "Builds settings…"))
+            case .ready: (.ok, L("settings.setup.ci.ok", "Xcode builds and GitHub Actions runs are reported."), nil)
+            case .missing: (.attention, L("settings.setup.ci.missing", "GitHub CLI not found: brew install gh."), L("settings.setup.ci.open", "Builds settings…"))
+            case .notAuthenticated: (.attention, L("settings.setup.ci.auth", "gh is not signed in: run gh auth login."), L("settings.setup.ci.open", "Builds settings…"))
+            case .failed: (.problem, L("settings.setup.ci.failed", "gh could not list runs; details in Settings → Builds."), L("settings.setup.ci.open", "Builds settings…"))
+            }
+        }
+        return SetupRow(tone: tone, title: L("settings.setup.ci", "Builds (optional)"), detail: detail, actionTitle: actionTitle) {
+            if !enabled {
+                context.store.setModule(module.id, enabled: true)
+            } else {
+                navigation.selectedTab = .ci
             }
         }
     }

@@ -30,6 +30,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         register(BatteryModule(), in: manager)
         register(DownloadsModule(), in: manager)
         register(ShelfModule(), in: manager)
+        register(CIModule(), in: manager)
         register(AudioDeviceModule(service: AudioDeviceService(watcher: audioOutput)), in: manager)
         register(VolumeModule(service: VolumeService(watcher: audioOutput)), in: manager)
         // The demo module only exists to exercise the engine, so it never ships in a release build.

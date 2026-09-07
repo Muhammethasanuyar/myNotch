@@ -18,6 +18,7 @@ struct SettingsApplier {
         .batteryLowThreshold, .batteryAlertsEnabled, .pomodoroWorkMinutes,
         .calendarLeadMinutes, .calendarSelectedIDs, .calendarAlertsEnabled, .shelfKeepInterval,
         .downloadsFolder, .downloadsCompletionPopups, .downloadsKeepRecent,
+        .ciXcodeEnabled, .ciRepos, .ciPollInterval,
         .volumePopupsEnabled, .volumeHUDReplacement, .audioDeviceConnectPopups, .audioDeviceDisconnectPopups,
         .audioDeviceBatteryEnabled, .updateChecksEnabled
     ]
@@ -80,6 +81,15 @@ struct SettingsApplier {
             downloads?.completionPopups = store.downloadsCompletionPopups
         case .downloadsKeepRecent:
             downloads?.service.keepRecent = store.downloadsKeepRecent
+        case .ciXcodeEnabled:
+            ci?.service.xcodeEnabled = store.ciXcodeEnabled
+        case .ciRepos:
+            ci?.service.github.repos = store.ciRepoList
+        case .ciPollInterval:
+            ci?.service.github.pollInterval = store.ciPollInterval
+        case .ciGHPath:
+            // Read by GHLocator on the next poll; nothing to push.
+            ci?.service.github.refresh()
         case .volumePopupsEnabled:
             volume?.service.popupsEnabled = store.volumePopupsEnabled
         case .volumeHUDReplacement:
@@ -142,5 +152,9 @@ struct SettingsApplier {
 
     private var downloads: DownloadsModule? {
         manager.module(id: "downloads") as? DownloadsModule
+    }
+
+    private var ci: CIModule? {
+        manager.module(id: "ci") as? CIModule
     }
 }

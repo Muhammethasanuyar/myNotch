@@ -209,3 +209,41 @@ Hazırlık: izin durumunu sıfırlamak için `tccutil reset Calendar com.emre.my
 8. Ayarlar → Raf: sayı + boyut + yol, "Finder'da Göster", "Rafı boşalt" (yalnızca kopyalar gider), saklama süresi seçici; 1 saate çekip 1 saatten eski bir kopyanın raf yeniden yüklenince gittiğini gör (`defaults write com.emre.mynotch shelfKeepInterval 3600` + yeniden aç). Kurulum sekmesinde "Raf (isteğe bağlı)" satırı pane'e götürür.
 9. `-debugState expanded -debugModule shelf -onboardingCompleted YES`: boş raf ipucu ("Dosyaları çentiğe bırak") + AirDrop bölgesi; Debug Preview → "Test popup" raf popup'ını gösterir. CPU: `scripts/measure-idle.sh 30` kart açıkken ≈ %0 (2026-09-06: %0,01, sürükleme monitörü kurulu).
 
+## Faz 7–9 — Release, ekler, yeni modüller
+
+### Release ve Sparkle
+1. `https://github.com/Muhammethasanuyar/myNotch/releases/latest` → DMG indir, aç, MyNotch'u Uygulamalar'a sürükle. İlk açılışta Gatekeeper "doğrulanamadı" der → Sistem Ayarları → Gizlilik ve Güvenlik → "Yine de Aç". Uygulama açılır, ilk açılışta Kurulum sekmesi gelir.
+2. Kurulu 0.1.0'da menü bar → **Check for Updates…** → Sparkle penceresi 0.2.0'ı sürüm notlarıyla gösterir → "Install and Relaunch" → uygulama 0.2.0 olarak döner (Ayarlar → Hakkında). Ad-hoc imzalı uygulamada Sparkle kurulumunun kanıtı; kuramazsa `docs/RELEASE.md` §4 ve README elle indirme yolu.
+3. 0.2.0'da: zamanlanmış denetim yeni sürüm bulunca menü öğesi "Update to x.y.z available…" olur; Ayarlar → Genel → "Güncellemeleri günde bir denetle" kapatılınca `defaults read com.emre.mynotch SUEnableAutomaticChecks` 0.
+4. `scripts/release.sh <v> --dry-run` (sürüm/CHANGELOG hazır): ürünler `build/release/`, appcast/git/GitHub dokunulmamış.
+
+### Faz 8 ekleri
+1. Generic oynatıcı açıkken (Safari/YouTube): karttaki shuffle/repeat düğmeleri etkin; tıkla → durum bir sonraki satırla geri gelir.
+2. Player kartı: kontrol çubuğunun sağında 6 çubuk; visualizer açıkken sese uyar, kapalıyken dans eder; `scripts/measure-idle.sh 30` kart açık ≤ %2.
+3. Ayarlar → Medya → seviye ölçer `.silent` iken "Gizlilik Ayarlarını Aç…" → Ekran ve Sistem Sesi Kaydı bölmesi.
+4. Claude: Anthropic'e ulaşılamazken (Wi-Fi kapat) ve Claude Code bir limite çarpmışken 5 saat halkası **kesik çizgili %100**, hover açıklaması "Claude Code'un günlüğü…"; yeni reddedilme popup'ı bir kez; endpoint dönünce gerçek okuma yerini alır, "pencere sıfırlandı" popup'ı **çıkmaz**.
+
+### Ses (Volume)
+1. Ses tuşlarına bas → çentikte 1,5 s popup (glif + 16 segment + yüzde), sistem HUD'u da görünür; menü barından/başka uygulamadan değişim de aynı popup'ı verir. Sessiz → "Sessiz".
+2. Ayarlar → Ses → "Sistem ses HUD'unu değiştir" aç → durum "Erişilebilirlik gerekir", "Erişim ver…" → macOS istemi → izin ver → durum "Açık — ses tuşları çentiğe gidiyor" (bildirimle ya da uygulamaya dönünce kendiliğinden).
+3. Değiştir modunda: ses tuşları yalnızca çentiği açar (sistem OSD'si yok), Option+Shift çeyrek adım, Shift geri bildirim sesi; **parlaklık tuşları normal çalışır**; HDMI TV çıkışında tuşlar sisteme geçer, popup "Ses denetimi yok".
+4. `tccutil reset Accessibility com.emre.mynotch` → durum "Erişilebilirlik gerekir", tuşlar sisteme döner (sessiz düşüş). Yeniden derleme sonrası aynı sıfırlanma beklenir (ad-hoc imza).
+5. Main Thread Checker açık Debug çalıştırmasında tuşlara bas → `NSEvent(cgEvent:)` şikâyeti yoksa V-3 kapanır. Tap zaman aşımı sayacı Ayarlar → Ses'te.
+
+### Çıkış aygıtı (AudioDevice)
+1. AirPods bağla → 2,5 s popup "Bağlandı: … AirPods Pro" (glif `airpods.pro`), pil biliniyorsa "Sol 84% · Sağ 82% · Kutu 61%"; kart: transport, gecikme, pil çubukları (birkaç saniye sonra dolabilir, ikinci popup yok). `ioreg -r -c AppleDeviceManagementHIDEventService -l | grep -iE "BatteryPercent|DeviceAddress|Product|Transport"` ile anahtar adlarını doğrula (A-1b).
+2. AirPods çıkar → varsayılan kapalı olduğu için popup yok; Ayarlar → Ses → "Ses dahili hoparlöre dönünce popup" aç → 2 s popup. HDMI TV seç → "Bağlandı: 22W_LCD_TV" (glif `tv.fill`).
+3. Şeritte "Çıkış aygıtı" ekranı yalnızca harici aygıttayken.
+
+### İndirmeler (Downloads)
+1. Ayarlar → Modüller → İndirmeler aç → macOS "İndirmeler klasörü" istemi (`NSDownloadsFolderUsageDescription` metni) → izin ver → Ayarlar → İndirmeler "İzleniyor". Reddet → "izin verilmedi" + "Gizlilik Ayarlarını Aç…".
+2. Safari'de büyük dosya indir → compact: halka yüzdeyle dolar, sağda yüzde; kart: kesin çubuk, "12,4 MB / 38 MB". D-1: `plutil -p ~/Downloads/<ad>.download/Info.plist` anahtarları `DownloadEntryProgressBytesSoFar/TotalToLoad/URL` doğrula; plist seyrek yazılıyorsa paket boyutu yedeği çubuğu yine hareket ettirir.
+3. Chrome/Edge'de indir → belirsiz çubuk + "…"; bitince popup "İndirildi: <ad>" 3 s; kartta ✓ ve tepsi düğmesi → "Rafa koy" → Raf'ta kopya.
+4. İndirmeyi iptal et → sessizce düşer. 60 s durmuş indirme şeridi bırakır. `scripts/run.sh` sonrası grant korunuyor mu (D-4) — ad-hoc'ta yeniden istem beklenir.
+
+### Derlemeler (CI)
+1. Ayarlar → Modüller → Derlemeler aç (istem yok). Xcode'da bir derleme bitir (ya da `scripts/build.sh`) → popup "MyNotch — uyarılar/başarılı/başarısız", kartta satır (`Xcode · MyNotch project`, sayaçlar, göreli zaman). Açılıştaki geçmiş popup üretmez.
+2. Ayarlar → Derlemeler → Depolar: `Muhammethasanuyar/myNotch` → "1 depo izleniyor"; `git push` → koşu sürerken şeritte çekiç + dal adı; bitince popup, kartta satıra dokun → tarayıcıda koşu. `pgrep -fl "gh run"` yalnızca poll anında.
+3. `gh auth logout` (geçici) → "gh oturum açmamış"; `gh auth login` → "Yeniden dene" düzeltir. Yol alanına saçma bir yol → "GitHub CLI bulunamadı".
+4. C-2: modül açıkken `scripts/build.sh` sırasında `scripts/measure-idle.sh 60` → MyNotch ≈ %0 (FSEvents süzgeci callback içinde). C-5: `time gh run list --repo … --limit 5 --json status` → 20 s zaman aşımı yeterli mi.
+

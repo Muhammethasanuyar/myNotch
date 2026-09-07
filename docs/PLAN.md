@@ -81,7 +81,7 @@ Bitince neyi aynen aldığını, neyi bilinçli değiştirdiğini 5 maddede öze
 | Proje tipi | Menü bar uygulaması (`LSUIElement = YES`) | Dock'ta görünmez, menü barda ikon + ayarlar |
 | Sandbox | **Kapalı** | AppleScript otomasyonu ve dosya izleme için gerekli → App Store hedefleme, Developer ID + notarization ile dağıt |
 | Mimari desen | MVVM + modül (plugin) protokolü | Her modül bağımsız test edilebilir |
-| Bağımlılık | Mümkün olduğunca sıfır SPM bağımlılığı | Sadece gerekirse ekle |
+| Bağımlılık | Mümkün olduğunca sıfır SPM bağımlılığı | Sadece gerekirse ekle. *Faz 7:* tek istisna **Sparkle 2** (`project.yml` `packages`, `exactVersion` ile sabit); `App/UpdaterManager.swift` dışında hiçbir dosya `import Sparkle` yapmaz |
 
 ## 4. Mimari Genel Bakış
 
@@ -266,7 +266,7 @@ Claude Code her oturumu yerel JSONL olarak yazar: `~/.claude/projects/<proje>/<s
 
 ## 7. Backlog Modüller (MVP sonrası fikir havuzu)
 
-Şarj/pil popup'ı **(Faz 6 ✓ `Modules/Battery`)** · AirPods bağlantı animasyonu · ses/parlaklık HUD replacement (bilinçli dışarıda: Erişilebilirlik + event tap) · dosya rafı (notch'a sürükle-bırak → AirDrop) **(Faz 6 ✓ `Modules/Shelf`)** · takvim "sıradaki toplantı" **(Faz 6 ✓ `Modules/Calendar`)** · indirme ilerlemesi · Pomodoro **(Faz 6 ✓ `Modules/Pomodoro`)** · Xcode/CI build durumu. Hepsi aynı `NotchModule` protokolüyle eklenir — mimariyi değiştirmez; raf için gereken tek motor dikişi (`acceptsDrops`) de modül-agnostiktir.
+Şarj/pil popup'ı **(Faz 6 ✓ `Modules/Battery`)** · AirPods bağlantı animasyonu **(Faz 9 ✓ `Modules/AudioDevice`)** · ses/parlaklık HUD replacement **(Faz 9 ✓ `Modules/Volume` — ses göstergesi + isteğe bağlı tuş devralma; parlaklık bilinçli dışarıda: özel API)** · dosya rafı (notch'a sürükle-bırak → AirDrop) **(Faz 6 ✓ `Modules/Shelf`)** · takvim "sıradaki toplantı" **(Faz 6 ✓ `Modules/Calendar`)** · indirme ilerlemesi **(Faz 9 ✓ `Modules/Downloads`)** · Pomodoro **(Faz 6 ✓ `Modules/Pomodoro`)** · Xcode/CI build durumu **(Faz 9 ✓ `Modules/CI`)**. Hepsi aynı `NotchModule` protokolüyle eklenir — mimariyi değiştirmez; raf için gereken tek motor dikişi (`acceptsDrops`) de modül-agnostiktir.
 
 ## 8. İzinler, Dağıtım, Güvenlik
 
@@ -301,8 +301,10 @@ Faz 6 sonrası gerçek ağaç (adlar `MyNotch`; üretilen `MyNotch.xcodeproj` ve
 
 ```
 MyNotch/
-├── App/            AppDelegate (SIGTERM → NSApp.terminate, applicationWillTerminate → ModuleManager.stopAll), SettingsApplier, Localizable.xcstrings
+├── App/            AppDelegate (SIGTERM → NSApp.terminate, applicationWillTerminate → ModuleManager.stopAll), UpdaterManager (Sparkle), SettingsApplier, Localizable.xcstrings
+├── appcast.xml, CHANGELOG.md, LICENSE (MIT), README.md, Resources/AppIcon.icns, Resources/MyNotch.entitlements, .github/workflows/ci.yml
 ├── Core/
+│   ├── System/     DirectoryWatcher (FSEvents, filtreli), AudioOutputDevice (Core Audio okuma/yazma), AudioOutputWatcher (paylaşılan dinleyiciler) — modül-agnostik
 │   ├── Window/     NotchPanel (NotchHostingView = drag hedefi), NotchRootView, NotchLayout, NotchShape, NotchDropDetector, NotchDragSessionMonitor,
 │   │               NotchScreenSwitcher, NotchSpotlight, PulsingSymbol, EqualizerBars, NotchTap, ScreenPreference
 │   ├── State/      NotchViewModel, NotchState, NotchTransition, Anim
@@ -313,11 +315,15 @@ MyNotch/
 │   ├── Battery/    BatteryService (IOKit.ps), BatteryRules, Views/
 │   ├── Pomodoro/   PomodoroTimer, PomodoroStateStore, PomodoroRules, Views/ (CountdownArc)
 │   ├── Calendar/   CalendarService (EventKit), CalendarRules, Views/
-│   └── Shelf/      ShelfStore, ShelfStorage (actor), ShelfItem (Transferable), ShelfRules, ShelfShare (AirDrop), Views/
-├── Settings/       SettingsStore, SettingsContext (sekmeler), SettingsWindowController, Panes/ (General, Modules, Media, Claude, Calendar, Battery, Pomodoro, Shelf, Setup, About)
+│   ├── Shelf/      ShelfStore, ShelfStorage (actor), ShelfItem (Transferable), ShelfRules, ShelfShare (AirDrop), Views/
+│   ├── Volume/     VolumeService, MediaKeyTap (event tap, kendi thread'i), VolumeRules, Views/
+│   ├── AudioDevice/ AudioDeviceService, AirPodsBatteryReader (IORegistry), AudioDeviceRules, Views/
+│   ├── Downloads/  DownloadsService (FSEvents + tarama), DownloadsRules, Views/
+│   └── CI/         XcodeBuildWatcher (LogStoreManifest), GitHubRunsService (gh), CIService, BuildManifest, GHLocator, CIRules, Views/
+├── Settings/       SettingsStore, SettingsContext (sekmeler), SettingsWindowController, Panes/ (General, Modules, Media, Claude, Calendar, Battery, Pomodoro, Shelf, Downloads, CI, Sound, Setup, About)
 ├── DebugPreview/
 ├── Vendor/mediaremote-adapter/   scripts/vendor-mediaremote-adapter.sh üretir; git'e girer
-├── scripts/        build/test/run, measure-idle, sync-settings-strings, vendor-mediaremote-adapter
+├── scripts/        build/test/run, measure-idle, sync-settings-strings, vendor-mediaremote-adapter, release (archive → imza → zip+DMG → appcast → GitHub Release), make-app-icon
 └── docs/           PLAN.md, manual-tests.md, harvest/
 ```
 
@@ -333,6 +339,9 @@ MyNotch/
 | **4 — Claude Usage** ✅ 2026-09-04 | `Modules/ClaudeUsage/`: `ClaudeCredentials` (env → Keychain via `/usr/bin/security` → dosya, salt-okunur), `UsageFetcher` (resmi 5 sa / 7 gün), `CCUsageRunner` (`ccusage@20` npx/binary, `--offline`), `ProjectsWatcher` (FSEvents), `ClaudeUsageService` (5 dk poll, 429 cooldown, uyanma grace, sign-in izleme), dashboard (halkalar, maliyet, model kırılımı, blok), eşik popup'ları | §6.3 kabul kriterleri |
 | **5 — Ayarlar & cila** | Settings penceresi (modül aç/kapa, hover gecikmesi, eşikler, ekran seçimi), launch at login, onboarding izin akışı, CPU/enerji ölçümü | Instruments'ta boşta <%1 CPU; temiz Mac'te kurulum akışı sorunsuz |
 | **6 — Gelişmiş** | Gerçek visualizer (CoreAudio process tap — spitfiresb/notch'un yaklaşımı — veya ScreenCaptureKit + vDSP, opsiyonel), mediaremote-adapter generic provider (`test` komutlu AppleScript fallback ile), native JSONL parser, ilk backlog modülü | Ayarlardan açılabilir, kapalıyken sıfır maliyet |
+| **7 — Release** ✅ 2026-09-07 | LICENSE (MIT), README, uygulama ikonu, Sparkle 2 (SPM istisnası, EdDSA anahtarı Keychain'de, günde bir appcast, `Check for Updates…`, arka plan uygulaması için nazik hatırlatma), `scripts/release.sh` (universal archive, içten dışa ad-hoc/Developer ID imza, zip + DMG, `sign_update`, appcast, `gh release`), CHANGELOG, GitHub Actions CI, Spotify token dosyası sertleştirme; **v0.1.0 ve v0.1.1 yayınlandı** | `scripts/release.sh <v>` tek komutla yayın; Sparkle canlı güncellemesi kullanıcının tıklamasını bekliyor (§18) |
+| **8 — Medya/Claude ekleri** ✅ 2026-09-07 | Generic oynatıcıda shuffle/repeat, player kartında 6 bantlı seviye ölçer, Claude `quotaLimits` "limit doldu" olayı (endpoint yokken kesik-çizgili %100 halka + tek popup), ses kaydı Gizlilik derin linki | Build/test yeşil; canlı doğrulama `docs/manual-tests.md` "Faz 7–9" |
+| **9 — Yeni modüller** ✅ 2026-09-07 | `Core/System/`, `ModuleContext.offerFiles`, varsayılan-kapalı modül mekanizması; **Volume** (gösterge + isteğe bağlı sistem HUD'u devralma), **AudioDevice** (AirPods/kulaklık/ekran popup'ı, IORegistry pili), **Downloads** (Safari/Chromium, FSEvents, Downloads TCC, varsayılan kapalı, "Rafa koy"), **CI** (Xcode `LogStoreManifest.plist` + `gh run list`, varsayılan kapalı) | Kapalıyken sıfır maliyet ölçüldü (kart açık %0,00–0,02); izin/sürükleme/tuş akışları elle (§18) |
 
 ## 11. CLAUDE.md Başlangıç İçeriği (repoya koy)
 
@@ -388,6 +397,13 @@ MyNotch/
 | GPL veya lisanssız koddan yanlışlıkla kopya | Lisans ihlali ya da tüm projenin GPL'e dönüşmesi | `references/` gitignore'da; adapte dosyalarda kaynak yorumu zorunlu; PR'da provenance kontrolü; §2.2 kuralları CLAUDE.md'ye de eklenecek |
 | Notch ölçüleri modele göre değişir | Yanlış hizalama | Ölçüleri her zaman `safeAreaInsets`/`auxiliaryTop*Area`dan hesapla, sabit değer yok |
 | Claude Code log formatı değişebilir | Parser kırılır | MVP'de ccusage'a yaslan (topluluk hızlı günceller); parser'ı toleranslı yaz |
+| Ad-hoc imzalı yayın: Gatekeeper "doğrulanamadı" der | Kullanıcı ilk açılışta takılır | README adımı (Gizlilik → Yine de Aç); Developer ID gelince kalkar; Homebrew cask bu sürede yok |
+| Ad-hoc → Developer ID geçişinde Sparkle kod imzası değişimini reddeder | Otomatik güncelleme o sürüm için çalışmaz | Tek seferlik elle indirme duyurusu (informational appcast öğesi) — `docs/RELEASE.md` §5 |
+| Erişilebilirlik / Downloads / Otomasyon izinleri imzaya bağlı; ad-hoc'ta her sürüm yeni imza | Her güncellemeden sonra izinler yeniden istenir | İzin isteyen her şey opt-in ve durum satırlı; izin yoksa sessiz düşüş (HUD → gösterge, Downloads → satır) |
+| Sparkle EdDSA anahtarı kaybı | Güncelleme kanalı ölür | `generate_keys -x` yedeği parola yöneticisinde (`docs/RELEASE.md` §1) |
+| Xcode `LogStoreManifest.plist` biçimi değişir | CI modülünün Xcode yarısı susar | Elle `decodeIfPresent`, yalnızca 5 anahtar okunur; bozuk manifest loglanır ve atlanır |
+| Safari `.download` plist anahtarları değişir / Chromium toplamı bilmez | İlerleme yüzdesi yok | Paket içi dosya boyutu yedeği; belirsiz çubuk; tamamlanma hedef dosyanın varlığından |
+| `gh` yok ya da oturumu düşmüş | CI'nin GitHub yarısı susar | Durum satırı + kurulum komutu; token saklanmaz, ağ yolu yalnızca `gh` |
 
 ## 14. Başlamadan Netleştirilecek Küçük Kararlar
 
@@ -441,6 +457,21 @@ MyNotch/
 | Raf deposu (Faz 6) | Bırakma **kopyalar**: `~/Library/Application Support/MyNotch/Shelf/<uuid>/<dosya>` + `preview.png` (QLThumbnailGenerator, 128 pt @2x, arka planda) + kökte `index.json` (ISO-8601). Disk işi `actor ShelfStorage`, UI modeli `ShelfStore` (`@MainActor @Observable`). Saklama `shelfKeepInterval` (24 sa; 1 sa/12 sa/1 gün/2 gün/1 hafta/kaldırılana kadar = 0); süresi dolanlar yüklemede, her bırakmada ve ayar değişince gider — timer yok. Silme kopyayı da siler, özgün dosyaya dokunulmaz. `activity` bırakmadan sonra 120 s `live`, sonra idle; ekran raf boşken şeritten düşer. AirDrop `NSSharingService(.sendViaAirDrop)` doğrudan (picker yok: key pencere ister); dışarı sürükleme `ShelfItem: Transferable` (`FileRepresentation`, kopyanın kendisi). |
 | Pomodoro durumu (Faz 6) | Çalışma durumu ayar değil: `PomodoroStateStore` kendi `pomodoroState` JSON anahtarında (`preferredModuleID` emsali); kapalıyken biten faz yeniden açılışta bir kez duyurulur, `autoStart`'a göre devam eder ya da bekler. Sayaç tek `Task.sleep(until:)`, halka `CountdownArc` (CAShapeLayer `strokeEnd`, süre = kalan; duraklatmada animasyon kaldırılır). |
 | Visualizer (Faz 6) | CoreAudio process tap (`CATapDescription(stereoGlobalTapButExcludeProcesses:)` → özel aggregate device → `AudioDeviceCreateIOProcIDWithBlock`), 6 RBJ bandpass → 4 çubuk; yalnızca `visualizerEnabled ∧ çalıyor (2 s debounce) ∧ ekranda gözlemci` iken yaşar, aksi halde `EqualizerMode.dancing` (CA). Seviye yolu 30 Hz utility kuyruğu → eşik geçince main → `EqualizerBarsView.setLevels` (CATransaction); SwiftUI per-frame yok. İzin `NSAudioCaptureUsageDescription`; ret → `.silent` → dans. |
+| Release (Faz 7) | GitHub Releases + Sparkle 2; **şimdilik ad-hoc imza** (bu Mac'te Developer ID yok; kullanıcı kararı 2026-09-06). `scripts/release.sh <v> [--dry-run]`: temiz ağaç + `main`, testler, universal Release archive, **içten dışa** imza (MediaRemoteAdapter.framework → Sparkle XPC/Autoupdate/Updater → Sparkle.framework → test client → app), `codesign --verify --deep --strict`, zip (Sparkle) + DMG (`create-dmg`), `sign_update`, appcast öğesi (notlar CHANGELOG bölümünden HTML), `gh release create`. Developer ID modu `MYNOTCH_SIGN_IDENTITY`/`MYNOTCH_TEAM` ile: hardened runtime + `Resources/MyNotch.entitlements` (apple-events) + `notarytool`/`stapler`; `project.yml` ad-hoc kalır. Hardened runtime ad-hoc'ta **açılmaz**. Sürüm politikası 0.x minor, `CURRENT_PROJECT_VERSION` monoton. Homebrew cask Developer ID'ye kadar yok. |
+| Sparkle (Faz 7) | Tek SPM paketi, `exactVersion` 2.9.6; `App/UpdaterManager.swift` tek `import Sparkle`. `SUFeedURL` repo'daki `appcast.xml` (raw.githubusercontent), `SUPublicEDKey` proje dosyasında, özel anahtar release Mac'inin Keychain'inde (yedek `docs/RELEASE.md`). Updater yalnızca Release'te başlar; `updateChecksEnabled` (Genel) `automaticallyChecksForUpdates`'i başlatmadan önce yazar → Sparkle'ın kendi sorusu çıkmaz. **Arka plan uygulaması dersi:** zamanlanmış bulgu için Sparkle pencere bekler ve çıkmaz (2026-09-07: uyarı logu, pencere yok) → `SPUStandardUserDriverDelegate` nazik hatırlatma: menü öğesi "Update to x.y.z available…", pencere kullanıcı isteyince. `SUEnableInstallerLauncherService` eklenmedi (yalnızca sandbox için). |
+| Repo kimliği (Faz 7) | LICENSE **MIT**, README İngilizce (public repo), ikon `scripts/make-app-icon.swift` (Core Graphics → `iconutil`, git'te `.icns`), `NSHumanReadableCopyright`; `didset` artıkları silindi. Adaptör sağlık cache anahtarı artık **artefakt sha256** (sürüm artışı sahte now-playing yayını tetiklemez). |
+| Spotify token dosyası (Faz 7) | Keychain'e taşıma **Developer ID ile birlikte** (ad-hoc'ta her derleme imzayı değiştirir → ACL istemi). Şimdi: dosya 0600 ile yaratılır ve `replaceItemAt` ile yerine konur; bozuk dosya `SpotifyLibraryError.storeUnreadable` → Ayarlar'da kırmızı satır. |
+| Generic shuffle/repeat (Faz 8) | Adaptör `shuffleMode`/`repeatMode` (repeat 2 = tek parça = `.one`, 3 = liste = `.all`); `capabilities` açıldı, komutlar toggle 6/7, gerçek durum sonraki diff satırıyla → desenkron yok. `speed` yok. |
+| Player kartı ölçeri (Faz 8) | `MediaControlBar` sağ boşluğunda 6 bant (`barLevels (6,6)` hazırdı); aynı `AudioMeter` gözlemcisi; visualizer kapalıyken CA dansı. |
+| Claude `quotaLimits` (Faz 8) | Gerçek veri (2026-09-07, 287 dosya): yalnızca `assistant` kökünde, yalnızca **reddedilince** (`five_hour`, `rejected`, `resetsAt` epoch), yüzde yok → **"limit doldu" olayı**. Parser üçüncü marker; `UsageWindow.isEstimate`; `UsageMerge.applyingQuota` yalnızca endpoint sağlıksızken ve gerçek okuma yokken/sıfırlanmışken %100 kesik-çizgili halka; `ThresholdMemory` kestirimi atlar; yeni `rejected` (≤10 dk) tek popup + o pencerenin eşikleri işaretlenir. |
+| HUD kapsamı (Faz 9) | Kullanıcı kararı 2026-09-07: **ses göstergesi + isteğe bağlı değiştirme**; parlaklık sistemde kalır (özel API). Gösterge: `AudioOutputWatcher` (V-1: dahili hoparlör `vmvc` rw + scalar main rw + mute rw, HDMI TV hiçbiri), popup **okuma değişiminden**, 40 ms birleştirme. Değiştir modu: `MediaKeyTap` — head-insert tap, NX_SYSDEFINED subtype 8, **kendi thread'i**, `tapDisabledByTimeout` yeniden etkinleştirme, ses/sessiz tuşları iki yönde yutulur, parlaklık 2/3 ve klavye ışığı 21/22 dokunulmaz, sesi olmayan aygıtta geçer; geri bildirim `com.apple.sound.beep.feedback XOR Shift`, Option+Shift çeyrek adım. Erişilebilirlik opt-in; grant yoksa sessizce gösterge; izin gelişi `com.apple.accessibility.api` + `didBecomeActive`. |
+| Çıkış aygıtı (Faz 9) | `shouldAnnounce`: dahili → dahili asla, ilk okuma bağlanma değil; ad → transport glif sırası; 300 ms rota yerleşmesi. Pil: `AppleDeviceManagementHIDEventService` IORegistry (public IOKit, belgesiz anahtarlar; `FIFO`/`Built-In` süzülür), UID→adres → tam ad → içerir → tek harici; 0/2/5 sn üç okuma, popup ilk okumayla. Ayrılma popup'ı varsayılan kapalı. |
+| İndirmeler (Faz 9) | **Varsayılan kapalı**: klasör okuması Downloads TCC istemini çıkarır (`NSDownloadsFolderUsageDescription`). `DirectoryWatcher` (250 ms) + 500 ms tarama tabanı, tarama `Task.detached`; Safari `.download` `Info.plist` (D-1 doğrulayacak) + paket boyutu yedeği; `.crdownload/.part` boyut, toplam belirsiz. Tamamlanma = sidecar gitti ∧ hedef var; hedef yok = iptal, sessiz. `activity` hareket ederken + 5 s, 60 s büyümeyen → idle. "Rafa koy" `context.offerFiles`. `acceptsDrops` demez. |
+| Derlemeler (Faz 9) | **Varsayılan kapalı**. Xcode: DerivedData `LogStoreManifest.plist` (`logFormatVersion 12`, `schemeIdentifier-schemeName`, `highLevelStatus S/W/E`, sayaçlar, CFAbsoluteTime) tek FSEvents akışı manifest süzgeciyle; ilk liste hafızayı doldurur, sonrası `freshWindow` 300 s. GitHub: yalnızca kullanıcının `gh`'si (`GHLocator`, `PATH` kısıtlı, `GH_PROMPT_DISABLED`), `conclusion ""` koşarken, token saklanmaz; poll koşu/kart açıkken 60 s (60/120/300), aksi 600 s, repo yoksa hiç; `SuspendingClock`; uyanmada yarım aralık. |
+| Öncelikler (Faz 9) | claude 5 → media 10 → calendar 7 → pomodoro 8 → battery 6 → **downloads 3** → shelf 4 → **ci 2** → **audioDevice 1** → **volume 1** → demo 0. Volume/AudioDevice hiç canlı olmaz; şeritte `isAvailable` ile. |
+| `Core/System/` (Faz 9) | Modül-agnostik sistem yardımcıları: `DirectoryWatcher` (eski `ProjectsWatcher`), `AudioOutputDevice`, `AudioOutputWatcher` (gözlemci sayımlı, blok kimliği saklanır). Modül adı geçmez. |
+| `offerFiles` dikişi (Faz 9) | `ModuleContext.offerFiles/canOfferFiles` → `ModuleManager.dropTarget(excluding:)` → `acceptDrop(NotchDrop(unitPoint: nil))`. Modülden modüle referans yok. |
+| Varsayılan kapalı modül (Faz 9) | `ModuleDefaults.disabledByDefault` + `moduleDefaultsApplied`: uygulanmamış id'ler bir kez `disabledModules`'a yazılır; kullanıcı açtıysa dokunulmaz. |
 
 ## 16. Faz 5 Planı — Ayarlar & Cila (2026-09-06)
 
@@ -672,3 +703,40 @@ Toplam ≈ 30 commit; her iş parçası kendi içinde bitmiş ve geri alınabili
 | 2026-09-06 | Raf — deney turu | E-5 `NSSharingService(.sendViaAirDrop)` var, `canPerform(dosya) == true` (UI'sız `swiftc` deneyi); E-7 `sendViaAirDrop` deprecated değil (yalnızca sosyal servisler); E-1 yerine E-2 (AppKit hedefi) seçildi — `NSHostingView` `NSDraggingDestination` değil, `NSView` resmen uyuyor, `override` derlendi; E-3 konu dışı (dedektör yalnızca sürükleme oturumunda). E-2/E-4/E-6 canlı sürükleme **kullanıcıda** (sentetik girdi yok) |
 | 2026-09-06 | Raf — CPU | Kart açık, sürükleme monitörü kurulu: **%0,01** ort., tepe %0,10 (8 örnek, 79 MB). Depo klasörü ilk bırakmaya kadar oluşmaz |
 | 2026-09-06 | Visualizer (process tap) | Swift 6 `complete` altında IO block derlendi; saf kurallar testli. Canlı tap **henüz çalıştırılmadı**: Spotify duraklatılmıştı (tap yalnızca çalarken açılır) ve TCC istemi kullanıcı onayı ister — `docs/manual-tests.md` Faz 6 visualizer maddeleri |
+
+## 18. Faz 7–9 Planı ve Ölçümleri (2026-09-06 → 2026-09-07)
+
+Onaylı plan özetle: Faz 6'nın elle doğrulamaları + `docs/manual-tests.md` onarımı → **Faz 7 Release** (ad-hoc varyantı, Developer ID'ye hazır; Sparkle; `scripts/release.sh`; v0.1.0) → **Faz 8** medya/Claude ekleri → **Faz 9** dört yeni modül (temel: `Core/System/`, `offerFiles`, varsayılan-kapalı) → docs kapanışı → v0.2.0. Kararlar §15'te ("Faz 7"/"Faz 8"/"Faz 9" etiketli satırlar), prosedür `docs/RELEASE.md`, elle doğrulamalar `docs/manual-tests.md` "Faz 7–9".
+
+### 18.1 Durum
+
+| # | İş | Durum |
+|---|---|---|
+| 1 | Manuel liste onarımı (Takvim bölümü, Spotify satırları, sekme listesi) | ✓ — canlı doğrulamalar kullanıcıda |
+| 2 | LICENSE/README/ikon/`didset` temizliği, adaptör sağlık anahtarı, Spotify dosya sertleştirme | ✓ |
+| 3 | Sparkle + Check for Updates + ayar + nazik hatırlatma | ✓ |
+| 4 | `scripts/release.sh`, CHANGELOG, CI workflow, entitlements | ✓ |
+| 5 | v0.1.0 ve v0.1.1 yayını | ✓ GitHub Releases + appcast; Sparkle kurulum akışı kullanıcının tıklamasını bekliyor |
+| 6–8 | Generic shuffle/repeat, kart ölçeri, Gizlilik linki, quotaLimits | ✓ |
+| 9 | Temel (DirectoryWatcher, AudioOutputDevice/Watcher, offerFiles, varsayılan-kapalı) | ✓ |
+| 10–14 | Volume, AudioDevice, Downloads, CI | ✓ |
+| 15 | Docs kapanışı | ✓ (bu bölüm) |
+| 16 | v0.2.0 | oturum sonunda |
+
+### 18.2 Ölçümler ve deneyler
+
+| Tarih | Ne | Sonuç |
+|---|---|---|
+| 2026-09-07 | Release dry-run (`scripts/release.sh 0.1.0 --dry-run`) | Universal (arm64 + x86_64) archive; app/framework/Sparkle/test client hepsi ad-hoc, `codesign --verify --deep --strict` geçti; `spctl` beklendiği gibi `rejected`; DMG 4,1 MB, zip 3,8 MB. **Swift 6.3 optimizer çökmesi** (EarlyPerfInliner, generic `NSHostingView` alt sınıfının deinit'i) → `NotchHostingView` `NotchRootView` üzerine somutlaştırıldı |
+| 2026-09-07 | v0.1.0 / v0.1.1 yayını | `gh release create` + appcast iki öğe; GitHub Actions `macos-26` runner'ında CI yeşil |
+| 2026-09-07 | Sparkle ilk denetim (kurulu 0.1.0) | `SULastCheckTime` yazıldı, ağa çıkıldı; zamanlanmış bulgu için **pencere çıkmadı** (Sparkle uyarısı: arka plan uygulaması) → nazik hatırlatma delegate'i (0.2.0'da). 0.1.0 → sonraki sürüm kurulumu: kullanıcı "Check for Updates…" ile |
+| 2026-09-07 | V-1 CoreAudio sondası (`swiftc`, salt okuma) | Dahili hoparlör: `vmvc` rw, `VolumeScalar` main rw, kanal 1/2 yok, mute rw; HDMI TV: hiçbiri. Hangi dinleyicinin tuşta ateşlediği canlı (V-2) |
+| 2026-09-07 | S4 `quotaLimits` (287 dosya, anahtarlar) | 11 dosya / 18 satır, yalnızca `assistant` kökü, yalnızca `rejected`, `five_hour`, yüzde yok |
+| 2026-09-07 | A-1a IORegistry | Sınıf var; bugün yalnızca dahili klavye/trackpad (`FIFO`, `Built-In`), pil anahtarı yok; AirPods anahtarları canlı (A-1b) |
+| 2026-09-07 | C-1/C-3/C-4 | `LogStoreManifest.plist` anahtarları doğrulandı (testte literal fixture); `gh run list --json` `conclusion ""` koşarken; `gh` 2.96.0 oturum açık; kart gerçek manifestle iki derlemeyi gösterdi ("3 uyarı") |
+| 2026-09-07 | Boşta CPU (kart açık) | Volume %0,02 (92 MB), AudioDevice %0,02 (82 MB), CI %0,00 (91 MB; repo yok → `gh` süreci yok) |
+| 2026-09-07 | Testler | 363 → **400** |
+
+### 18.3 Kullanıcıda kalan canlı deneyler
+
+Sparkle 0.1.0 → 0.2.0 kurulumu (menü "Check for Updates…"); V-2…V-6 (Erişilebilirlik istemi, OSD gizlenmesi, parlaklık tuşları, `NSEvent(cgEvent:)` ana thread dışında, zaman aşımı yeniden etkinleştirme, feedback anahtarı değerleri); A-1b/A-3/A-4 (AirPods pil anahtarları, transport kodları, bağlan/çıkar); D-1…D-4 (Safari plist anahtarları/kadansı, Chromium `.crdownload`, TCC diyaloğu, yeniden derleme sonrası grant); C-2/C-5 (derleme sırasında FSEvents hacmi, `gh` süresi); S-1 (derin linkler). Hepsi `docs/manual-tests.md` "Faz 7–9".

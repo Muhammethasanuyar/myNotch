@@ -4,9 +4,23 @@ import SwiftUI
 struct SoundPane: View {
     @Bindable var store: SettingsStore
     let volume: VolumeModule?
+    let audioDevice: AudioDeviceModule?
 
     var body: some View {
         SettingsForm {
+            Section(L("settings.sound.device", "Output device")) {
+                if let audioDevice {
+                    deviceStatus(audioDevice.service)
+                }
+                Toggle(L("settings.sound.device.connect", "Popup when headphones, speakers or a display take over"), isOn: $store.audioDeviceConnectPopups)
+                    .toggleStyle(.switch)
+                Toggle(L("settings.sound.device.disconnect", "Popup when the sound comes back to the built-in speakers"), isOn: $store.audioDeviceDisconnectPopups)
+                    .toggleStyle(.switch)
+                Toggle(L("settings.sound.device.battery", "Show the AirPods battery"), isOn: $store.audioDeviceBatteryEnabled)
+                    .toggleStyle(.switch)
+                SettingsFootnote(L("settings.sound.device.help", "Core Audio says which device is the default output; the popup names it with its glyph. The battery comes from the IORegistry, which AirPods fill in a few seconds after connecting — read only, no Bluetooth permission involved."))
+            }
+
             Section(L("settings.sound.volume", "Volume")) {
                 if let volume {
                     levelStatus(volume.service)
@@ -25,6 +39,17 @@ struct SoundPane: View {
                 SettingsFootnote(L("settings.sound.hud.help", "MyNotch takes the volume and mute keys before macOS does, moves the level in sixteenths (Option-Shift: quarters, Shift: with the feedback sound) and shows it in the notch, so the system HUD never appears. Needs the Accessibility permission, which macOS ties to the app's signature: a rebuilt or re-signed app asks again. Brightness keys are never touched, and a device without a volume (HDMI, optical) keeps its system behaviour."))
             }
         }
+    }
+
+    private func deviceStatus(_ service: AudioDeviceService) -> some View {
+        guard let output = service.output else {
+            return StatusRow(tone: .neutral, title: L("audioDevice.none", "No output device"))
+        }
+        var detail = AudioDeviceRules.transportName(output.transport)
+        if let battery = service.battery, let text = AudioDeviceRules.batteryText(battery) {
+            detail += " · " + text
+        }
+        return StatusRow(tone: AudioDeviceRules.isExternal(output) ? .ok : .neutral, title: output.name, detail: detail)
     }
 
     private func levelStatus(_ service: VolumeService) -> some View {

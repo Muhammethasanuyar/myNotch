@@ -92,4 +92,8 @@ struct SettingsContext {
     var volume: VolumeModule? {
         manager.module(id: "volume") as? VolumeModule
     }
+
+    var audioDevice: AudioDeviceModule? {
+        manager.module(id: "audioDevice") as? AudioDeviceModule
+    }
 }

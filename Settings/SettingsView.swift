@@ -81,7 +81,7 @@ struct SettingsView: View {
         case .shelf:
             ShelfPane(store: context.store, module: context.shelf)
         case .sound:
-            SoundPane(store: context.store, volume: context.volume)
+            SoundPane(store: context.store, volume: context.volume, audioDevice: context.audioDevice)
         case .setup:
             SetupPane(context: context, navigation: navigation, closeWindow: closeWindow)
         case .about:

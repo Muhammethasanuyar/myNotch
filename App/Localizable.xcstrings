@@ -31,6 +31,186 @@
         }
       }
     },
+    "audioDevice.battery.case": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kutu %%%lld"
+          }
+        }
+      }
+    },
+    "audioDevice.battery.left": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sol %%%lld"
+          }
+        }
+      }
+    },
+    "audioDevice.battery.right": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sağ %%%lld"
+          }
+        }
+      }
+    },
+    "audioDevice.case": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kutu"
+          }
+        }
+      }
+    },
+    "audioDevice.event.connected": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bağlandı: %@"
+          }
+        }
+      }
+    },
+    "audioDevice.event.disconnected": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bağlantı kesildi: %@"
+          }
+        }
+      }
+    },
+    "audioDevice.explain.battery": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "IORegistry'den okunur; AirPods bağlandıktan birkaç saniye sonra ve yalnızca bağlıyken bildirir."
+          }
+        }
+      }
+    },
+    "audioDevice.explain.device": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sesin şu an gittiği yer. Dahili hoparlörden her ayrılış bir popup'la belirtilir."
+          }
+        }
+      }
+    },
+    "audioDevice.explain.latency": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Core Audio'nun bildirdiği çıkış gecikmesi; şarkı sözleri Bluetooth'ta zamanlamayı bu sayıyla tutar."
+          }
+        }
+      }
+    },
+    "audioDevice.explain.transport": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aygıtın nasıl bağlı olduğu. Bluetooth aygıtları pillerini de bildirebilir."
+          }
+        }
+      }
+    },
+    "audioDevice.latency": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld ms"
+          }
+        }
+      }
+    },
+    "audioDevice.left": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sol"
+          }
+        }
+      }
+    },
+    "audioDevice.none": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Çıkış aygıtı yok"
+          }
+        }
+      }
+    },
+    "audioDevice.right": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sağ"
+          }
+        }
+      }
+    },
+    "audioDevice.transport.aggregate": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Çok çıkışlı"
+          }
+        }
+      }
+    },
+    "audioDevice.transport.builtIn": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dahili"
+          }
+        }
+      }
+    },
+    "audioDevice.transport.unknown": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bilinmiyor"
+          }
+        }
+      }
+    },
+    "audioDevice.transport.virtual": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sanal"
+          }
+        }
+      }
+    },
     "battery.estimate.left": {
       "localizations": {
         "tr": {
@@ -1207,6 +1387,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "%@ sürümüne güncelle…"
+          }
+        }
+      }
+    },
+    "module.audioDevice": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Çıkış aygıtı"
           }
         }
       }
@@ -3021,6 +3211,16 @@
         }
       }
     },
+    "settings.modules.audioDevice.summary": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AirPods, kulaklık ya da ekran sesi devralınca popup; biliniyorsa AirPods piliyle."
+          }
+        }
+      }
+    },
     "settings.modules.battery.summary": {
       "localizations": {
         "tr": {
@@ -3787,6 +3987,56 @@
           "stringUnit": {
             "state": "translated",
             "value": "Bırakma dosyayı kopyalar; özgün dosya yerinde kalır. Rafı boşaltmak yalnızca kopyaları siler."
+          }
+        }
+      }
+    },
+    "settings.sound.device": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Çıkış aygıtı"
+          }
+        }
+      }
+    },
+    "settings.sound.device.battery": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AirPods pilini göster"
+          }
+        }
+      }
+    },
+    "settings.sound.device.connect": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kulaklık, hoparlör ya da ekran sesi devralınca popup"
+          }
+        }
+      }
+    },
+    "settings.sound.device.disconnect": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ses dahili hoparlöre dönünce popup"
+          }
+        }
+      }
+    },
+    "settings.sound.device.help": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hangi aygıtın varsayılan çıkış olduğunu Core Audio söyler; popup onu glifiyle adlandırır. Pil, AirPods'un bağlandıktan birkaç saniye sonra doldurduğu IORegistry'den gelir — yalnızca okuma, Bluetooth izni yok."
           }
         }
       }

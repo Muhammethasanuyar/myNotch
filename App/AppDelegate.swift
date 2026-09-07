@@ -29,6 +29,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         register(PomodoroModule(), in: manager)
         register(BatteryModule(), in: manager)
         register(ShelfModule(), in: manager)
+        register(AudioDeviceModule(service: AudioDeviceService(watcher: audioOutput)), in: manager)
         register(VolumeModule(service: VolumeService(watcher: audioOutput)), in: manager)
         // The demo module only exists to exercise the engine, so it never ships in a release build.
         let demo = DemoModule()

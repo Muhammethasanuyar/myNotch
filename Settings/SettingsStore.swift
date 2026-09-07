@@ -44,6 +44,9 @@ nonisolated enum SettingsKey: String, CaseIterable, Sendable {
     // Sound
     case volumePopupsEnabled
     case volumeHUDReplacement
+    case audioDeviceConnectPopups
+    case audioDeviceDisconnectPopups
+    case audioDeviceBatteryEnabled
     // App
     case onboardingCompleted
     case updateChecksEnabled
@@ -253,6 +256,9 @@ final class SettingsStore {
     var volumePopupsEnabled: Bool { didSet { persist(volumePopupsEnabled, .volumePopupsEnabled) } }
     /// Off until asked for: taking the volume keys needs the Accessibility permission.
     var volumeHUDReplacement: Bool { didSet { persist(volumeHUDReplacement, .volumeHUDReplacement) } }
+    var audioDeviceConnectPopups: Bool { didSet { persist(audioDeviceConnectPopups, .audioDeviceConnectPopups) } }
+    var audioDeviceDisconnectPopups: Bool { didSet { persist(audioDeviceDisconnectPopups, .audioDeviceDisconnectPopups) } }
+    var audioDeviceBatteryEnabled: Bool { didSet { persist(audioDeviceBatteryEnabled, .audioDeviceBatteryEnabled) } }
 
     // MARK: App
 
@@ -336,6 +342,9 @@ final class SettingsStore {
         storedShelfKeep = SettingsRules.shelfKeepInterval(defaults.object(forKey: SettingsKey.shelfKeepInterval.rawValue) as? Double ?? ShelfRules.defaultKeepInterval)
         volumePopupsEnabled = defaults.object(forKey: SettingsKey.volumePopupsEnabled.rawValue) as? Bool ?? true
         volumeHUDReplacement = defaults.object(forKey: SettingsKey.volumeHUDReplacement.rawValue) as? Bool ?? false
+        audioDeviceConnectPopups = defaults.object(forKey: SettingsKey.audioDeviceConnectPopups.rawValue) as? Bool ?? true
+        audioDeviceDisconnectPopups = defaults.object(forKey: SettingsKey.audioDeviceDisconnectPopups.rawValue) as? Bool ?? false
+        audioDeviceBatteryEnabled = defaults.object(forKey: SettingsKey.audioDeviceBatteryEnabled.rawValue) as? Bool ?? true
         onboardingCompleted = defaults.bool(forKey: SettingsKey.onboardingCompleted.rawValue)
         updateChecksEnabled = defaults.object(forKey: SettingsKey.updateChecksEnabled.rawValue) as? Bool ?? true
     }

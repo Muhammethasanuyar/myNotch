@@ -17,7 +17,8 @@ struct SettingsApplier {
         .usageWarningThreshold, .usagePollInterval, .usageAlertsEnabled,
         .batteryLowThreshold, .batteryAlertsEnabled, .pomodoroWorkMinutes,
         .calendarLeadMinutes, .calendarSelectedIDs, .calendarAlertsEnabled, .shelfKeepInterval,
-        .volumePopupsEnabled, .volumeHUDReplacement, .updateChecksEnabled
+        .volumePopupsEnabled, .volumeHUDReplacement, .audioDeviceConnectPopups, .audioDeviceDisconnectPopups,
+        .audioDeviceBatteryEnabled, .updateChecksEnabled
     ]
 
     func applyAll() {
@@ -76,6 +77,12 @@ struct SettingsApplier {
             volume?.service.popupsEnabled = store.volumePopupsEnabled
         case .volumeHUDReplacement:
             volume?.service.hudReplacement = store.volumeHUDReplacement
+        case .audioDeviceConnectPopups:
+            audioDevice?.service.connectPopups = store.audioDeviceConnectPopups
+        case .audioDeviceDisconnectPopups:
+            audioDevice?.service.disconnectPopups = store.audioDeviceDisconnectPopups
+        case .audioDeviceBatteryEnabled:
+            audioDevice?.service.batteryEnabled = store.audioDeviceBatteryEnabled
         case .updateChecksEnabled:
             updater?.automaticallyChecksForUpdates = store.updateChecksEnabled
         case .moduleDefaultsApplied:
@@ -120,5 +127,9 @@ struct SettingsApplier {
 
     private var volume: VolumeModule? {
         manager.module(id: "volume") as? VolumeModule
+    }
+
+    private var audioDevice: AudioDeviceModule? {
+        manager.module(id: "audioDevice") as? AudioDeviceModule
     }
 }
